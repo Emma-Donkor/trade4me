@@ -1,0 +1,57 @@
+# ============================================================================
+# TradeSense AI — repository hygiene
+# ============================================================================
+
+# ---- Node / frontend build output ----
+node_modules/
+dist/
+build/
+out/
+.next/
+coverage/
+*.tsbuildinfo
+.npm/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# ---- Secrets and environment files ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# ---- IDE / editors ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*.code-workspace
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Docker / local data volumes ----
+docker-volumes/
+pgdata/
+redisdata/
+
+# ---- Project artifacts ----
+models/
+artifacts/
+*.log
+logs/

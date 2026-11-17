@@ -1,0 +1,11 @@
+# Documentation is the source of truth and is verified, not reformatted (P00/P40).
+README.md
+IMPLEMENTATION-ROADMAP.md
+
+# Generated / installed content
+**/node_modules
+**/dist
+**/.next
+**/.venv
+**/coverage
+package-lock.json
