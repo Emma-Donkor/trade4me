@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src",
-    "test": "jest --config ../../jest.config.cjs --runTestsByPath src/index.test.ts",
+    "test": "jest --config ../../jest.config.cjs --runTestsByPath src/index.test.ts src/ai.test.ts",
     "format": "prettier --write src"
   },
   "dependencies": {

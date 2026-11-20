@@ -7,6 +7,11 @@ pydantic>=2.5,<3
 pytest>=8.0,<9
 httpx>=0.26,<1
 
+# PHASE 03 architecture
+pydantic-settings>=2.5,<3
+redis>=5,<7
+asyncpg>=0.29,<1
+
 # Data and ML stack (consumed from PHASE 10 onward)
 pandas>=2.0,<3
 numpy>=1.26,<3

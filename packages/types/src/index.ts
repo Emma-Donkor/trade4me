@@ -7,3 +7,5 @@
 export const MONOREPO_ROOT_PACKAGE = 'tradesense-ai' as const;
 
 export type MonorepoRootPackage = typeof MONOREPO_ROOT_PACKAGE;
+
+export * from './contracts';

@@ -546,16 +546,16 @@ Depends on: PHASE 02
 ```
 
 ### Tasks
-- [ ] **Config package finalized:** zod-validated env (all vars from `.env.example`), typed constants (timeframes, score bands, default decision weights), fail-fast in production
-- [ ] **API common layer:** global exception filter producing README §8.1 envelope (`success/error{code,message,details,requestId}`), request-ID interceptor (`ENABLE_REQUEST_IDS`), structured JSON logger, response serializer
-- [ ] **API bootstrap:** Swagger/OpenAPI at `/api/v1/docs`, helmet security headers, CORS allowlist from `CORS_ORIGINS`, global `ValidationPipe` wired to Zod/class-validator DTOs
-- [ ] **Health module:** `GET /health` (liveness), `GET /health/ready` (DB + Redis + AI-service checks, degraded status reporting)
-- [ ] **Redis client module** (ioredis, namespaced `tradesense:`) + **Prisma module** (connection lifecycle; schema comes in P04 — module tolerates missing tables)
-- [ ] **WebSocket gateway** with Redis adapter (auth handshake accepting JWT; event envelope matches README §8.3)
-- [ ] **BullMQ scaffolding:** queue registry (`market-sync`, `news-ingest`, `features`, `outcomes`, `cleanup`, `health`), worker bootstrap, cron registrations from README §20.3, idempotent job base class
-- [ ] **Audit module skeleton** (service writing `AuditLog` — table exists in P04)
-- [ ] **AI-engine shell:** pydantic settings mirroring env, structured logging, `/health` with dependency checks (db/redis), routers registered but returning `501` stubs for `indicators`, `features`, `predict`, `explain`
-- [ ] **Config parity test:** TS env schema and Python settings must validate the same variable set
+- [x] **Config package finalized:** zod-validated env (all vars from `.env.example`), typed constants (timeframes, score bands, default decision weights), fail-fast in production
+- [x] **API common layer:** global exception filter producing README §8.1 envelope (`success/error{code,message,details,requestId}`), request-ID interceptor (`ENABLE_REQUEST_IDS`), structured JSON logger, response serializer
+- [x] **API bootstrap:** Swagger/OpenAPI at `/api/v1/docs`, helmet security headers, CORS allowlist from `CORS_ORIGINS`, global `ValidationPipe` wired to Zod/class-validator DTOs
+- [x] **Health module:** `GET /health` (liveness), `GET /health/ready` (DB + Redis + AI-service checks, degraded status reporting)
+- [x] **Redis client module** (ioredis, namespaced `tradesense:`) + **Prisma module** (connection lifecycle; schema comes in P04 — module tolerates missing tables)
+- [x] **WebSocket gateway** with Redis adapter (auth handshake accepting JWT; event envelope matches README §8.3)
+- [x] **BullMQ scaffolding:** queue registry (`market-sync`, `news-ingest`, `features`, `outcomes`, `cleanup`, `health`), worker bootstrap, cron registrations from README §20.3, idempotent job base class
+- [x] **Audit module skeleton** (service writing `AuditLog` — table exists in P04)
+- [x] **AI-engine shell:** pydantic settings mirroring env, structured logging, `/health` with dependency checks (db/redis), routers registered but returning `501` stubs for `indicators`, `features`, `predict`, `explain`
+- [x] **Config parity test:** TS env schema and Python settings must validate the same variable set
 
 ### Files/Folders
 ```text
@@ -596,12 +596,12 @@ None (P18).
 Helmet + CSP headers active; CORS allowlist enforced; JWT/Role guards implemented (activated in P06); no stack traces in responses; logger redacts `authorization`, `cookie`, `*API_KEY*`, `DATABASE_URL`.
 
 ### Testing
-- [ ] Unit: exception filter maps unknown error → 500 `INTERNAL_ERROR` without stack leak
-- [ ] Unit: request-ID interceptor propagates `x-request-id`
-- [ ] Integration: `/health/ready` reports each dependency correctly (up/down)
-- [ ] Integration: Redis connect/reconnect; queue enqueue/dequeue round-trip
-- [ ] Contract: Python stub models match TS types for the four AI routes
-- [ ] Regression: all P02 tests still pass
+- [x] Unit: exception filter maps unknown error → 500 `INTERNAL_ERROR` without stack leak
+- [x] Unit: request-ID interceptor propagates `x-request-id`
+- [x] Integration: `/health/ready` reports each dependency correctly (up/down)
+- [x] Integration: Redis connect/reconnect; queue enqueue/dequeue round-trip
+- [x] Contract: Python stub models match TS types for the four AI routes
+- [x] Regression: all P02 tests still pass
 
 ### Completion Criteria
 All three services boot with uniform error/logging/health contracts; Swagger renders; WS gateway connects; queues idle-ready; no feature logic yet.
