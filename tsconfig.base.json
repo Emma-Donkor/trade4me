@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "paths": {
+      "@ts/types": ["./packages/types/dist"],
+      "@ts/types/*": ["./packages/types/dist/*"],
+      "@ts/validation": ["./packages/validation/dist"],
+      "@ts/validation/*": ["./packages/validation/dist/*"],
+      "@ts/config": ["./packages/config/dist"],
+      "@ts/config/*": ["./packages/config/dist/*"],
+      "@ts/database": ["./packages/database/dist"],
+      "@ts/database/*": ["./packages/database/dist/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "build", "out", ".next", "coverage"]
+}

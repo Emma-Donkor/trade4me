@@ -1,5 +1,6 @@
 # PHASE 01: Windows/PowerShell bootstrap for the apps/ai-engine virtualenv.
-# No project packages are installed yet - requirements.txt arrives in PHASE 02/03.
+# PHASE 02 adds requirements.txt; install it with:
+#   apps\ai-engine\.venv\Scripts\python.exe -m pip install -r apps\ai-engine\requirements.txt
 $ErrorActionPreference = 'Stop'
 
 $RootDir = Split-Path -Parent $PSScriptRoot

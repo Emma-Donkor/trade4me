@@ -398,14 +398,14 @@ Depends on: PHASE 00
 ```
 
 ### Tasks
-- [ ] Verify toolchain: `node --version` (≥20), `npm --version`, `python --version` (≥3.11), `docker --version`, `docker compose version`, `git --version`
-- [ ] Create `docker-compose.yml` with **data tier only**: `postgres:16` (user/db `tradesense`, volume, healthcheck) and `redis:7` (password optional locally, healthcheck, volume)
-- [ ] Create `.env.local` from `.env.example` (defaults, mock providers, keyless)
-- [ ] Create `.env.test` pointing `DATABASE_URL` at `tradesense_test`
-- [ ] Create Python virtualenv bootstrap script (`scripts/setup-ai.sh|ps1`)
-- [ ] Write environment verification script (`scripts/verify-env.sh`) checking all tools + both containers healthy
-- [ ] Confirm ports free: 3000 (web), 4000 (api), 8000 (ai), 5432, 6379
-- [ ] Document any environment-specific gotchas (Windows paths, Docker Desktop memory)
+- [x] Verify toolchain: `node --version` (≥20), `npm --version`, `python --version` (≥3.11), `docker --version`, `docker compose version`, `git --version`
+- [x] Create `docker-compose.yml` with **data tier only**: `postgres:16` (user/db `tradesense`, volume, healthcheck) and `redis:7` (password optional locally, healthcheck, volume)
+- [x] Create `.env.local` from `.env.example` (defaults, mock providers, keyless)
+- [x] Create `.env.test` pointing `DATABASE_URL` at `tradesense_test`
+- [x] Create Python virtualenv bootstrap script (`scripts/setup-ai.sh|ps1`)
+- [x] Write environment verification script (`scripts/verify-env.sh`) checking all tools + both containers healthy
+- [x] Confirm ports free: 3000 (web), 4000 (api), 8000 (ai), 5432, 6379
+- [x] Document any environment-specific gotchas (Windows paths, Docker Desktop memory)
 
 ### Files/Folders
 ```text
@@ -435,10 +435,10 @@ None.
 `.env.local` / `.env.test` are gitignored; database credentials are local-only and never committed.
 
 ### Testing
-- [ ] `docker compose up -d` → both containers healthy
-- [ ] `psql` connection query succeeds (`SELECT 1`)
-- [ ] `redis-cli ping` → `PONG`
-- [ ] `scripts/verify-env.sh` exits 0
+- [x] `docker compose up -d` → both containers healthy
+- [x] `psql` connection query succeeds (`SELECT 1`)
+- [x] `redis-cli ping` → `PONG`
+- [x] `scripts/verify-env.sh` exits 0
 
 ### Completion Criteria
 All tools verified; PostgreSQL and Redis running with healthchecks; env files in place; verification script passes.
@@ -465,20 +465,20 @@ Depends on: PHASE 00, PHASE 01
 ```
 
 ### Tasks
-- [ ] Root `package.json` with npm workspaces: `apps/*`, `packages/*`
-- [ ] Root `tsconfig.base.json` (strict: true, ES2022, path aliases `@ts/types`, `@ts/validation`, `@ts/config`, `@ts/database`)
-- [ ] Workspace scripts: `dev`, `build`, `lint`, `typecheck`, `test`, `db:*`, `format`
-- [ ] `apps/api` — NestJS skeleton: `nest new` equivalent, boots on :4000, `GET /api/v1/health` returns placeholder
-- [ ] `apps/web` — Next.js App Router skeleton (TypeScript strict, Tailwind installed), boots on :3000
-- [ ] `apps/ai-engine` — FastAPI skeleton with `GET /health`, uvicorn dev script, `requirements.txt` (fastapi, uvicorn, pandas, numpy, scikit-learn, xgboost, pandas-ta, statsmodels, pydantic, pytest, httpx)
-- [ ] `packages/types` — barrel export skeleton (no domain types yet)
-- [ ] `packages/validation` — Zod skeleton
-- [ ] `packages/config` — env loader skeleton (zod-validated env object)
-- [ ] `packages/database` — Prisma client re-export skeleton (client generated in P04)
-- [ ] `concurrently`-based `npm run dev` running web + api + ai together
-- [ ] Cross-workspace imports verified (`@ts/types` resolves in api, web, and via tsconfig paths)
-- [ ] ESLint + Prettier configured per workspace; `npm run lint` and `npm run typecheck` pass across all workspaces
-- [ ] Jest configured at root for TS packages; one trivial passing test per workspace proves the harness
+- [x] Root `package.json` with npm workspaces: `apps/*`, `packages/*`
+- [x] Root `tsconfig.base.json` (strict: true, ES2022, path aliases `@ts/types`, `@ts/validation`, `@ts/config`, `@ts/database`)
+- [x] Workspace scripts: `dev`, `build`, `lint`, `typecheck`, `test`, `db:*`, `format`
+- [x] `apps/api` — NestJS skeleton: `nest new` equivalent, boots on :4000, `GET /api/v1/health` returns placeholder
+- [x] `apps/web` — Next.js App Router skeleton (TypeScript strict, Tailwind installed), boots on :3000
+- [x] `apps/ai-engine` — FastAPI skeleton with `GET /health`, uvicorn dev script, `requirements.txt` (fastapi, uvicorn, pandas, numpy, scikit-learn, xgboost, pandas-ta, statsmodels, pydantic, pytest, httpx)
+- [x] `packages/types` — barrel export skeleton (no domain types yet)
+- [x] `packages/validation` — Zod skeleton
+- [x] `packages/config` — env loader skeleton (zod-validated env object)
+- [x] `packages/database` — Prisma client re-export skeleton (client generated in P04)
+- [x] `concurrently`-based `npm run dev` running web + api + ai together
+- [x] Cross-workspace imports verified (`@ts/types` resolves in api, web, and via tsconfig paths)
+- [x] ESLint + Prettier configured per workspace; `npm run lint` and `npm run typecheck` pass across all workspaces
+- [x] Jest configured at root for TS packages; one trivial passing test per workspace proves the harness
 
 ### Files/Folders
 ```text
@@ -514,12 +514,12 @@ Default Next.js page renders (replaced entirely in P18).
 `packages/config` must be the **only** place env vars are read; it validates via Zod and refuses to boot on missing required vars in production mode.
 
 ### Testing
-- [ ] `npm run typecheck` passes on all workspaces
-- [ ] `npm run lint` passes
-- [ ] `npm run build` builds all three apps
-- [ ] `npm test` runs one passing test per workspace
-- [ ] `pytest apps/ai-engine` passes
-- [ ] Cross-package import compiles in `apps/api`
+- [x] `npm run typecheck` passes on all workspaces
+- [x] `npm run lint` passes
+- [x] `npm run build` builds all three apps
+- [x] `npm test` runs one passing test per workspace
+- [x] `pytest apps/ai-engine` passes
+- [x] Cross-package import compiles in `apps/api`
 
 ### Completion Criteria
 All apps build and boot; shared packages import cleanly; lint/typecheck/test green across the monorepo.

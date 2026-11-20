@@ -2,7 +2,8 @@
 set -eu
 
 # PHASE 01: bootstrap the Python virtualenv used by apps/ai-engine.
-# No project packages are installed yet — requirements.txt arrives in PHASE 02/03.
+# PHASE 02 adds requirements.txt; install it with:
+#   apps/ai-engine/.venv/Scripts/python.exe -m pip install -r apps/ai-engine/requirements.txt
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 AI_DIR="$ROOT_DIR/apps/ai-engine"
 VENV_DIR="$AI_DIR/.venv"
