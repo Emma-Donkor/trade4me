@@ -1,7 +1,27 @@
-/**
- * Single Prisma access point for every workspace.
- *
- * The schema and generated client arrive in PHASE 04; this skeleton fixes the
- * import contract now so later modules never reach around the wrapper.
- */
-export { Prisma, PrismaClient } from '@prisma/client';
+/** Single Prisma access point for every workspace (README §7). */
+export * from '@prisma/client';
+export { getPrismaClient, softConnect, disconnect } from './client';
+export { withTransaction, type TransactionClient, type TransactionOptions } from './transaction';
+export {
+  BaseRepository,
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  pageOf,
+  pagination,
+  type Page,
+  type PaginationInput,
+  type PaginationQuery,
+} from './repositories/base.repo';
+export {
+  CANDLE_SELECT,
+  CandleRepository,
+  type CandleRangeInput,
+  type CandleRow,
+  type CandleUpsertInput,
+} from './repositories/candle.repo';
+export {
+  QUOTE_SELECT,
+  QuoteRepository,
+  type QuoteRow,
+  type QuoteUpsertInput,
+} from './repositories/quote.repo';

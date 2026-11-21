@@ -1,0 +1,658 @@
+// TradeSense AI — complete database schema (README §7).
+// Candle keys deliberately mirror a future TimescaleDB hypertable: range scans
+// are always (pairId, timeframe, timestamp) so no restructuring is needed.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────── Enums (README §7.2) ───────────────────────────────
+
+enum Role {
+  USER
+  ANALYST
+  ADMIN
+}
+
+enum Timeframe {
+  M1
+  M5
+  M15
+  M30
+  H1
+  H4
+  D1
+  W1
+  MN1
+}
+
+enum Direction {
+  LONG
+  SHORT
+  NEUTRAL
+}
+
+enum SignalAction {
+  LONG
+  SHORT
+  WATCH
+  NO_TRADE
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  EXTREME
+}
+
+enum MarketRegime {
+  STRONG_UPTREND
+  WEAK_UPTREND
+  RANGE
+  WEAK_DOWNTREND
+  STRONG_DOWNTREND
+  HIGH_VOLATILITY
+  LOW_VOLATILITY
+  UNCERTAIN
+}
+
+enum Sentiment {
+  BULLISH
+  BEARISH
+  NEUTRAL
+}
+
+enum NewsImpact {
+  LOW
+  MEDIUM
+  HIGH
+  EXTREME
+}
+
+enum PositionStatus {
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+enum PositionSide {
+  LONG
+  SHORT
+}
+
+enum NotificationType {
+  SIGNAL_CHANGED
+  CONFIDENCE_CHANGED
+  RISK_CHANGED
+  NEWS_ALERT
+  ECONOMIC_EVENT
+  PRICE_ALERT
+  REGIME_CHANGED
+}
+
+enum ProviderStatus {
+  HEALTHY
+  DEGRADED
+  DISABLED
+}
+
+enum ModelStatus {
+  TRAINING
+  ACTIVE
+  ARCHIVED
+  DRIFT_WARNING
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  REGISTER
+  TRADE_OPEN
+  TRADE_CLOSE
+  SIGNAL_GENERATED
+  ADMIN_ACTION
+  DATA_EXPORT
+  SETTINGS_CHANGE
+}
+
+enum BacktestStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// Explicit Postgres enums for the field-level unions listed in README §7.3.
+enum RiskProfileType {
+  CONSERVATIVE
+  MODERATE
+  AGGRESSIVE
+}
+
+enum PositionSource {
+  MANUAL
+  SIGNAL
+}
+
+enum SystemEventLevel {
+  INFO
+  WARN
+  ERROR
+}
+
+enum SystemEventSource {
+  API
+  AI
+  WORKER
+  PROVIDER
+}
+
+enum AIAnalysisSubjectType {
+  PAIR
+  SIGNAL
+  REPORT
+}
+
+enum BacktestExitReason {
+  STOP_LOSS
+  TAKE_PROFIT
+  SIGNAL
+  END_OF_RANGE
+}
+
+// ─────────────────────────────── Identity ───────────────────────────────
+
+model User {
+  id              String         @id @default(cuid())
+  email           String         @unique
+  passwordHash    String
+  role            Role           @default(USER)
+  emailVerifiedAt DateTime?
+  isActive        Boolean        @default(true)
+  mfaEnabled      Boolean        @default(false)
+  profile         UserProfile?
+  riskProfile     RiskProfile?
+  portfolios      Portfolio[]
+  watchlists      Watchlist[]
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+  backtests       Backtest[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model UserProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName       String?
+  lastName        String?
+  timezone        String   @default("UTC")
+  baseCurrency    String   @default("USD")
+  experienceLevel String   @default("BEGINNER")
+  avatarUrl       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model RiskProfile {
+  id                      String          @id @default(cuid())
+  // Nullable so README's three risk templates can exist without an owner;
+  // the unique constraint still allows at most one profile per user.
+  userId                  String?         @unique
+  user                    User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                    String
+  profileType             RiskProfileType
+  riskPerTradePct         Decimal         @db.Decimal(5, 2)
+  maxDailyLossPct         Decimal         @db.Decimal(5, 2)
+  maxOpenPositions        Int
+  maxPortfolioExposurePct Decimal         @db.Decimal(5, 2)
+  maxDrawdownPct          Decimal         @db.Decimal(5, 2)
+  minRiskReward           Decimal         @db.Decimal(6, 2)
+  maxVolatilityPct        Decimal         @db.Decimal(5, 2)
+  newsEventRestriction    Boolean         @default(true)
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+
+  @@unique([name, userId])
+}
+
+// ─────────────────────────────── Market data ───────────────────────────────
+
+model CurrencyPair {
+  id                String               @id @default(cuid())
+  symbol            String               @unique
+  baseCurrency      String
+  quoteCurrency     String
+  pipSize           Decimal              @db.Decimal(18, 8)
+  pointValue        Decimal              @db.Decimal(18, 6)
+  spreadPipsTypical Decimal              @db.Decimal(8, 2)
+  isActive          Boolean              @default(true)
+  providerSymbols   Json
+  candles           MarketCandle[]
+  quotes            MarketQuote[]
+  indicators        TechnicalIndicator[]
+  features          MarketFeature[]
+  predictions       Prediction[]
+  signals           TradeSignal[]
+  positions         Position[]
+  watchlistItems    WatchlistItem[]
+  backtests         Backtest[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+}
+
+model MarketCandle {
+  id        String       @id @default(cuid())
+  pairId    String
+  pair      CurrencyPair @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  timeframe Timeframe
+  timestamp DateTime
+  open      Decimal      @db.Decimal(18, 6)
+  high      Decimal      @db.Decimal(18, 6)
+  low       Decimal      @db.Decimal(18, 6)
+  close     Decimal      @db.Decimal(18, 6)
+  volume    Decimal?     @db.Decimal(18, 6)
+  provider  String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([pairId, timeframe, timestamp], name: "candle_pair_timeframe_timestamp_key")
+  // Dedicated DESC index: the unique b-tree cannot satisfy a descending range scan.
+  @@index([pairId, timeframe, timestamp(sort: Desc)], name: "market_candle_range_idx")
+}
+
+model MarketQuote {
+  id        String       @id @default(cuid())
+  pairId    String
+  pair      CurrencyPair @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  bid       Decimal      @db.Decimal(18, 6)
+  ask       Decimal      @db.Decimal(18, 6)
+  spread    Decimal      @db.Decimal(18, 6)
+  timestamp DateTime
+  provider  String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([pairId, timestamp], name: "quote_pair_timestamp_key")
+}
+
+model TechnicalIndicator {
+  id         String       @id @default(cuid())
+  pairId     String
+  pair       CurrencyPair @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  timeframe  Timeframe
+  timestamp  DateTime
+  name       String
+  value      Json
+  computedAt DateTime
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@unique([pairId, timeframe, name, timestamp], name: "indicator_pair_timeframe_name_timestamp_key")
+  @@index([pairId, createdAt], name: "indicator_pair_created_idx")
+}
+
+model MarketFeature {
+  id             String       @id @default(cuid())
+  pairId         String
+  pair           CurrencyPair @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  timeframe      Timeframe
+  timestamp      DateTime
+  featureVersion String
+  values         Json
+  label          Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([pairId, timeframe, timestamp, featureVersion], name: "feature_pair_timeframe_timestamp_version_key")
+}
+
+// ─────────────────────────────── News & events ───────────────────────────────
+
+model NewsArticle {
+  id          String        @id @default(cuid())
+  source      String
+  sourceUrl   String        @unique
+  title       String
+  description String?
+  contentHash String        @unique
+  publishedAt DateTime
+  currencies  String[]
+  rawText     String?
+  analysis    NewsAnalysis?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([publishedAt], name: "news_published_idx")
+}
+
+model NewsAnalysis {
+  id            String      @id @default(cuid())
+  articleId     String      @unique
+  article       NewsArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  eventType     String
+  sentiment     Sentiment
+  impact        NewsImpact
+  confidence    Decimal     @db.Decimal(5, 4)
+  affectedPairs String[]
+  analyzedBy    String
+  analyzedAt    DateTime
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model EconomicEvent {
+  id            String     @id @default(cuid())
+  eventName     String
+  currency      String
+  eventClass    String
+  scheduledAt   DateTime
+  actualValue   String?
+  forecastValue String?
+  previousValue String?
+  impact        NewsImpact
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([scheduledAt], name: "economic_event_scheduled_idx")
+}
+
+// ─────────────────────────────── AI / ML ───────────────────────────────
+
+model ModelVersion {
+  id                     String        @id @default(cuid())
+  name                   String
+  version                String
+  featureVersion         String
+  trainingDatasetVersion String
+  hyperparams            Json
+  metrics                Json
+  status                 ModelStatus   @default(TRAINING)
+  runs                   ModelRun[]
+  predictions            Prediction[]
+  signals                TradeSignal[]
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  @@unique([name, version], name: "model_name_version_key")
+}
+
+model ModelRun {
+  id             String       @id @default(cuid())
+  modelVersionId String
+  modelVersion   ModelVersion @relation(fields: [modelVersionId], references: [id], onDelete: Cascade)
+  startedAt      DateTime
+  finishedAt     DateTime?
+  trainRange     Json
+  testRange      Json
+  seed           Int
+  artifactsPath  String?
+  metrics        Json
+  predictions    Prediction[]
+  analyses       AIAnalysis[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Prediction {
+  id               String             @id @default(cuid())
+  pairId           String
+  // Historical predictions are reference data: a pair with predictions cannot
+  // be deleted (asserted by the P04 cascade test).
+  pair             CurrencyPair       @relation(fields: [pairId], references: [id], onDelete: Restrict)
+  timeframe        Timeframe
+  horizon          Int
+  modelVersionId   String
+  modelVersion     ModelVersion       @relation(fields: [modelVersionId], references: [id], onDelete: Restrict)
+  modelRunId       String
+  modelRun         ModelRun           @relation(fields: [modelRunId], references: [id], onDelete: Restrict)
+  direction        Direction
+  probability      Decimal            @db.Decimal(5, 4)
+  confidence       Decimal            @db.Decimal(5, 4)
+  riskLevel        RiskLevel
+  featuresSnapshot Json
+  outcome          PredictionOutcome?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([pairId, createdAt], name: "prediction_pair_created_idx")
+}
+
+model PredictionOutcome {
+  id            String     @id @default(cuid())
+  predictionId  String     @unique
+  prediction    Prediction @relation(fields: [predictionId], references: [id], onDelete: Cascade)
+  resolvedAt    DateTime
+  actualMovePct Decimal    @db.Decimal(10, 4)
+  label         Int
+  correct       Boolean
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model AIAnalysis {
+  id                    String                @id @default(cuid())
+  subjectType           AIAnalysisSubjectType
+  subjectId             String
+  modelRunId            String?
+  modelRun              ModelRun?             @relation(fields: [modelRunId], references: [id], onDelete: SetNull)
+  signalId              String?
+  signal                TradeSignal?          @relation(fields: [signalId], references: [id], onDelete: SetNull)
+  summary               String
+  supportingEvidence    Json
+  contradictingEvidence Json
+  explanationText       String
+  llmModel              String
+  dataFreshness         DateTime?
+  timestamp             DateTime
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  @@index([subjectType, subjectId], name: "ai_analysis_subject_idx")
+}
+
+// ─────────────────────────────── Trading ───────────────────────────────
+
+model TradeSignal {
+  id             String          @id @default(cuid())
+  pairId         String
+  pair           CurrencyPair    @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  action         SignalAction
+  score          Decimal         @db.Decimal(5, 2)
+  probability    Decimal         @db.Decimal(5, 4)
+  confidence     Decimal         @db.Decimal(5, 4)
+  riskLevel      RiskLevel
+  direction      Direction
+  entryPrice     Decimal?        @db.Decimal(18, 6)
+  stopLoss       Decimal?        @db.Decimal(18, 6)
+  takeProfit     Decimal?        @db.Decimal(18, 6)
+  riskReward     Decimal?        @db.Decimal(8, 4)
+  scores         Json
+  reasons        String[]
+  noTradeReasons String[]
+  modelVersionId String?
+  modelVersion   ModelVersion?   @relation(fields: [modelVersionId], references: [id], onDelete: SetNull)
+  status         String          @default("ACTIVE")
+  generatedAt    DateTime
+  features       SignalFeature[]
+  analyses       AIAnalysis[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([pairId, generatedAt(sort: Desc)], name: "signal_pair_generated_idx")
+}
+
+model SignalFeature {
+  id             String      @id @default(cuid())
+  signalId       String
+  signal         TradeSignal @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  featureVersion String
+  values         Json
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([signalId, featureVersion], name: "signal_feature_version_key")
+}
+
+model Backtest {
+  id              String          @id @default(cuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pairId          String
+  pair            CurrencyPair    @relation(fields: [pairId], references: [id], onDelete: Restrict)
+  strategy        String
+  timeframe       Timeframe
+  rangeStart      DateTime
+  rangeEnd        DateTime
+  startingCapital Decimal         @db.Decimal(18, 2)
+  riskPerTradePct Decimal         @db.Decimal(5, 2)
+  status          BacktestStatus  @default(QUEUED)
+  results         Json?
+  tradeCount      Int             @default(0)
+  trades          BacktestTrade[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model BacktestTrade {
+  id         String             @id @default(cuid())
+  backtestId String
+  backtest   Backtest           @relation(fields: [backtestId], references: [id], onDelete: Cascade)
+  direction  Direction
+  entryAt    DateTime
+  entryPrice Decimal            @db.Decimal(18, 6)
+  exitAt     DateTime
+  exitPrice  Decimal            @db.Decimal(18, 6)
+  size       Decimal            @db.Decimal(18, 6)
+  pnl        Decimal            @db.Decimal(18, 2)
+  pnlPct     Decimal            @db.Decimal(8, 4)
+  reason     BacktestExitReason
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+}
+
+model Portfolio {
+  id             String     @id @default(cuid())
+  userId         String
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  balance        Decimal    @default(10000) @db.Decimal(18, 2)
+  initialBalance Decimal    @default(10000) @db.Decimal(18, 2)
+  currency       String     @default("USD")
+  positions      Position[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@unique([userId, name], name: "portfolio_user_name_key")
+}
+
+model Position {
+  id            String         @id @default(cuid())
+  portfolioId   String
+  portfolio     Portfolio      @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  pairId        String
+  pair          CurrencyPair   @relation(fields: [pairId], references: [id], onDelete: Restrict)
+  side          PositionSide
+  status        PositionStatus @default(OPEN)
+  entryPrice    Decimal        @db.Decimal(18, 6)
+  size          Decimal        @db.Decimal(18, 6)
+  stopLoss      Decimal        @db.Decimal(18, 6)
+  takeProfit    Decimal        @db.Decimal(18, 6)
+  exitPrice     Decimal?       @db.Decimal(18, 6)
+  unrealizedPnl Decimal        @default(0) @db.Decimal(18, 2)
+  realizedPnl   Decimal        @default(0) @db.Decimal(18, 2)
+  openedAt      DateTime       @default(now())
+  closedAt      DateTime?
+  source        PositionSource @default(MANUAL)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([portfolioId, status], name: "position_portfolio_status_idx")
+}
+
+model Watchlist {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  items     WatchlistItem[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@unique([userId, name], name: "watchlist_user_name_key")
+}
+
+model WatchlistItem {
+  id          String       @id @default(cuid())
+  watchlistId String
+  watchlist   Watchlist    @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  pairId      String
+  pair        CurrencyPair @relation(fields: [pairId], references: [id], onDelete: Restrict)
+  sortOrder   Int          @default(0)
+  priceAlert  Decimal?     @db.Decimal(18, 6)
+  enabled     Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([watchlistId, pairId], name: "watchlist_item_pair_key")
+}
+
+// ─────────────────────────────── System ───────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([userId, readAt, createdAt], name: "notification_user_read_created_idx")
+}
+
+model AuditLog {
+  id               String      @id @default(cuid())
+  userId           String?
+  user             User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action           AuditAction
+  symbol           String?
+  inputDataVersion String?
+  modelVersion     String?
+  predictionId     String?
+  riskDecision     String?
+  finalSignal      String?
+  metadata         Json
+  ip               String?
+  requestId        String
+  timestamp        DateTime    @default(now())
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([userId, timestamp], name: "audit_user_timestamp_idx")
+  @@index([action, timestamp], name: "audit_action_timestamp_idx")
+}
+
+model SystemEvent {
+  id         String            @id @default(cuid())
+  level      SystemEventLevel
+  source     SystemEventSource
+  message    String
+  code       String
+  metadata   Json
+  occurredAt DateTime          @default(now())
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([level, occurredAt], name: "system_event_level_occurred_idx")
+}

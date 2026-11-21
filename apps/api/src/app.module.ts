@@ -2,6 +2,7 @@ import { Module, ValidationPipe } from '@nestjs/common';
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { AuditModule } from './modules/audit/audit.module';
 import { HealthModule } from './modules/health/health.module';
+import { PrismaModule } from './modules/prisma/prisma.module';
 import { JobsModule } from './jobs/jobs.module';
 import { WebsocketModule } from './modules/websocket/websocket.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -12,7 +13,7 @@ import { CommonModule } from './common/common.module';
 import { createValidationPipe } from './config/validation';
 
 @Module({
-  imports: [CommonModule, HealthModule, AuditModule, JobsModule, WebsocketModule],
+  imports: [CommonModule, PrismaModule, HealthModule, AuditModule, JobsModule, WebsocketModule],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: APP_INTERCEPTOR, useClass: RequestIdInterceptor },

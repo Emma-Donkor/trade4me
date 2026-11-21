@@ -30,12 +30,16 @@
     "typecheck": "npm run build:packages && npm run typecheck -w packages/types && npm run typecheck -w packages/validation && npm run typecheck -w packages/config && npm run typecheck -w packages/database && npm run typecheck -w apps/api && npm run typecheck -w apps/web",
     "test": "jest --config jest.config.cjs --runInBand",
     "test:ai": "node scripts/run-in-ai-venv.mjs pytest apps/ai-engine",
-    "db:migrate": "prisma migrate dev",
-    "db:seed": "prisma db seed",
-    "db:reset": "prisma migrate reset --force",
-    "db:studio": "prisma studio",
+    "db:migrate": "node scripts/prisma.mjs migrate dev",
+    "db:seed": "node scripts/prisma.mjs db seed",
+    "db:reset": "node scripts/prisma.mjs migrate reset --force",
+    "db:studio": "node scripts/prisma.mjs studio",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma",
+    "seed": "tsx prisma/seed.ts"
   },
   "lint-staged": {
     "*.{js,cjs,mjs,ts,tsx,json,md,yml,yaml}": "prettier --write",
@@ -58,6 +62,7 @@
     "@eslint/js": "^9.0.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^22.10.0",
+    "bcryptjs": "^3.0.3",
     "concurrently": "^10.0.5",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.0.0",
@@ -68,6 +73,7 @@
     "prettier": "^3.0.0",
     "prisma": "6.12.0",
     "ts-jest": "^29.2.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.0.0"
   }

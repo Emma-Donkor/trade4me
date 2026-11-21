@@ -628,7 +628,7 @@ Depends on: PHASE 03
 ```
 
 ### Tasks
-- [ ] `prisma init` and author **complete** `schema.prisma` per README §7.2–7.3:
+- [x] `prisma init` and author **complete** `schema.prisma` per README §7.2–7.3:
   - Enums: `Role`, `Timeframe`, `Direction`, `SignalAction`, `RiskLevel`, `MarketRegime`, `Sentiment`, `NewsImpact`, `PositionStatus`, `PositionSide`, `NotificationType`, `ProviderStatus`, `ModelStatus`, `AuditAction`, `BacktestStatus`
   - Identity: `User`, `UserProfile`, `RiskProfile`
   - Market: `CurrencyPair`, `MarketCandle`, `MarketQuote`, `TechnicalIndicator`, `MarketFeature`
@@ -636,16 +636,16 @@ Depends on: PHASE 03
   - AI: `ModelVersion`, `ModelRun`, `Prediction`, `PredictionOutcome`, `AIAnalysis`
   - Trading: `TradeSignal`, `SignalFeature`, `Backtest`, `BacktestTrade`, `Portfolio`, `Position`, `Watchlist`, `WatchlistItem`
   - System: `Notification`, `AuditLog`, `SystemEvent`
-- [ ] Conventions enforced: cuid PKs, `createdAt`/`updatedAt`, `Decimal` for money/prices (`Decimal(18,6)`), explicit `onDelete` (Cascade for owned children, Restrict for reference data)
-- [ ] Constraints: unique `(pairId, timeframe, timestamp)` on `MarketCandle`; unique `(pairId, timeframe, timestamp, featureVersion)` on `MarketFeature`; unique `(pairId, timeframe, name, timestamp)` on `TechnicalIndicator`; unique `email`, `symbol`, `sourceUrl`, `contentHash`, `(watchlistId, pairId)`, `predictionId` on outcome
-- [ ] Time-series index: composite `(pairId, timeframe, timestamp DESC)` on `MarketCandle`; supporting indexes per README §7.3 (`(pairId, createdAt)`, `(portfolioId, status)`, `(userId, readAt, createdAt)`, `(pairId, generatedAt DESC)`)
-- [ ] First migration `prisma migrate dev`; verify `migrate reset` reproduces from scratch
-- [ ] `prisma/seed.ts`: 10 major pairs (with `pipSize`, `pointValue`, `spreadPipsTypical`, `providerSymbols` JSON), demo user (`demo@tradesense.ai`, role USER, verified, printed password from env), demo ADMIN, default risk profiles (Conservative/Moderate/Aggressive per README §14.3), one `ModelVersion` placeholder (status `ARCHIVED` until P13), active `Watchlist` for demo user
-- [ ] `packages/database`: Prisma client singleton, soft-connect helper, transaction helper, repository base, pagination helper
-- [ ] Candle repository with **column projection** + range query (enforces README §7.4 no-`SELECT *` rule)
-- [ ] Prisma Studio script `npm run db:studio`
-- [ ] Migration/reset/seed npm scripts: `db:migrate`, `db:reset`, `db:seed`, `db:studio`
-- [ ] TimescaleDB readiness note documented (hypertable migration path — no restructuring)
+- [x] Conventions enforced: cuid PKs, `createdAt`/`updatedAt`, `Decimal` for money/prices (`Decimal(18,6)`), explicit `onDelete` (Cascade for owned children, Restrict for reference data)
+- [x] Constraints: unique `(pairId, timeframe, timestamp)` on `MarketCandle`; unique `(pairId, timeframe, timestamp, featureVersion)` on `MarketFeature`; unique `(pairId, timeframe, name, timestamp)` on `TechnicalIndicator`; unique `email`, `symbol`, `sourceUrl`, `contentHash`, `(watchlistId, pairId)`, `predictionId` on outcome
+- [x] Time-series index: composite `(pairId, timeframe, timestamp DESC)` on `MarketCandle`; supporting indexes per README §7.3 (`(pairId, createdAt)`, `(portfolioId, status)`, `(userId, readAt, createdAt)`, `(pairId, generatedAt DESC)`)
+- [x] First migration `prisma migrate dev`; verify `migrate reset` reproduces from scratch
+- [x] `prisma/seed.ts`: 10 major pairs (with `pipSize`, `pointValue`, `spreadPipsTypical`, `providerSymbols` JSON), demo user (`demo@tradesense.ai`, role USER, verified, printed password from env), demo ADMIN, default risk profiles (Conservative/Moderate/Aggressive per README §14.3), one `ModelVersion` placeholder (status `ARCHIVED` until P13), active `Watchlist` for demo user
+- [x] `packages/database`: Prisma client singleton, soft-connect helper, transaction helper, repository base, pagination helper
+- [x] Candle repository with **column projection** + range query (enforces README §7.4 no-`SELECT *` rule)
+- [x] Prisma Studio script `npm run db:studio`
+- [x] Migration/reset/seed npm scripts: `db:migrate`, `db:reset`, `db:seed`, `db:studio`
+- [x] TimescaleDB readiness note documented (hypertable migration path — no restructuring)
 
 ### Files/Folders
 ```text
@@ -672,12 +672,12 @@ None.
 `DATABASE_URL` only via validated env; seed passwords generated, never hardcoded; Prisma client is the sole DB access path (no raw SQL strings in later phases).
 
 ### Testing
-- [ ] Unit: repository pagination/projection helpers
-- [ ] Integration: migrate → seed → query each relation cluster (ERD traversal from README §6.2 works)
-- [ ] Integration: candle upsert deduplicates on unique constraint (duplicate insert is ignored/upserted)
-- [ ] Integration: cascade deletes (delete user → watchlists/items cascade; delete pair → restrict if referenced by predictions, or cascade per schema choice — assert defined behavior)
-- [ ] Integrity: candle range query uses composite index (`EXPLAIN` assertion)
-- [ ] Regression: P02–P03 tests pass; `db:reset && db:migrate && db:seed` is idempotent-clean
+- [x] Unit: repository pagination/projection helpers
+- [x] Integration: migrate → seed → query each relation cluster (ERD traversal from README §6.2 works)
+- [x] Integration: candle upsert deduplicates on unique constraint (duplicate insert is ignored/upserted)
+- [x] Integration: cascade deletes (delete user → watchlists/items cascade; delete pair → restrict if referenced by predictions, or cascade per schema choice — assert defined behavior)
+- [x] Integrity: candle range query uses composite index (`EXPLAIN` assertion)
+- [x] Regression: P02–P03 tests pass; `db:reset && db:migrate && db:seed` is idempotent-clean
 
 ### Completion Criteria
 Full schema migrated; seed reproducible; all constraints/indexes verified; repositories usable; `prisma validate` clean.
@@ -3282,11 +3282,11 @@ Rules: two engineers may hold B/C/D and A simultaneously; never two phases writi
 
 | Phase | Name | Status | Dependencies | Deliverable |
 |---|---|---|---|---|
-| 00 | Project Initialization | NOT STARTED | None | Initialized repo + conventions |
-| 01 | Development Environment | NOT STARTED | 00 | Working toolchain + data tier |
-| 02 | Monorepo Foundation | NOT STARTED | 01 | Buildable monorepo skeleton |
-| 03 | Architecture Foundation | NOT STARTED | 02 | Cross-cutting API/AI/WS/queue skeleton |
-| 04 | Database Foundation | NOT STARTED | 03 | Complete schema + migrations + seed |
+| 00 | Project Initialization | COMPLETED | None | Initialized repo + conventions |
+| 01 | Development Environment | COMPLETED | 00 | Working toolchain + data tier |
+| 02 | Monorepo Foundation | COMPLETED | 01 | Buildable monorepo skeleton |
+| 03 | Architecture Foundation | COMPLETED | 02 | Cross-cutting API/AI/WS/queue skeleton |
+| 04 | Database Foundation | COMPLETED | 03 | Complete schema + migrations + seed |
 | 05 | Shared Types & Validation | NOT STARTED | 04 | Enforced API contracts |
 | 06 | Authentication & Authorization | NOT STARTED | 04,05 | Full auth lifecycle + RBAC |
 | 07 | Backend Core | NOT STARTED | 06 | Complete API surface (honest stubs) |
