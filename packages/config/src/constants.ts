@@ -17,3 +17,6 @@ export const SCORE_BANDS: readonly ScoreBand[] = [
 ];
 
 export const HEALTH_CHECK_TIMEOUT_MS = 2000;
+
+/** README §8.5: /ai/* is limited to 20 requests per user per window. */
+export const AI_RATE_LIMIT_MAX = 20;

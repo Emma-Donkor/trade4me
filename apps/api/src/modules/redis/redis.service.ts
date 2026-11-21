@@ -162,9 +162,16 @@ export class RedisService implements OnModuleDestroy {
 
   async onModuleDestroy(): Promise<void> {
     await Promise.all(
-      [this.client, this.publisher, this.subscriber]
-        .filter((client) => client.status !== 'end')
-        .map((client) => client.quit().catch(() => undefined)),
+      [this.client, this.publisher, this.subscriber].map(async (client) => {
+        if (client.status === 'end') return;
+        // `quit()` waits for a connection, which never arrives for lazy clients
+        // that were only constructed for DI (e.g. the OpenAPI export process).
+        if (client.status === 'ready') {
+          await client.quit().catch(() => undefined);
+          return;
+        }
+        client.disconnect();
+      }),
     );
   }
 }

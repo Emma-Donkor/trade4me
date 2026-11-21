@@ -3,7 +3,7 @@ import type { UpdateProfileInput, UpdateRiskProfileInput, UserView } from '@ts/t
 import { updateProfileSchema, updateRiskProfileSchema } from '@ts/validation';
 import { CurrentUser } from '../../common/decorators/current-user';
 import type { AuthenticatedRequest, AuthenticatedUser } from '../../common/guards/jwt-auth.guard';
-import { ZodValidationPipe } from '../auth/dto/zod-validation.pipe';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { UsersService } from './users.service';
 
 /** README §8.2: every route below is scoped to the authenticated user. */

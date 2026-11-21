@@ -877,7 +877,7 @@ regime:changed      { symbol, regime }
 
 ### 8.6 OpenAPI / Swagger
 
-NestJS generates the OpenAPI spec at **`/api/v1/docs`** (Swagger UI) with request/response schemas, authentication requirements, error models, validation rules, rate-limit annotations and examples. The spec is exported to `docs/openapi.json` in CI and validated as a build artifact.
+NestJS generates the OpenAPI spec at **`/api/v1/docs`** (Swagger UI) with request/response schemas, authentication requirements, error models, validation rules, rate-limit annotations and examples. Run `npm run openapi:export` to regenerate `docs/openapi.json`; the contract test asserts every README §8.2 route appears in both the live app and the exported artifact.
 
 ---
 

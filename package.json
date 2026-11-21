@@ -31,6 +31,7 @@
     "test": "jest --config jest.config.cjs --runInBand",
     "test:ai": "node scripts/run-in-ai-venv.mjs pytest apps/ai-engine",
     "test:e2e": "playwright test --config playwright.config.ts",
+    "openapi:export": "npm run build -w apps/api && node apps/api/dist/openapi-export.js",
     "db:migrate": "node scripts/prisma.mjs migrate dev",
     "db:seed": "node scripts/prisma.mjs db seed",
     "db:reset": "node scripts/prisma.mjs migrate reset --force",

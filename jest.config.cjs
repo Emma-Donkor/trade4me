@@ -4,6 +4,7 @@ module.exports = {
   testEnvironment: 'node',
   roots: [
     '<rootDir>/apps/api/src',
+    '<rootDir>/apps/api/test',
     '<rootDir>/apps/web/src',
     '<rootDir>/packages',
     '<rootDir>/tests',

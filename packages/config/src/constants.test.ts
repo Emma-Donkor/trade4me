@@ -1,4 +1,10 @@
-import { HEALTH_CHECK_TIMEOUT_MS, SCORE_BANDS, TIMEFRAMES, type Timeframe } from './constants';
+import {
+  AI_RATE_LIMIT_MAX,
+  HEALTH_CHECK_TIMEOUT_MS,
+  SCORE_BANDS,
+  TIMEFRAMES,
+  type Timeframe,
+} from './constants';
 
 function bandFor(score: number): string | undefined {
   return SCORE_BANDS.find((band) => score >= band.min && score <= band.max)?.label;
@@ -38,5 +44,9 @@ describe('@ts/config constants', () => {
 
   it('uses a two-second health check timeout', () => {
     expect(HEALTH_CHECK_TIMEOUT_MS).toBe(2000);
+  });
+
+  it('caps /ai/* at 20 requests per window', () => {
+    expect(AI_RATE_LIMIT_MAX).toBe(20);
   });
 });

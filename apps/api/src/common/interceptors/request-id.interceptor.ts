@@ -19,7 +19,8 @@ export class RequestIdInterceptor implements NestInterceptor {
     const response = context.switchToHttp().getResponse<Response>();
     const incoming = request.headers['x-request-id'];
     const requestId =
-      typeof incoming === 'string' && incoming.length > 0 ? incoming : `req_${randomUUID()}`;
+      request.requestId ??
+      (typeof incoming === 'string' && incoming.length > 0 ? incoming : `req_${randomUUID()}`);
 
     request.requestId = requestId;
     if (String(env.ENABLE_REQUEST_IDS) !== 'false') {

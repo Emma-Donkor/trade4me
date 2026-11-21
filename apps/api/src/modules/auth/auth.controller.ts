@@ -16,11 +16,12 @@ import {
   verifyEmailSchema,
 } from '@ts/validation';
 import type { Request, Response } from 'express';
+import { CookieAuth } from '../../common/decorators/cookie-auth';
 import { Public } from '../../common/decorators/public';
 import { CurrentUser } from '../../common/decorators/current-user';
 import type { AuthenticatedRequest, AuthenticatedUser } from '../../common/guards/jwt-auth.guard';
 import { AuthService, type RequestContext } from './auth.service';
-import { ZodValidationPipe } from './dto/zod-validation.pipe';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AuthRateLimitGuard } from './guards/auth-rate-limit.guard';
 
 interface LoginResult {
@@ -96,6 +97,7 @@ export class AuthController {
   }
 
   @Public()
+  @CookieAuth()
   @HttpCode(200)
   @Post('refresh')
   async refresh(
@@ -109,6 +111,7 @@ export class AuthController {
   }
 
   @Public()
+  @CookieAuth()
   @HttpCode(200)
   @Post('logout')
   async logout(

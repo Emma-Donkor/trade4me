@@ -854,16 +854,16 @@ Depends on: PHASE 06
 ```
 
 ### Tasks
-- [ ] Module shells registered in `AppModule` for: `market`, `news`, `technical-analysis`, `historical-analysis`, `prediction`, `signals`, `risk`, `backtesting`, `paper-trading`, `portfolio`, `watchlist`, `notifications`, `ai`, `admin`, `health` (extend P03)
-- [ ] Each module: controller with **every README §8.2 route** (correct method/path/auth decorator), DTO validated by shared Zod schemas, service with interface + stub implementation, module providers wired via DI
-- [ ] **Market module** wired to P04 repositories: `GET /market/pairs` returns seeded pairs (real data!), `GET /market/quote`, `GET /market/candles`, `GET /market/overview` return `INSUFFICIENT_DATA` until P08/P09 (contract-correct errors, not fake data)
-- [ ] Global **rate limiting** (Redis token buckets): global 100/min per IP, auth 10/min, `/ai/*` 20/min; `429` with `Retry-After`
-- [ ] **Pagination helper** (cursor-based) applied to list endpoints
-- [ ] **Notifications/watchlist/portfolio stubs** return empty collections (honest empty states)
-- [ ] **Signals/scanner stubs** return `INSUFFICIENT_DATA` (never fabricated rows)
-- [ ] OpenAPI completeness: every route documented with request/response/error examples; `npm run openapi:export` writes `docs/openapi.json`
-- [ ] WebSocket event emitters registered (no producers yet): `quote:update`, `signal:new`, `signal:changed`, `analysis:updated`, `notification:new`, `position:update`, `regime:changed`
-- [ ] Integration-test base: supertest harness with test DB + Redis fixtures
+- [x] Module shells registered in `AppModule` for: `market`, `news`, `technical-analysis`, `historical-analysis`, `prediction`, `signals`, `risk`, `backtesting`, `paper-trading`, `portfolio`, `watchlist`, `notifications`, `ai`, `admin`, `health` (extend P03)
+- [x] Each module: controller with **every README §8.2 route** (correct method/path/auth decorator), DTO validated by shared Zod schemas, service with interface + stub implementation, module providers wired via DI
+- [x] **Market module** wired to P04 repositories: `GET /market/pairs` returns seeded pairs (real data!), `GET /market/quote`, `GET /market/candles`, `GET /market/overview` return `INSUFFICIENT_DATA` until P08/P09 (contract-correct errors, not fake data)
+- [x] Global **rate limiting** (Redis token buckets): global 100/min per IP, auth 10/min, `/ai/*` 20/min; `429` with `Retry-After`
+- [x] **Pagination helper** (cursor-based) applied to list endpoints
+- [x] **Notifications/watchlist/portfolio stubs** return empty collections (honest empty states)
+- [x] **Signals/scanner stubs** return `INSUFFICIENT_DATA` (never fabricated rows)
+- [x] OpenAPI completeness: every route documented with request/response/error examples; `npm run openapi:export` writes `docs/openapi.json`
+- [x] WebSocket event emitters registered (no producers yet): `quote:update`, `signal:new`, `signal:changed`, `analysis:updated`, `notification:new`, `position:update`, `regime:changed`
+- [x] Integration-test base: supertest harness with test DB + Redis fixtures
 
 ### Files/Folders
 ```text
@@ -871,9 +871,12 @@ apps/api/src/modules/
   market/ news/ technical-analysis/ historical-analysis/ prediction/ signals/ risk/
   backtesting/ paper-trading/ portfolio/ watchlist/ notifications/ ai/ admin/
   (each: *.module.ts, *.controller.ts, *.service.ts, dto/)
-apps/api/src/common/{middleware/rate-limit.middleware.ts, helpers/pagination.ts}
+apps/api/src/common/{middleware/rate-limit.middleware.ts, helpers/pagination.ts,
+  openapi/{route-catalog.ts, openapi.ts, openapi.module.ts}, pipes/zod-validation.pipe.ts}
+apps/api/src/openapi-export.ts
+apps/api/src/modules/websocket/events.service.ts
 docs/openapi.json (generated)
-apps/api/test/{setup.ts, helpers/*.ts}
+apps/api/test/{helpers/*.ts, phase7-contract.test.ts, phase7-integration.test.ts}
 ```
 
 ### Implementation
@@ -895,11 +898,11 @@ None.
 Deny-by-default auth on all non-public routes; rate limits live; input validation on every route; admin routes role-gated; OpenAPI exposes no internal-only fields.
 
 ### Testing
-- [ ] Contract tests: snapshot every route against README §8.2 (method, path, auth level)
-- [ ] Integration: rate limiter window behavior on Redis
-- [ ] Integration: `market/pairs` returns seeded 10 pairs with pip/point metadata
-- [ ] Integration: stub endpoints return documented error codes (not 500s)
-- [ ] Regression: P02–P06 tests pass
+- [x] Contract tests: snapshot every route against README §8.2 (method, path, auth level)
+- [x] Integration: rate limiter window behavior on Redis
+- [x] Integration: `market/pairs` returns seeded 10 pairs with pip/point metadata
+- [x] Integration: stub endpoints return documented error codes (not 500s)
+- [x] Regression: P02–P06 tests pass
 
 ### Completion Criteria
 Complete, documented, tested API surface exists; honest stubs everywhere; rate limiting + pagination proven; frontend can now integrate contract-first.
@@ -3289,7 +3292,7 @@ Rules: two engineers may hold B/C/D and A simultaneously; never two phases writi
 | 04 | Database Foundation | COMPLETED | 03 | Complete schema + migrations + seed |
 | 05 | Shared Types & Validation | COMPLETED | 04 | Enforced API contracts |
 | 06 | Authentication & Authorization | COMPLETED | 04,05 | Full auth lifecycle + RBAC |
-| 07 | Backend Core | NOT STARTED | 06 | Complete API surface (honest stubs) |
+| 07 | Backend Core | COMPLETED | 06 | Complete API surface (honest stubs) |
 | 08 | Market Data Infrastructure | NOT STARTED | 07 | Live quotes w/ failover + caching |
 | 09 | Historical Data Pipeline | NOT STARTED | 08 | Full validated history + fast API |
 | 10 | Technical Analysis Engine | NOT STARTED | 09 | Proven indicators + patterns + regime |

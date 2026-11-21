@@ -1,11 +1,12 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { MONOREPO_ROOT_PACKAGE } from '@ts/types';
 import { AppModule } from './app.module';
 import { JsonLogger } from './common/logger/json-logger';
+import { createApiDocument } from './common/openapi/openapi';
 import { configuration } from './config/configuration';
 
 async function bootstrap(): Promise<void> {
@@ -30,13 +31,7 @@ async function bootstrap(): Promise<void> {
   app.enableCors({ origin: configuration.cors.origins, credentials: true });
   app.setGlobalPrefix('api/v1');
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('TradeSense AI API')
-    .setDescription('Explainable forex intelligence, signals and paper trading')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  SwaggerModule.setup('api/v1/docs', app, SwaggerModule.createDocument(app, swaggerConfig));
+  SwaggerModule.setup('api/v1/docs', app, createApiDocument(app));
 
   app.enableShutdownHooks();
   await app.listen(configuration.app.port);
