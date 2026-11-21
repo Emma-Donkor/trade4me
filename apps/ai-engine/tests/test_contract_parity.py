@@ -67,6 +67,13 @@ def test_env_schema_matches_settings_fields() -> None:
     assert ts_keys == set(Settings.model_fields)
 
 
+def test_local_data_tier_defaults_match_compose() -> None:
+    defaults = {name: field.default for name, field in Settings.model_fields.items()}
+
+    assert 'localhost:5433' in defaults['DATABASE_URL']
+    assert defaults['REDIS_URL'] == 'redis://localhost:6380'
+
+
 def test_contract_interfaces_match_pydantic_models() -> None:
     source = CONTRACTS_PATH.read_text(encoding='utf-8')
 

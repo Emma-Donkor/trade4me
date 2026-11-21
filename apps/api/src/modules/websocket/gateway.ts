@@ -54,11 +54,8 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection {
     const secret = env.JWT_SECRET ? String(env.JWT_SECRET) : '';
 
     if (!token) {
-      if (String(env.NODE_ENV) === 'production') {
-        client.disconnect(true);
-        return;
-      }
-      client.data.user = { id: 'dev-user', roles: [] };
+      this.logger.warn('WS handshake rejected: no token supplied', 'WS');
+      client.disconnect(true);
       return;
     }
     if (!secret) {

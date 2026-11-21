@@ -44,6 +44,7 @@ export const envSchema = z.object({
   API_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   AI_PORT: z.coerce.number().int().min(1).max(65535).default(8000),
   CORS_ORIGINS: z.string().min(1).default('http://localhost:3000'),
+  TRUST_PROXY: z.coerce.number().int().min(0).default(1),
 
   // Database / cache
   DATABASE_URL: z

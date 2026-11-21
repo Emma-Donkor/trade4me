@@ -34,8 +34,8 @@ versions.
 
 ## Port mapping deviation (important)
 
-The README and roadmap target host ports **5432 (PostgreSQL)** and
-**6379 (Redis)**. On this machine those ports were already occupied:
+The roadmap historically targeted host ports **5432 (PostgreSQL)** and
+**6379 (Redis)**, but those ports were already occupied on this machine:
 
 | Port | Occupant                                   | Action                                           |
 | ---- | ------------------------------------------ | ------------------------------------------------ |
@@ -43,7 +43,7 @@ The README and roadmap target host ports **5432 (PostgreSQL)** and
 | 6379 | native `memurai.exe` (Redis-compatible)    | left running (no elevation available to stop it) |
 
 The Docker data tier therefore publishes **5433 → 5432** and **6380 → 6379**.
-`.env.local` and `.env.test` use the host-side ports. Internal container ports
+`.env.example`, `.env.local` and `.env.test` use the host-side ports. Internal container ports
 and all URLs inside the Docker network remain the documented ones. If the
 native services are later stopped by an administrator, the compose port
 mappings and env files can be switched back to 5432/6379 without other changes.

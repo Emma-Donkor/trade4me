@@ -10,6 +10,19 @@ import { authApi } from '../../../lib/api/auth';
 import { fromUnknownError } from '../../../lib/api/client';
 import { useAuthStore } from '../../../lib/auth/store';
 
+function safeNextPath(value: string | null): string {
+  if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
+    return '/dashboard';
+  }
+  try {
+    const url = new URL(value, window.location.origin);
+    if (url.origin !== window.location.origin) return '/dashboard';
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return '/dashboard';
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const setSession = useAuthStore((state) => state.setSession);
@@ -23,7 +36,7 @@ export default function LoginPage() {
     onSuccess: (session) => {
       setSession(session);
       const next = new URLSearchParams(window.location.search).get('next');
-      router.replace(next?.startsWith('/') ? next : '/dashboard');
+      router.replace(safeNextPath(next));
     },
   });
 

@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import { Queue } from 'bullmq';
 import { bullConnectionOptions, QUEUE_NAMES, queueToken } from './queues';
 
@@ -26,22 +27,10 @@ describe('BullMQ scaffolding', () => {
       connection: bullConnectionOptions(),
       prefix: 'tradesense:test:',
     });
-    let available = false;
 
     try {
       await queue.waitUntilReady();
       await queue.obliterate({ force: true });
-      available = true;
-    } catch (error) {
-      console.warn(
-        `Redis unavailable; skipping queue round-trip: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
-    }
-
-    try {
-      if (!available) return;
       const added = await queue.add('ping', { hello: 'world' });
       const fetched = await queue.getJob(String(added.id));
       expect(fetched?.data).toEqual({ hello: 'world' });

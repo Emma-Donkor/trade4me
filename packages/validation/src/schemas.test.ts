@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import {
   assistantRequestSchema,
   backtestConfigSchema,
@@ -130,10 +131,28 @@ describe('P05 validation schemas (table-driven)', () => {
       },
       { name: 'rejects unsupported timeframe', value: { ...range, timeframe: 'M2' }, valid: false },
       { name: 'rejects unknown keys', value: { ...range, select: '*' }, valid: false },
+      {
+        name: 'accepts README query aliases',
+        value: {
+          symbol: 'EUR/USD',
+          timeframe: 'H1',
+          start: '2026-11-01T00:00:00.000Z',
+          end: '2026-11-21T00:00:00.000Z',
+          limit: 50,
+        },
+        valid: true,
+      },
+      {
+        name: 'rejects a range without dates',
+        value: { symbol: 'EUR/USD', timeframe: 'H1' },
+        valid: false,
+      },
     ]);
 
     check(quoteQuerySchema, [
       { name: 'accepts a symbol', value: { symbol: 'EURUSD' }, valid: true },
+      { name: 'accepts documented symbols', value: { symbols: 'EUR/USD,GBP/USD' }, valid: true },
+      { name: 'accepts repeated symbols', value: { symbols: ['EUR/USD', 'GBP/USD'] }, valid: true },
       { name: 'rejects unknown keys', value: { symbol: 'EURUSD', fields: [] }, valid: false },
     ]);
 

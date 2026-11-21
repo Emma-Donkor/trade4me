@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, pageOf, pagination } from './base.repo';
 
 describe('pagination helpers', () => {

@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import { assertWeightsSumTo1, DEFAULT_DECISION_WEIGHTS } from './weights';
 
 describe('@ts/config decision weights', () => {

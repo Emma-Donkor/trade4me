@@ -1,3 +1,4 @@
+import { describe, expect, it, jest } from '@jest/globals';
 import type { WebSocketEventName } from '@ts/types';
 import { EventsService } from './events.service';
 import type { EventsGateway } from './gateway';
@@ -26,7 +27,7 @@ describe('P07 WebSocket emitters', () => {
     events.positionUpdate({ positionId: 'pos_1', status: 'OPEN', unrealizedPnl: 10 });
     events.regimeChanged({ symbol: 'EUR/USD', regime: 'RANGE' }, 'req_1');
 
-    expect(emit.mock.calls.map(([event]) => event)).toEqual<WebSocketEventName[]>([
+    const expectedEvents: WebSocketEventName[] = [
       'quote:update',
       'signal:new',
       'signal:changed',
@@ -34,7 +35,8 @@ describe('P07 WebSocket emitters', () => {
       'notification:new',
       'position:update',
       'regime:changed',
-    ]);
+    ];
+    expect(emit.mock.calls.map(([event]) => event)).toEqual(expectedEvents);
     expect(emit).toHaveBeenLastCalledWith(
       'regime:changed',
       { symbol: 'EUR/USD', regime: 'RANGE' },

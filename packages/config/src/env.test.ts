@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from '@jest/globals';
 import { envSchema, loadEnv } from './env';
 
 const ENV_NAMES = [
@@ -8,6 +11,7 @@ const ENV_NAMES = [
   'API_PORT',
   'AI_PORT',
   'CORS_ORIGINS',
+  'TRUST_PROXY',
   'DATABASE_URL',
   'DATABASE_POOL_SIZE',
   'REDIS_URL',
@@ -68,6 +72,17 @@ describe('@ts/config', () => {
     expect(Object.keys(envSchema.shape).sort()).toEqual([...ENV_NAMES].sort());
   });
 
+  it('documents the local env filename and data-tier ports consistently', () => {
+    const example = readFileSync(resolve(__dirname, '../../../.env.example'), 'utf8');
+
+    expect(example).toContain('Copy to .env.local');
+    expect(example).toContain('DATABASE_URL=postgresql://tradesense:tradesense@localhost:5433/');
+    expect(example).toContain('REDIS_URL=redis://localhost:6380');
+    expect(example).toContain(
+      'TEST_DATABASE_URL=postgresql://tradesense:tradesense@localhost:5433/',
+    );
+  });
+
   it('applies keyless development defaults', () => {
     const parsed = loadEnv({ NODE_ENV: 'development' });
 
@@ -84,6 +99,7 @@ describe('@ts/config', () => {
 
   it('coerces numeric and boolean values', () => {
     const parsed = loadEnv({
+      NODE_ENV: 'test',
       API_PORT: '4100',
       DATABASE_POOL_SIZE: '20',
       PREDICTION_THRESHOLD: '0.55',
@@ -102,6 +118,7 @@ describe('@ts/config', () => {
 
   it('strips inline comments from cron values', () => {
     const parsed = loadEnv({
+      NODE_ENV: 'test',
       MARKET_SYNC_CRON: '0 * * * *          # hourly candle sync',
       NEWS_INGEST_CRON: '*/15 * * * *       # every 15 minutes',
     });
@@ -127,6 +144,8 @@ describe('@ts/config', () => {
   });
 
   it('rejects malformed ports', () => {
-    expect(() => loadEnv({ API_PORT: 'not-a-port' })).toThrow('Invalid environment configuration');
+    expect(() => loadEnv({ NODE_ENV: 'test', API_PORT: 'not-a-port' })).toThrow(
+      'Invalid environment configuration',
+    );
   });
 });

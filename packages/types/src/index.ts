@@ -20,4 +20,8 @@ export * from './ws';
 
 export const MONOREPO_ROOT_PACKAGE = 'tradesense-ai' as const;
 
+/** Double-submit CSRF pair used by cookie-authenticated auth mutations. */
+export const CSRF_COOKIE_NAME = 'ts_csrf' as const;
+export const CSRF_HEADER_NAME = 'x-csrf-token' as const;
+
 export type MonorepoRootPackage = typeof MONOREPO_ROOT_PACKAGE;

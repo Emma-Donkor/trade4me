@@ -1,4 +1,5 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
+import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '@ts/types';
 import type { ApiError, ApiSuccess, ErrorCode } from '@ts/types';
 
 const REFRESH_PATH = '/auth/refresh';
@@ -13,6 +14,18 @@ const PUBLIC_PATHS = new Set([
 ]);
 
 type RetryConfig = InternalAxiosRequestConfig & { _retried?: boolean };
+
+function readCsrfToken(): string {
+  if (typeof document === 'undefined') return '';
+  const prefix = `${CSRF_COOKIE_NAME}=`;
+  return (
+    document.cookie
+      .split(';')
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(prefix))
+      ?.slice(prefix.length) ?? ''
+  );
+}
 
 let accessToken: string | null = null;
 let refreshInFlight: Promise<string | null> | null = null;
@@ -72,6 +85,7 @@ const http: AxiosInstance = axios.create({
 
 http.interceptors.request.use((config) => {
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+  config.headers[CSRF_HEADER_NAME] = readCsrfToken();
   return config;
 });
 

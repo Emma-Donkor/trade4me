@@ -1,3 +1,4 @@
+import { describe, expect, it, jest } from '@jest/globals';
 import { CANDLE_SELECT, CandleRepository, type CandleRangeInput } from './candle.repo';
 
 describe('CandleRepository projection', () => {
@@ -20,8 +21,8 @@ describe('CandleRepository projection', () => {
   });
 
   it('queries a bounded range through the select, ordered by the indexed timestamp', async () => {
-    const findMany = jest.fn().mockResolvedValue([]);
-    const count = jest.fn().mockResolvedValue(0);
+    const findMany = jest.fn(async () => []);
+    const count = jest.fn(async () => 0);
     const repository = new CandleRepository();
     Object.assign(repository, { client: { marketCandle: { findMany, count } } });
 

@@ -345,39 +345,43 @@ export class TokenService {
     const claims = this.verifyRefresh(token);
     if (claims.sub !== user.id) throw new UnauthorizedException('Refresh token owner mismatch');
 
-    const oldKey = this.refreshKey(claims.jti);
-    const stored = await this.redis.get(oldKey);
-    if (!stored) {
-      // A rotated token was replayed: kill the whole family.
-      if (await this.redis.exists(this.familyKey(claims.fam))) {
-        await this.revokeFamily(claims.fam);
-        throw new UnauthorizedException('Refresh token reuse detected; session family revoked');
-      }
-      throw new UnauthorizedException('Refresh token has been revoked');
-    }
-
-    const record = JSON.parse(stored) as RefreshRecord;
-    if (
-      record.userId !== user.id ||
-      record.familyId !== claims.fam ||
-      record.sessionId !== claims.sid
-    ) {
-      throw new UnauthorizedException('Refresh token record mismatch');
-    }
-
-    // Burn the previous jti before issuing its replacement (atomic rotation).
-    await this.redis.del(oldKey);
-    await this.redis.removeFromSet(this.familyKey(claims.fam), claims.jti);
-
     const access = this.signAccess(user, claims.sid);
     const refresh = this.signRefresh(user, claims.sid, claims.fam);
-    await this.redis.set(
+    const replacement = JSON.stringify({
+      userId: user.id,
+      familyId: claims.fam,
+      sessionId: claims.sid,
+    } satisfies RefreshRecord);
+
+    // Claim-and-burn happens atomically in Redis; only one concurrent refresh
+    // can rotate a given jti. A replay of an already-consumed jti revokes the
+    // whole family.
+    const outcome = await this.redis.consumeAndReplaceRefresh(
+      this.refreshKey(claims.jti),
       this.refreshKey(refresh.claims.jti),
-      JSON.stringify(record satisfies RefreshRecord),
-      this.ttlSeconds(refresh.claims.exp),
+      this.familyKey(claims.fam),
+      {
+        userId: user.id,
+        familyId: claims.fam,
+        sessionId: claims.sid,
+        oldMember: claims.jti,
+        replacement,
+        replacementTtl: this.ttlSeconds(refresh.claims.exp),
+        newMember: refresh.claims.jti,
+        familyTtl: this.ttlSeconds(refresh.claims.exp),
+      },
     );
-    await this.redis.addToSet(this.familyKey(claims.fam), refresh.claims.jti);
-    await this.redis.expire(this.familyKey(claims.fam), this.ttlSeconds(refresh.claims.exp));
+
+    if (outcome === 'reuse') {
+      await this.revokeFamily(claims.fam);
+      throw new UnauthorizedException('Refresh token reuse detected; session family revoked');
+    }
+    if (outcome === 'revoked') {
+      throw new UnauthorizedException('Refresh token has been revoked');
+    }
+    if (outcome === 'mismatch') {
+      throw new UnauthorizedException('Refresh token record mismatch');
+    }
 
     const meta = await this.getSession(claims.sid);
     if (meta) {
@@ -431,9 +435,8 @@ export class TokenService {
 
   async consumeVerificationToken(token: string): Promise<string | null> {
     const key = this.verificationKey(this.hashToken(token));
-    const raw = await this.redis.get(key);
+    const raw = await this.redis.getdel(key);
     if (!raw) return null;
-    await this.redis.del(key);
     return (JSON.parse(raw) as { userId: string }).userId;
   }
 
@@ -449,9 +452,8 @@ export class TokenService {
 
   async consumeResetToken(token: string): Promise<string | null> {
     const key = this.resetKey(this.hashToken(token));
-    const raw = await this.redis.get(key);
+    const raw = await this.redis.getdel(key);
     if (!raw) return null;
-    await this.redis.del(key);
     return (JSON.parse(raw) as { userId: string }).userId;
   }
 }

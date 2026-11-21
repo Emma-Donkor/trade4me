@@ -1,3 +1,4 @@
+import { afterAll, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { UnauthorizedException } from '@nestjs/common';
 import { env } from '@ts/config';
 import { RedisService } from '../redis/redis.service';
@@ -10,6 +11,48 @@ function memoryRedis(): RedisService {
   return {
     key: (...parts: string[]) => `tradesense:${parts.join(':')}`,
     get: jest.fn(async (key: string) => values.get(key) ?? null),
+    getdel: jest.fn(async (key: string) => {
+      const value = values.get(key) ?? null;
+      values.delete(key);
+      return value;
+    }),
+    consumeAndReplaceRefresh: jest.fn(
+      async (
+        oldKey: string,
+        newKey: string,
+        familyKey: string,
+        input: {
+          userId: string;
+          familyId: string;
+          sessionId: string;
+          oldMember: string;
+          replacement: string;
+          newMember: string;
+        },
+      ) => {
+        const stored = values.get(oldKey);
+        if (!stored) return sets.has(familyKey) ? 'reuse' : 'revoked';
+        const record = JSON.parse(stored) as {
+          userId: string;
+          familyId: string;
+          sessionId: string;
+        };
+        if (
+          record.userId !== input.userId ||
+          record.familyId !== input.familyId ||
+          record.sessionId !== input.sessionId
+        ) {
+          return 'mismatch';
+        }
+        values.delete(oldKey);
+        sets.get(familyKey)?.delete(input.oldMember);
+        values.set(newKey, input.replacement);
+        const family = sets.get(familyKey) ?? new Set<string>();
+        family.add(input.newMember);
+        sets.set(familyKey, family);
+        return 'rotated';
+      },
+    ),
     set: jest.fn(async (key: string, value: string) => {
       values.set(key, value);
     }),
@@ -109,6 +152,23 @@ describe('P06 TokenService', () => {
     );
   });
 
+  it('lets only one concurrent refresh consume a token', async () => {
+    const session = await tokens.createSession(user);
+    const results = await Promise.allSettled([
+      tokens.rotateRefresh(session.refreshToken, user),
+      tokens.rotateRefresh(session.refreshToken, user),
+    ]);
+
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(
+      results.some(
+        (result) =>
+          result.status === 'rejected' &&
+          String(result.reason).includes('Refresh token reuse detected'),
+      ),
+    ).toBe(true);
+  });
+
   it('tracks sessions and enforces the idle window', async () => {
     const session = await tokens.createSession(user);
     await expect(tokens.listSessions(user.id)).resolves.toEqual([
@@ -128,6 +188,17 @@ describe('P06 TokenService', () => {
     const reset = await tokens.issueResetToken(user.id);
     expect(await tokens.consumeResetToken(reset)).toBe(user.id);
     expect(await tokens.consumeResetToken(reset)).toBeNull();
+  });
+
+  it('consumes a single-use token only once under concurrent requests', async () => {
+    const verification = await tokens.issueVerificationToken(user.id);
+    const results = await Promise.all([
+      tokens.consumeVerificationToken(verification),
+      tokens.consumeVerificationToken(verification),
+    ]);
+
+    expect(results.filter((value) => value === user.id)).toHaveLength(1);
+    expect(results).toContain(null);
   });
 
   it('never stores raw single-use tokens as keys', async () => {

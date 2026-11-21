@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import { MONOREPO_ROOT_PACKAGE } from './index';
 
 describe('@ts/types', () => {

@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import * as database from './index';
 
 describe('@ts/database', () => {

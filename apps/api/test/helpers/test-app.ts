@@ -4,6 +4,7 @@ import { env } from '@ts/config';
 import { PrismaClient } from '@ts/database';
 import cookieParser from 'cookie-parser';
 import { randomUUID } from 'node:crypto';
+import { jest } from '@jest/globals';
 import { AppModule } from '../../src/app.module';
 import { JsonLogger } from '../../src/common/logger/json-logger';
 import { PrismaService } from '../../src/modules/prisma/prisma.service';
@@ -22,26 +23,97 @@ export interface MemoryRedis extends RedisService {
 export function memoryRedis(): MemoryRedis {
   const values = new Map<string, string>();
   const sets = new Map<string, Set<string>>();
+  const expiries = new Map<string, number>();
+  const purge = (key: string): void => {
+    const expiresAt = expiries.get(key);
+    if (expiresAt !== undefined && expiresAt <= Date.now()) {
+      values.delete(key);
+      expiries.delete(key);
+    }
+  };
   return {
     ensureConnected: jest.fn(async () => undefined),
-    get: jest.fn(async (key: string) => values.get(key) ?? null),
+    get: jest.fn(async (key: string) => {
+      purge(key);
+      return values.get(key) ?? null;
+    }),
+    getdel: jest.fn(async (key: string) => {
+      purge(key);
+      const value = values.get(key) ?? null;
+      values.delete(key);
+      expiries.delete(key);
+      return value;
+    }),
+    consumeAndReplaceRefresh: jest.fn(
+      async (
+        oldKey: string,
+        newKey: string,
+        familyKey: string,
+        input: {
+          userId: string;
+          familyId: string;
+          sessionId: string;
+          oldMember: string;
+          replacement: string;
+          newMember: string;
+        },
+      ) => {
+        purge(oldKey);
+        const stored = values.get(oldKey);
+        if (!stored) return sets.has(familyKey) ? 'reuse' : 'revoked';
+        const record = JSON.parse(stored) as {
+          userId: string;
+          familyId: string;
+          sessionId: string;
+        };
+        if (
+          record.userId !== input.userId ||
+          record.familyId !== input.familyId ||
+          record.sessionId !== input.sessionId
+        ) {
+          return 'mismatch';
+        }
+        values.delete(oldKey);
+        expiries.delete(oldKey);
+        sets.get(familyKey)?.delete(input.oldMember);
+        values.set(newKey, input.replacement);
+        const family = sets.get(familyKey) ?? new Set<string>();
+        family.add(input.newMember);
+        sets.set(familyKey, family);
+        return 'rotated';
+      },
+    ),
     set: jest.fn(async (key: string, value: string) => {
       values.set(key, value);
+      expiries.delete(key);
     }),
     del: jest.fn(async (...keys: string[]) => {
       let removed = 0;
       for (const key of keys) {
         if (values.delete(key)) removed += 1;
         if (sets.delete(key)) removed += 1;
+        expiries.delete(key);
       }
       return removed;
     }),
-    exists: jest.fn(async (key: string) => values.has(key) || sets.has(key)),
-    expire: jest.fn(async () => undefined),
-    ttl: jest.fn(async () => 60),
-    incrWithTtl: jest.fn(async (key: string) => {
+    exists: jest.fn(async (key: string) => {
+      purge(key);
+      return values.has(key) || sets.has(key);
+    }),
+    expire: jest.fn(async (key: string, ttlSeconds: number) => {
+      expiries.set(key, Date.now() + Math.max(1, Math.ceil(ttlSeconds)) * 1000);
+    }),
+    ttl: jest.fn(async (key: string) => {
+      purge(key);
+      const expiresAt = expiries.get(key);
+      if (expiresAt === undefined) return values.has(key) ? -1 : -2;
+      return Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+    }),
+    incrWithTtl: jest.fn(async (key: string, ttlSeconds: number) => {
+      purge(key);
       const next = Number(values.get(key) ?? 0) + 1;
       values.set(key, String(next));
+      expiries.set(key, Date.now() + Math.max(1, Math.ceil(ttlSeconds)) * 1000);
       return next;
     }),
     addToSet: jest.fn(async (key: string, ...members: string[]) => {
@@ -120,7 +192,11 @@ export async function createPhase7TestApp(
     .compile();
 
   const app = moduleRef.createNestApplication();
-  app.getHttpAdapter().getInstance().set('trust proxy', true);
+  // Match production: derive client IPs from the same trusted hop count.
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .set('trust proxy', Number(env.TRUST_PROXY ?? 1));
   app.use(cookieParser());
   app.setGlobalPrefix('api/v1');
   await app.init();

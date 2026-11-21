@@ -1,3 +1,4 @@
+import { describe, expect, it, jest } from '@jest/globals';
 import { ArgumentsHost, BadRequestException, HttpException } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import type { ApiError } from '@ts/types';

@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule, ValidationPipe } from '@nestjs/
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { CommonModule } from './common/common.module';
 import { AiRateLimitGuard } from './common/guards/ai-rate-limit.guard';
+import { CookieAuthGuard } from './common/guards/cookie-auth.guard';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -60,8 +61,9 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
     AdminModule,
   ],
   providers: [
-    // P06/P07: authenticate first, enforce AI limits, then authorize.
+    // P06/P07: authenticate first, enforce cookie/AI limits, then authorize.
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: CookieAuthGuard },
     { provide: APP_GUARD, useClass: AiRateLimitGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },

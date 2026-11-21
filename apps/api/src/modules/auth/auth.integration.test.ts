@@ -1,9 +1,11 @@
+import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { Controller, Get } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import type { ValidationPipe } from '@nestjs/common';
 import { env } from '@ts/config';
+import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '@ts/types';
 import { PrismaClient, type Role } from '@ts/database';
 import cookieParser from 'cookie-parser';
 import { randomUUID } from 'node:crypto';
@@ -11,6 +13,7 @@ import { sign } from 'jsonwebtoken';
 import request from 'supertest';
 import { CommonModule } from '../../common/common.module';
 import { HttpExceptionFilter } from '../../common/filters/http-exception.filter';
+import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Public } from '../../common/decorators/public';
@@ -69,6 +72,48 @@ function memoryRedis(): RedisService {
   return {
     ensureConnected: jest.fn(async () => undefined),
     get: jest.fn(async (key: string) => values.get(key) ?? null),
+    getdel: jest.fn(async (key: string) => {
+      const value = values.get(key) ?? null;
+      values.delete(key);
+      return value;
+    }),
+    consumeAndReplaceRefresh: jest.fn(
+      async (
+        oldKey: string,
+        newKey: string,
+        familyKey: string,
+        input: {
+          userId: string;
+          familyId: string;
+          sessionId: string;
+          oldMember: string;
+          replacement: string;
+          newMember: string;
+        },
+      ) => {
+        const stored = values.get(oldKey);
+        if (!stored) return sets.has(familyKey) ? 'reuse' : 'revoked';
+        const record = JSON.parse(stored) as {
+          userId: string;
+          familyId: string;
+          sessionId: string;
+        };
+        if (
+          record.userId !== input.userId ||
+          record.familyId !== input.familyId ||
+          record.sessionId !== input.sessionId
+        ) {
+          return 'mismatch';
+        }
+        values.delete(oldKey);
+        sets.get(familyKey)?.delete(input.oldMember);
+        values.set(newKey, input.replacement);
+        const family = sets.get(familyKey) ?? new Set<string>();
+        family.add(input.newMember);
+        sets.set(familyKey, family);
+        return 'rotated';
+      },
+    ),
     set: jest.fn(async (key: string, value: string) => {
       values.set(key, value);
     }),
@@ -113,7 +158,9 @@ describe('P06 auth integration', () => {
   const original = { ...mutableEnv };
   let app: INestApplication;
   let prisma: PrismaClient;
-  let loggerSpy: jest.SpyInstance;
+  let loggerSpy: jest.SpiedFunction<
+    (message: unknown, context?: string, extra?: Record<string, unknown>) => void
+  >;
   const createdUserIds: string[] = [];
 
   async function createVerifiedUser(role: Role): Promise<{ email: string; password: string }> {
@@ -157,6 +204,7 @@ describe('P06 auth integration', () => {
       controllers: [ProbeController],
       providers: [
         { provide: APP_GUARD, useClass: JwtAuthGuard },
+        { provide: APP_GUARD, useClass: CookieAuthGuard },
         { provide: APP_GUARD, useClass: RolesGuard },
         { provide: APP_FILTER, useClass: HttpExceptionFilter },
         { provide: APP_INTERCEPTOR, useClass: RequestIdInterceptor },
@@ -176,7 +224,10 @@ describe('P06 auth integration', () => {
       .compile();
 
     app = moduleRef.createNestApplication();
-    app.getHttpAdapter().getInstance().set('trust proxy', true);
+    app
+      .getHttpAdapter()
+      .getInstance()
+      .set('trust proxy', Number(env.TRUST_PROXY ?? 1));
     app.use(cookieParser());
     app.setGlobalPrefix('api/v1');
     await app.init();
@@ -280,26 +331,55 @@ describe('P06 auth integration', () => {
     expect(cookies?.join(' ')).toContain('HttpOnly');
     expect(cookies?.join(' ')).toContain('SameSite=Strict');
 
+    const setCookies = (response: { headers: Record<string, unknown> }): string[] =>
+      (response.headers['set-cookie'] as unknown as string[] | undefined) ?? [];
+    const cookiesOf = (response: { headers: Record<string, unknown> }): string =>
+      setCookies(response)
+        .map((cookie) => cookie.split(';')[0])
+        .join('; ');
+    const csrfOf = (response: { headers: Record<string, unknown> }): string =>
+      setCookies(response)
+        .find((cookie) => cookie.startsWith(`${CSRF_COOKIE_NAME}=`))
+        ?.split(';')[0]
+        .split('=')[1] ?? '';
     const { tokens } = loginResponse.body.data as LoginBody;
+
+    // A refresh token in the body is deliberately ignored.
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .set(CSRF_HEADER_NAME, csrfOf(loginResponse))
+      .send({ refreshToken: tokens.refreshToken })
+      .expect(401);
+
+    // A valid refresh cookie without the matching CSRF header is rejected.
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/refresh')
+      .set('Cookie', cookiesOf(loginResponse))
+      .expect(403);
+
     const refreshResponse = await request(app.getHttpServer())
       .post('/api/v1/auth/refresh')
-      .send({ refreshToken: tokens.refreshToken })
+      .set('Cookie', cookiesOf(loginResponse))
+      .set(CSRF_HEADER_NAME, csrfOf(loginResponse))
       .expect(200);
     const rotated = refreshResponse.body.data.tokens.refreshToken as string;
     expect(rotated).not.toBe(tokens.refreshToken);
 
     await request(app.getHttpServer())
       .post('/api/v1/auth/refresh')
-      .send({ refreshToken: tokens.refreshToken })
+      .set('Cookie', cookiesOf(loginResponse))
+      .set(CSRF_HEADER_NAME, csrfOf(loginResponse))
       .expect(401);
 
     await request(app.getHttpServer())
       .post('/api/v1/auth/logout')
-      .send({ refreshToken: rotated })
+      .set('Cookie', cookiesOf(refreshResponse))
+      .set(CSRF_HEADER_NAME, csrfOf(refreshResponse))
       .expect(200);
     await request(app.getHttpServer())
       .post('/api/v1/auth/refresh')
-      .send({ refreshToken: rotated })
+      .set('Cookie', cookiesOf(refreshResponse))
+      .set(CSRF_HEADER_NAME, csrfOf(refreshResponse))
       .expect(401);
 
     await request(app.getHttpServer())

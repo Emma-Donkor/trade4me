@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { PrismaClient } from '@prisma/client';
@@ -285,7 +286,9 @@ describe('database integration: migrate → seed → query', () => {
 
   it('seeds the documented reference data and placeholder model', async () => {
     await expect(prisma.currencyPair.count()).resolves.toBe(10);
-    await expect(prisma.riskProfile.count()).resolves.toBe(3);
+    // Only ownerless templates are reference data; a user-owned profile from
+    // another integration fixture must not change this count.
+    await expect(prisma.riskProfile.count({ where: { userId: null } })).resolves.toBe(3);
     await expect(prisma.user.count()).resolves.toBeGreaterThanOrEqual(2);
 
     const demo = await prisma.user.findUniqueOrThrow({

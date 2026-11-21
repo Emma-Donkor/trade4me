@@ -8,13 +8,14 @@
     "start": "next start -p 3000",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "jest --config ../../jest.config.cjs --runTestsByPath src/app/page.test.tsx",
+    "test": "jest --config ../../jest.config.cjs --runInBand apps/web/src",
     "format": "prettier --write src"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.8",
     "@tanstack/react-query": "^5.108.2",
     "@ts/types": "0.0.0",
+    "@ts/validation": "0.0.0",
     "axios": "^1.21.1",
     "next": "^16.4.6",
     "react": "^19.0.0",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.5",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

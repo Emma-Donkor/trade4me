@@ -10,6 +10,7 @@ export interface ContractRoute {
   method: HttpMethod;
   path: string;
   auth: RouteAuth;
+  queryParams?: readonly string[];
 }
 
 const METHODS: readonly string[] = ['GET', 'POST', 'PATCH', 'DELETE'];
@@ -56,10 +57,22 @@ export function readReadmeContract(): ContractRoute[] {
       .split('/')
       .map((method) => method.toLowerCase())
       .filter((method): method is HttpMethod => METHODS.includes(method.toUpperCase()));
-    const paths = [...cells[1].matchAll(/`([^`]+)`/g)].map((match) => normalizePath(match[1]));
+    const documentedPaths = [...cells[1].matchAll(/`([^`]+)`/g)].map((match) => match[1]);
     const auth = normalizeAuth(cells[3] ?? 'Bearer');
     for (const method of methods) {
-      for (const path of paths) routes.push({ method, path, auth });
+      for (const documentedPath of documentedPaths) {
+        const [rawPath, query = ''] = documentedPath.split('?');
+        const queryParams = query
+          .split('&')
+          .map((part) => part.split('=')[0])
+          .filter(Boolean);
+        routes.push({
+          method,
+          path: normalizePath(rawPath),
+          auth,
+          ...(queryParams.length > 0 ? { queryParams } : {}),
+        });
+      }
     }
   }
   return routes;

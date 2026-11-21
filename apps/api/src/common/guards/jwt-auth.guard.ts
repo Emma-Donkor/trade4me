@@ -34,8 +34,8 @@ function bearerToken(header: string | undefined): string | undefined {
 /**
  * Global default guard (P06). `@Public()` opts a route out. When the auth
  * strategy is available, tokens are checked against the Redis blacklist and
- * session idle window; the synchronous fallback keeps isolated guard tests
- * and pre-auth bootstrapping working.
+ * session idle window; the synchronous fallback exists only for isolated
+ * guard tests. Non-public requests always require a verified identity.
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -56,10 +56,6 @@ export class JwtAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const token = bearerToken(request.headers.authorization);
     if (!token) {
-      if (!this.strategy && !env.JWT_SECRET && String(env.NODE_ENV) !== 'production') {
-        request.user = { id: 'dev-user', roles: ['USER'] };
-        return true;
-      }
       throw new UnauthorizedException('Missing bearer token');
     }
 

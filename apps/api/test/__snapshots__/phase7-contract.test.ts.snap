@@ -1,7 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`P07 README §8.2 contract registers every README route with the documented auth level 1`] = `
+exports[`P07 README §8.2 contract registers exactly the README routes with the documented auth level 1`] = `
 [
+  "DELETE /api/v1/auth/sessions/{id}",
   "DELETE /api/v1/paper-trading/positions/{id}",
   "DELETE /api/v1/watchlist",
   "DELETE /api/v1/watchlist/items",
@@ -17,6 +18,7 @@ exports[`P07 README §8.2 contract registers every README route with the documen
   "GET /api/v1/analysis/{symbol}/regime",
   "GET /api/v1/analysis/{symbol}/report",
   "GET /api/v1/analysis/{symbol}/technical",
+  "GET /api/v1/auth/sessions",
   "GET /api/v1/backtests",
   "GET /api/v1/backtests/{id}",
   "GET /api/v1/health",
@@ -40,8 +42,10 @@ exports[`P07 README §8.2 contract registers every README route with the documen
   "GET /api/v1/signals/{id}",
   "GET /api/v1/users/me",
   "GET /api/v1/users/me/risk-profile",
+  "GET /api/v1/users/me/sessions",
   "GET /api/v1/watchlist",
   "GET /api/v1/watchlist/items",
+  "PATCH /api/v1/admin/providers",
   "PATCH /api/v1/notifications/{id}/read",
   "PATCH /api/v1/paper-trading/positions/{id}",
   "PATCH /api/v1/users/me",

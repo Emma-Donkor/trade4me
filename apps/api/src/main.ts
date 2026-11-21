@@ -29,6 +29,9 @@ async function bootstrap(): Promise<void> {
   // P06: the rotating refresh token travels in an httpOnly cookie.
   app.use(cookieParser());
   app.enableCors({ origin: configuration.cors.origins, credentials: true });
+  // Trust only the configured number of reverse-proxy hops. Without this,
+  // every client shares the proxy address and one rate-limit bucket.
+  app.getHttpAdapter().getInstance().set('trust proxy', configuration.trustProxy);
   app.setGlobalPrefix('api/v1');
 
   SwaggerModule.setup('api/v1/docs', app, createApiDocument(app));

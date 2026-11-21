@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type {
@@ -385,6 +386,9 @@ describe('PHASE 05 contract parity', () => {
           timeframe: 'H1',
           from: '2026-11-01T00:00:00.000Z',
           to: '2026-11-21T00:00:00.000Z',
+          start: '2026-11-01T00:00:00.000Z',
+          end: '2026-11-21T00:00:00.000Z',
+          limit: 50,
           page: 1,
           pageSize: 50,
           order: 'desc',

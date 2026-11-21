@@ -741,6 +741,8 @@ Stack traces are never returned to clients. Every response carries `requestId` f
 | POST | `/auth/forgot-password` | Request reset link | Public (rate-limited) |
 | POST | `/auth/reset-password` | Set new password with token | Public |
 | POST | `/auth/mfa/setup` | Begin MFA enrollment (MFA-ready) | Bearer |
+| GET | `/auth/sessions` | List active sessions | Bearer |
+| DELETE | `/auth/sessions/:id` | Revoke one session | Bearer |
 
 #### `/api/v1/users`
 | Method | Path | Description | Auth |
@@ -748,6 +750,7 @@ Stack traces are never returned to clients. Every response carries `requestId` f
 | GET | `/users/me` | Current user + profile | Bearer |
 | PATCH | `/users/me` | Update profile | Bearer |
 | GET/PATCH | `/users/me/risk-profile` | Read/update risk profile | Bearer |
+| GET | `/users/me/sessions` | Current user's active sessions | Bearer |
 
 #### `/api/v1/market`
 | Method | Path | Description | Auth |
@@ -827,11 +830,12 @@ Stack traces are never returned to clients. Every response carries `requestId` f
 #### `/api/v1/admin` (ADMIN / ANALYST)
 | Method | Path | Description | Auth |
 |---|---|---|---|
-| GET | `/admin/health` | System, DB, Redis, provider, AI health | ADMIN |
+| GET | `/admin/health` | System, DB, Redis and AI health | ADMIN |
 | GET | `/admin/users` | User management | ADMIN |
-| GET | `/admin/providers` | Provider status; `PATCH` to disable unhealthy provider | ADMIN |
-| GET | `/admin/models` | Model versions + runs + metrics | ANALYST |
-| GET | `/admin/predictions/performance` | Accuracy, Brier, calibration, drift status | ANALYST |
+| GET | `/admin/providers` | Provider status | ADMIN |
+| PATCH | `/admin/providers` | Disable an unhealthy provider | ADMIN |
+| GET | `/admin/models` | Model versions + runs + metrics | ADMIN / ANALYST |
+| GET | `/admin/predictions/performance` | Accuracy, Brier, calibration, drift status | ADMIN / ANALYST |
 | GET | `/admin/audit-logs` | Audit log query | ADMIN |
 
 #### `/api/v1/health`
@@ -1527,8 +1531,8 @@ AI_SERVICE_URL=http://localhost:8000
 CORS_ORIGINS=http://localhost:3000
 
 # Data stores
-DATABASE_URL=postgresql://tradesense:tradesense@localhost:5432/tradesense
-REDIS_URL=redis://localhost:6379
+DATABASE_URL=postgresql://tradesense:tradesense@localhost:5433/tradesense
+REDIS_URL=redis://localhost:6380
 
 # Secrets (generate: openssl rand -hex 32)
 JWT_SECRET=
@@ -1569,7 +1573,7 @@ Node.js ≥ 20 · npm ≥ 10 · Python ≥ 3.11 · Docker + Docker Compose.
 git clone <repo-url> tradesense-ai && cd tradesense-ai
 npm install
 
-cp .env.example .env          # defaults work for keyless local dev
+cp .env.example .env.local    # defaults work for keyless local dev
 
 docker compose up -d postgres redis
 
@@ -1581,7 +1585,7 @@ python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\act
 pip install -r requirements.txt
 cd ../..
 
-npm run dev                   # web :3000 · api :4000 · ai-engine :8000 · workers
+npm run dev                   # web :3000 · api :4000 · ai-engine :8000 (workers in-process)
 ```
 
 Open **http://localhost:3000** (demo credentials are printed by `npm run db:seed`).
@@ -1590,9 +1594,8 @@ Open **http://localhost:3000** (demo credentials are printed by `npm run db:seed
 
 ```bash
 npm run dev:web      # Next.js
-npm run dev:api      # NestJS (+ Swagger at /api/v1/docs)
+npm run dev:api      # NestJS (+ Swagger at /api/v1/docs) and in-process BullMQ workers
 npm run dev:ai       # FastAPI (+ docs at :8000/docs)
-npm run dev:worker   # BullMQ workers (or in-process in development)
 ```
 
 ### Database tooling
@@ -1607,22 +1610,23 @@ npm run db:studio    # Prisma Studio → :5555
 
 ## 25. Docker
 
-`docker-compose.yml` services: **postgres** (16), **redis** (7), **api** (NestJS), **ai-engine** (FastAPI), **web** (Next.js), **worker** (BullMQ).
+`docker-compose.yml` currently defines the **data tier only**: **postgres** (16) and **redis** (7). The api, ai-engine, web and worker services, plus their Dockerfiles, are added in the full-stack deployment phase.
 
 ```bash
-docker compose up -d              # data tier
-docker compose up --build         # full stack
+docker compose up -d              # data tier (postgres + redis)
 ```
 
-- Multi-stage Dockerfiles: dev (hot reload, source mounts) and prod (pruned runtime images, non-root users).
-- Healthchecks gate startup ordering (`depends_on: condition: service_healthy`).
-- Volumes persist PostgreSQL data and the model registry across restarts.
+- Data-tier healthchecks currently gate PostgreSQL and Redis startup.
+- Named volumes persist PostgreSQL and Redis data across restarts.
+- Multi-stage application Dockerfiles and full-stack startup ordering arrive with the deployment phase.
 
 ---
 
 ## 26. CI/CD & Deployment
 
 ### 26.1 Pipeline (GitHub Actions)
+
+> **Current status:** the GitHub Actions workflow and deployment images are not part of the phases completed so far. The checks below are available locally through `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:ai` and `npm run test:e2e`.
 
 ```text
 Install → Lint → Typecheck → Unit tests → Integration tests

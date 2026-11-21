@@ -1,6 +1,7 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Query } from '@nestjs/common';
 import type { PaginationQuery } from '@ts/types';
-import { paginationSchema } from '@ts/validation';
+import type { AdminProviderUpdateInput } from '@ts/validation';
+import { adminProviderUpdateSchema, paginationSchema } from '@ts/validation';
 import { Roles } from '../../common/decorators/roles';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AdminService } from './admin.service';
@@ -27,13 +28,21 @@ export class AdminController {
     return this.admin.providers();
   }
 
-  @Roles('ANALYST')
+  @Roles('ADMIN')
+  @Patch('providers')
+  setProviderEnabled(
+    @Body(new ZodValidationPipe(adminProviderUpdateSchema)) input: AdminProviderUpdateInput,
+  ) {
+    return this.admin.setProviderEnabled(input);
+  }
+
+  @Roles('ADMIN', 'ANALYST')
   @Get('models')
   models(@Query(new ZodValidationPipe(paginationSchema)) query: PaginationQuery) {
     return this.admin.models(query);
   }
 
-  @Roles('ANALYST')
+  @Roles('ADMIN', 'ANALYST')
   @Get('predictions/performance')
   predictionsPerformance() {
     return this.admin.predictionsPerformance();

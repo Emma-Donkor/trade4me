@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import request from 'supertest';
 import { accessTokenFor, createPhase7TestApp, type Phase7TestApp } from './helpers/test-app';
 
@@ -38,20 +39,22 @@ describe('P07 integration contract', () => {
       ]),
     );
     expect(response.body.requestId).toMatch(/^req_/);
+    expect(response.body.data.items[0]).not.toHaveProperty('providerSymbols');
   });
 
   it('fails honestly for unimplemented market, analysis and AI routes', async () => {
     const symbol = encodeURIComponent('EUR/USD');
 
+    // Query names are the README §8.2 contract, not internal aliases.
     const quote = await request(harness.app.getHttpServer())
-      .get(`/api/v1/market/quote?symbol=${symbol}`)
+      .get(`/api/v1/market/quote?symbols=${symbol}`)
       .set('Authorization', bearer(userToken))
       .expect(422);
     expect(quote.body.error.code).toBe('INSUFFICIENT_DATA');
 
     const candles = await request(harness.app.getHttpServer())
       .get(
-        `/api/v1/market/candles?symbol=${symbol}&timeframe=H1&from=2026-01-01T00:00:00Z&to=2026-01-02T00:00:00Z`,
+        `/api/v1/market/candles?symbol=${symbol}&timeframe=H1&start=2026-01-01T00:00:00Z&end=2026-01-02T00:00:00Z&limit=50`,
       )
       .set('Authorization', bearer(userToken))
       .expect(422);
@@ -89,11 +92,17 @@ describe('P07 integration contract', () => {
   });
 
   it('enforces admin and analyst roles on admin routes', async () => {
-    await request(harness.app.getHttpServer())
-      .get('/api/v1/admin/users')
-      .set('Authorization', bearer(userToken))
-      .expect(403)
-      .expect(({ body }) => expect(body.error.code).toBe('FORBIDDEN'));
+    for (const path of [
+      '/api/v1/admin/users',
+      '/api/v1/admin/models',
+      '/api/v1/admin/audit-logs',
+    ]) {
+      await request(harness.app.getHttpServer())
+        .get(path)
+        .set('Authorization', bearer(userToken))
+        .expect(403)
+        .expect(({ body }) => expect(body.error.code).toBe('FORBIDDEN'));
+    }
 
     await request(harness.app.getHttpServer())
       .get('/api/v1/admin/users')
@@ -101,9 +110,27 @@ describe('P07 integration contract', () => {
       .expect(200);
 
     await request(harness.app.getHttpServer())
+      .get('/api/v1/admin/users')
+      .set('Authorization', bearer(await accessTokenFor(harness, 'ANALYST')))
+      .expect(403);
+
+    await request(harness.app.getHttpServer())
       .get('/api/v1/admin/models')
       .set('Authorization', bearer(await accessTokenFor(harness, 'ANALYST')))
       .expect(200);
+
+    // ADMIN is a superset of ANALYST for the documented admin surface.
+    await request(harness.app.getHttpServer())
+      .get('/api/v1/admin/models')
+      .set('Authorization', bearer(await accessTokenFor(harness, 'ADMIN')))
+      .expect(200);
+
+    const patch = await request(harness.app.getHttpServer())
+      .patch('/api/v1/admin/providers')
+      .set('Authorization', bearer(await accessTokenFor(harness, 'ADMIN')))
+      .send({ provider: 'twelvedata', enabled: false })
+      .expect(501);
+    expect(patch.body.error.code).toBe('NOT_IMPLEMENTED');
   });
 
   it('validates request bodies before reaching a stub', async () => {
@@ -142,7 +169,7 @@ describe('P07 global rate limiter', () => {
   let harness: Phase7TestApp;
 
   beforeAll(async () => {
-    harness = await createPhase7TestApp({ rateLimitMax: 2 });
+    harness = await createPhase7TestApp({ rateLimitMax: 2, rateLimitWindowMs: 1_000 });
   }, 120_000);
 
   afterAll(async () => {
@@ -163,8 +190,32 @@ describe('P07 global rate limiter', () => {
       .set('X-Forwarded-For', ip)
       .expect(429);
     expect(limited.body.error.code).toBe('RATE_LIMITED');
-    expect(limited.body.error.details).toEqual({ limit: 2, windowSeconds: 60 });
+    expect(limited.body.error.details).toEqual({ limit: 2, windowSeconds: 1 });
     expect(Number(limited.headers['retry-after'])).toBeGreaterThan(0);
+    expect(Number(limited.headers['x-ratelimit-reset'])).toBeGreaterThan(
+      Math.floor(Date.now() / 1000),
+    );
     expect(limited.body.error.requestId).toMatch(/^req_/);
+  });
+
+  it('resets the per-IP counter when the window expires', async () => {
+    const ip = '203.0.113.19';
+    for (let index = 0; index < 2; index += 1) {
+      await request(harness.app.getHttpServer())
+        .get('/api/v1/health')
+        .set('X-Forwarded-For', ip)
+        .expect(200);
+    }
+    await request(harness.app.getHttpServer())
+      .get('/api/v1/health')
+      .set('X-Forwarded-For', ip)
+      .expect(429);
+
+    await new Promise((resolve) => setTimeout(resolve, 1_100));
+
+    await request(harness.app.getHttpServer())
+      .get('/api/v1/health')
+      .set('X-Forwarded-For', ip)
+      .expect(200);
   });
 });

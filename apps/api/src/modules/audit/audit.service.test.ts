@@ -1,3 +1,4 @@
+import { describe, expect, it, jest } from '@jest/globals';
 import { JsonLogger } from '../../common/logger/json-logger';
 import { AuditService } from './audit.service';
 

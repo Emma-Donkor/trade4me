@@ -3,6 +3,8 @@ import Redis from 'ioredis';
 import { configuration } from '../../config/configuration';
 import { dependencyError, type DependencyStatus } from '../health/dependency-status';
 
+export type RefreshClaimOutcome = 'rotated' | 'reuse' | 'revoked' | 'mismatch';
+
 function redisOptions() {
   return {
     maxRetriesPerRequest: 1,
@@ -47,6 +49,69 @@ export class RedisService implements OnModuleDestroy {
   async get(key: string): Promise<string | null> {
     await this.ensureConnected();
     return this.client.get(this.key(key));
+  }
+
+  /** Redis 6.2+ atomic read-and-delete for single-use credentials. */
+  async getdel(key: string): Promise<string | null> {
+    await this.ensureConnected();
+    return (await this.client.call('GETDEL', this.key(key))) as string | null;
+  }
+
+  /**
+   * Atomically claim a refresh token and install its replacement in one Lua
+   * script. Concurrent refreshes cannot both observe the same valid record.
+   */
+  async consumeAndReplaceRefresh(
+    oldKey: string,
+    newKey: string,
+    familyKey: string,
+    input: {
+      userId: string;
+      familyId: string;
+      sessionId: string;
+      oldMember: string;
+      replacement: string;
+      replacementTtl: number;
+      newMember: string;
+      familyTtl: number;
+    },
+  ): Promise<RefreshClaimOutcome> {
+    await this.ensureConnected();
+    const script = `
+      local stored = redis.call('GET', KEYS[1])
+      if not stored then
+        if redis.call('EXISTS', KEYS[3]) == 1 then return 'reuse' end
+        return 'revoked'
+      end
+      local ok, record = pcall(cjson.decode, stored)
+      if not ok or record.userId ~= ARGV[1] or record.familyId ~= ARGV[2]
+          or record.sessionId ~= ARGV[3] then
+        return 'mismatch'
+      end
+      redis.call('DEL', KEYS[1])
+      redis.call('SREM', KEYS[3], ARGV[4])
+      redis.call('SET', KEYS[2], ARGV[5], 'EX', ARGV[6])
+      redis.call('SADD', KEYS[3], ARGV[7])
+      redis.call('EXPIRE', KEYS[3], ARGV[8])
+      return 'rotated'
+    `;
+    const result = await this.client.call(
+      'EVAL',
+      script,
+      3,
+      this.key(oldKey),
+      this.key(newKey),
+      this.key(familyKey),
+      input.userId,
+      input.familyId,
+      input.sessionId,
+      input.oldMember,
+      input.replacement,
+      Math.max(1, Math.ceil(input.replacementTtl)),
+      input.newMember,
+      Math.max(1, Math.ceil(input.familyTtl)),
+    );
+    return String(result) as RefreshClaimOutcome;
   }
 
   async set(key: string, value: string, ttlSeconds?: number): Promise<void> {

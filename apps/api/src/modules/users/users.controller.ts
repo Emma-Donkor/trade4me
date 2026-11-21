@@ -2,6 +2,7 @@ import { Body, Controller, Get, Patch, Req } from '@nestjs/common';
 import type { UpdateProfileInput, UpdateRiskProfileInput, UserView } from '@ts/types';
 import { updateProfileSchema, updateRiskProfileSchema } from '@ts/validation';
 import { CurrentUser } from '../../common/decorators/current-user';
+import { clientIp } from '../../common/helpers/client-ip';
 import type { AuthenticatedRequest, AuthenticatedUser } from '../../common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { UsersService } from './users.service';
@@ -24,7 +25,7 @@ export class UsersController {
   ): Promise<UserView> {
     return this.users.updateMe(user.id, input, {
       actorId: user.id,
-      ip: request.ip || request.socket?.remoteAddress,
+      ip: clientIp(request),
       requestId: request.requestId,
     });
   }
@@ -42,7 +43,7 @@ export class UsersController {
   ): Promise<UserView['riskProfile']> {
     return this.users.updateRiskProfile(user.id, input, {
       actorId: user.id,
-      ip: request.ip || request.socket?.remoteAddress,
+      ip: clientIp(request),
       requestId: request.requestId,
     });
   }

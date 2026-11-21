@@ -1,5 +1,17 @@
-import { Body, Controller, Delete, Get, HttpCode, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { env } from '@ts/config';
+import { CSRF_COOKIE_NAME } from '@ts/types';
 import type { AuthTokens, MessageResponse, SessionInfo, UserView } from '@ts/types';
 import type {
   ForgotPasswordInput,
@@ -10,13 +22,14 @@ import type {
 import {
   forgotPasswordSchema,
   loginSchema,
-  refreshSchema,
   registerSchema,
   resetPasswordSchema,
   verifyEmailSchema,
 } from '@ts/validation';
+import { randomBytes } from 'node:crypto';
 import type { Request, Response } from 'express';
 import { CookieAuth } from '../../common/decorators/cookie-auth';
+import { clientIp } from '../../common/helpers/client-ip';
 import { Public } from '../../common/decorators/public';
 import { CurrentUser } from '../../common/decorators/current-user';
 import type { AuthenticatedRequest, AuthenticatedUser } from '../../common/guards/jwt-auth.guard';
@@ -30,7 +43,6 @@ interface LoginResult {
 }
 
 /** README §8.2 auth catalog. All state-changing cookie auth uses SameSite. */
-@UseGuards(AuthRateLimitGuard)
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
@@ -38,7 +50,7 @@ export class AuthController {
   private context(request: AuthenticatedRequest): RequestContext {
     return {
       actorId: request.user?.id,
-      ip: request.ip || request.socket?.remoteAddress,
+      ip: clientIp(request),
       requestId: request.requestId,
     };
   }
@@ -63,15 +75,15 @@ export class AuthController {
   }
 
   private setRefreshCookie(response: Response, tokens: AuthTokens): void {
-    response.cookie(String(env.REFRESH_COOKIE_NAME), tokens.refreshToken, this.cookieOptions());
-  }
-
-  private refreshTokenFrom(
-    request: AuthenticatedRequest,
-    body?: { refreshToken?: string },
-  ): string {
-    const cookieName = String(env.REFRESH_COOKIE_NAME);
-    return body?.refreshToken ?? request.cookies?.[cookieName] ?? '';
+    const options = this.cookieOptions();
+    response.cookie(String(env.REFRESH_COOKIE_NAME), tokens.refreshToken, options);
+    // The CSRF cookie is readable by the same-origin client so it can echo the
+    // token in a header. It is not an authentication credential.
+    response.cookie(CSRF_COOKIE_NAME, randomBytes(24).toString('hex'), {
+      ...options,
+      httpOnly: false,
+      path: '/',
+    });
   }
 
   @Public()
@@ -84,6 +96,7 @@ export class AuthController {
   }
 
   @Public()
+  @UseGuards(AuthRateLimitGuard)
   @HttpCode(200)
   @Post('login')
   async login(
@@ -101,11 +114,12 @@ export class AuthController {
   @HttpCode(200)
   @Post('refresh')
   async refresh(
-    @Body(new ZodValidationPipe(refreshSchema)) body: { refreshToken?: string },
     @Req() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: Response,
   ): Promise<LoginResult> {
-    const result = await this.auth.refresh(this.refreshTokenFrom(request, body));
+    const token = request.cookies?.[String(env.REFRESH_COOKIE_NAME)];
+    if (!token) throw new UnauthorizedException('Refresh cookie is required');
+    const result = await this.auth.refresh(token);
     this.setRefreshCookie(response, result.tokens);
     return result;
   }
@@ -115,13 +129,14 @@ export class AuthController {
   @HttpCode(200)
   @Post('logout')
   async logout(
-    @Body(new ZodValidationPipe(refreshSchema)) body: { refreshToken?: string },
     @Req() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: Response,
   ): Promise<MessageResponse> {
-    const token = this.refreshTokenFrom(request, body);
+    const token = request.cookies?.[String(env.REFRESH_COOKIE_NAME)];
+    if (!token) throw new UnauthorizedException('Refresh cookie is required');
     const result = await this.auth.logout(token, this.context(request));
     response.clearCookie(String(env.REFRESH_COOKIE_NAME), { path: '/api/v1/auth' });
+    response.clearCookie(CSRF_COOKIE_NAME, { path: '/' });
     return result;
   }
 
@@ -135,6 +150,7 @@ export class AuthController {
   }
 
   @Public()
+  @UseGuards(AuthRateLimitGuard)
   @HttpCode(200)
   @Post('forgot-password')
   forgotPassword(

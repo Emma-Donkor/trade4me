@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { PaginationQuery } from '@ts/types';
+import type { AdminProviderUpdateInput } from '@ts/validation';
+import { notImplemented } from '../../common/errors/stub-errors';
 import { emptyPage, type CursorPage } from '../../common/helpers/pagination';
 import { HealthService, type ReadinessResult } from '../health/health.service';
 
@@ -7,6 +9,7 @@ export abstract class AdminService {
   abstract health(): Promise<ReadinessResult>;
   abstract users(query: PaginationQuery): CursorPage<never>;
   abstract providers(): { items: never[] };
+  abstract setProviderEnabled(input: AdminProviderUpdateInput): never;
   abstract models(query: PaginationQuery): CursorPage<never>;
   abstract predictionsPerformance(): { items: never[] };
   abstract auditLogs(query: PaginationQuery): CursorPage<never>;
@@ -28,6 +31,10 @@ export class Phase7AdminService extends AdminService {
 
   providers(): { items: never[] } {
     return { items: [] };
+  }
+
+  setProviderEnabled(): never {
+    notImplemented('provider status update');
   }
 
   models(query: PaginationQuery): CursorPage<never> {

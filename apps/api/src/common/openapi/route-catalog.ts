@@ -16,6 +16,10 @@ export interface RouteSpec {
   status?: number;
   dataExample?: unknown;
   requestExample?: unknown;
+  /** Honest stub failure documented as an error response, not a success body. */
+  errorExample?: { status: number; code: string; message: string };
+  /** Query names promised by README §8.2. */
+  queryParams?: readonly string[];
 }
 
 export const ROUTE_CATALOG: readonly RouteSpec[] = [
@@ -44,9 +48,8 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     method: 'post',
     path: '/api/v1/auth/refresh',
     auth: 'Cookie',
-    summary: 'Rotate the refresh token',
+    summary: 'Rotate the refresh token from the httpOnly cookie',
     status: 200,
-    requestExample: {},
     dataExample: {
       user: { id: 'usr_1' },
       tokens: { accessToken: 'eyJ...', refreshToken: 'eyJ...' },
@@ -56,9 +59,8 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     method: 'post',
     path: '/api/v1/auth/logout',
     auth: 'Cookie',
-    summary: 'Revoke the refresh token and blacklist its access token id',
+    summary: 'Revoke the refresh cookie and blacklist its access token id',
     status: 200,
-    requestExample: {},
     dataExample: { message: 'Logged out' },
   },
   {
@@ -93,7 +95,32 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     path: '/api/v1/auth/mfa/setup',
     auth: 'Bearer',
     summary: 'Begin MFA enrollment (MFA-ready scaffold)',
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
+  },
+  {
+    method: 'get',
+    path: '/api/v1/auth/sessions',
+    auth: 'Bearer',
+    summary: 'List active sessions',
+    dataExample: [
+      {
+        id: 'ses_1',
+        createdAt: '2026-11-21T00:00:00.000Z',
+        lastActivity: '2026-11-21T12:00:00.000Z',
+        expiresAt: '2026-11-21T13:00:00.000Z',
+      },
+    ],
+  },
+  {
+    method: 'delete',
+    path: '/api/v1/auth/sessions/:id',
+    auth: 'Bearer',
+    summary: 'Revoke one active session',
+    dataExample: { message: 'Session revoked' },
   },
 
   // Users
@@ -127,6 +154,20 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     requestExample: { riskPerTradePct: 1 },
     dataExample: { profileType: 'MODERATE', riskPerTradePct: 1 },
   },
+  {
+    method: 'get',
+    path: '/api/v1/users/me/sessions',
+    auth: 'Bearer',
+    summary: "Current user's active sessions",
+    dataExample: [
+      {
+        id: 'ses_1',
+        createdAt: '2026-11-21T00:00:00.000Z',
+        lastActivity: '2026-11-21T12:00:00.000Z',
+        expiresAt: '2026-11-21T13:00:00.000Z',
+      },
+    ],
+  },
 
   // Market
   {
@@ -153,21 +194,35 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     path: '/api/v1/market/quote',
     auth: 'Bearer',
     summary: 'Latest quotes (INSUFFICIENT_DATA until market ingestion lands)',
-    dataExample: { code: 'INSUFFICIENT_DATA' },
+    queryParams: ['symbols'],
+    errorExample: {
+      status: 422,
+      code: 'INSUFFICIENT_DATA',
+      message: 'Not enough data is available yet',
+    },
   },
   {
     method: 'get',
     path: '/api/v1/market/candles',
     auth: 'Bearer',
     summary: 'Bounded OHLC history (INSUFFICIENT_DATA until P09)',
-    dataExample: { code: 'INSUFFICIENT_DATA' },
+    queryParams: ['symbol', 'timeframe', 'start', 'end', 'limit'],
+    errorExample: {
+      status: 422,
+      code: 'INSUFFICIENT_DATA',
+      message: 'Not enough data is available yet',
+    },
   },
   {
     method: 'get',
     path: '/api/v1/market/overview',
     auth: 'Bearer',
     summary: 'Aggregated market overview (INSUFFICIENT_DATA until P08)',
-    dataExample: { code: 'INSUFFICIENT_DATA' },
+    errorExample: {
+      status: 422,
+      code: 'INSUFFICIENT_DATA',
+      message: 'Not enough data is available yet',
+    },
   },
 
   // Analysis
@@ -176,35 +231,55 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     path: '/api/v1/analysis/:symbol/technical',
     auth: 'Bearer',
     summary: 'Technical indicator snapshot (AI_SERVICE_UNAVAILABLE until P10)',
-    dataExample: { code: 'AI_SERVICE_UNAVAILABLE' },
+    errorExample: {
+      status: 503,
+      code: 'AI_SERVICE_UNAVAILABLE',
+      message: 'AI service is unavailable',
+    },
   },
   {
     method: 'get',
     path: '/api/v1/analysis/:symbol/historical',
     auth: 'Bearer',
     summary: 'Historical similarity assessment (AI_SERVICE_UNAVAILABLE)',
-    dataExample: { code: 'AI_SERVICE_UNAVAILABLE' },
+    errorExample: {
+      status: 503,
+      code: 'AI_SERVICE_UNAVAILABLE',
+      message: 'AI service is unavailable',
+    },
   },
   {
     method: 'get',
     path: '/api/v1/analysis/:symbol/regime',
     auth: 'Bearer',
     summary: 'Market-regime classification (AI_SERVICE_UNAVAILABLE)',
-    dataExample: { code: 'AI_SERVICE_UNAVAILABLE' },
+    errorExample: {
+      status: 503,
+      code: 'AI_SERVICE_UNAVAILABLE',
+      message: 'AI service is unavailable',
+    },
   },
   {
     method: 'get',
     path: '/api/v1/analysis/:symbol',
     auth: 'Bearer',
     summary: 'Combined assessment (AI_SERVICE_UNAVAILABLE)',
-    dataExample: { code: 'AI_SERVICE_UNAVAILABLE' },
+    errorExample: {
+      status: 503,
+      code: 'AI_SERVICE_UNAVAILABLE',
+      message: 'AI service is unavailable',
+    },
   },
   {
     method: 'get',
     path: '/api/v1/analysis/:symbol/report',
     auth: 'Bearer',
     summary: 'AI market report (AI_SERVICE_UNAVAILABLE until P17)',
-    dataExample: { code: 'AI_SERVICE_UNAVAILABLE' },
+    errorExample: {
+      status: 503,
+      code: 'AI_SERVICE_UNAVAILABLE',
+      message: 'AI service is unavailable',
+    },
   },
 
   // News
@@ -220,7 +295,11 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     path: '/api/v1/news/:id',
     auth: 'Bearer',
     summary: 'News article with analysis',
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
   },
   {
     method: 'get',
@@ -233,8 +312,12 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     method: 'get',
     path: '/api/v1/news/sentiment/:symbol',
     auth: 'Bearer',
-    summary: 'Aggregated pair sentiment',
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    summary: 'Aggregated pair sentiment (INSUFFICIENT_DATA until ingestion lands)',
+    errorExample: {
+      status: 422,
+      code: 'INSUFFICIENT_DATA',
+      message: 'Not enough data is available yet',
+    },
   },
 
   // Signals and scanner
@@ -243,21 +326,34 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     path: '/api/v1/signals',
     auth: 'Bearer',
     summary: 'Recent trade signals (INSUFFICIENT_DATA until P16)',
-    dataExample: { code: 'INSUFFICIENT_DATA' },
+    errorExample: {
+      status: 422,
+      code: 'INSUFFICIENT_DATA',
+      message: 'Not enough data is available yet',
+    },
   },
   {
     method: 'get',
     path: '/api/v1/signals/:id',
     auth: 'Bearer',
     summary: 'Signal evidence and explanation',
-    dataExample: { code: 'INSUFFICIENT_DATA' },
+    errorExample: {
+      status: 422,
+      code: 'INSUFFICIENT_DATA',
+      message: 'Not enough data is available yet',
+    },
   },
   {
     method: 'get',
     path: '/api/v1/scanner',
     auth: 'Bearer',
     summary: 'All-pairs scan table (INSUFFICIENT_DATA until P16)',
-    dataExample: { code: 'INSUFFICIENT_DATA' },
+    queryParams: ['sortBy', 'order'],
+    errorExample: {
+      status: 422,
+      code: 'INSUFFICIENT_DATA',
+      message: 'Not enough data is available yet',
+    },
   },
 
   // Risk
@@ -274,7 +370,11 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
       stopLoss: 1.095,
       takeProfit: 1.11,
     },
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
   },
   {
     method: 'get',
@@ -289,7 +389,11 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     auth: 'Bearer',
     summary: 'Evaluate an order against all risk rules',
     requestExample: { order: { symbol: 'EUR/USD', side: 'LONG' } },
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
   },
 
   // Backtests
@@ -307,7 +411,11 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
       startingCapital: 10000,
       riskPerTradePct: 1,
     },
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
   },
   {
     method: 'get',
@@ -321,7 +429,11 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     path: '/api/v1/backtests/:id',
     auth: 'Bearer',
     summary: 'Backtest status, results and equity curve',
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
   },
 
   // Paper trading
@@ -330,7 +442,11 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     path: '/api/v1/paper-trading/account',
     auth: 'Bearer',
     summary: 'Virtual account balance, equity and performance',
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
   },
   {
     method: 'get',
@@ -352,7 +468,11 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
       takeProfit: 1.11,
       size: 1000,
     },
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
   },
   {
     method: 'patch',
@@ -360,14 +480,22 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     auth: 'Bearer',
     summary: 'Modify a position stop loss or take profit',
     requestExample: { stopLoss: 1.096 },
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
   },
   {
     method: 'delete',
     path: '/api/v1/paper-trading/positions/:id',
     auth: 'Bearer',
     summary: 'Close a simulated position at market',
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
   },
 
   // Portfolio
@@ -400,14 +528,22 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     auth: 'Bearer',
     summary: 'Create a watchlist',
     requestExample: { name: 'Majors' },
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
   },
   {
     method: 'delete',
     path: '/api/v1/watchlist',
     auth: 'Bearer',
     summary: 'Delete a watchlist',
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
   },
   {
     method: 'get',
@@ -422,14 +558,22 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     auth: 'Bearer',
     summary: 'Add or reorder a watchlist item',
     requestExample: { symbol: 'EUR/USD', sortOrder: 0 },
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
   },
   {
     method: 'delete',
     path: '/api/v1/watchlist/items',
     auth: 'Bearer',
     summary: 'Remove a watchlist item',
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
   },
 
   // Notifications
@@ -445,7 +589,11 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     path: '/api/v1/notifications/:id/read',
     auth: 'Bearer',
     summary: 'Mark a notification read',
-    dataExample: { code: 'NOT_IMPLEMENTED' },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
   },
 
   // AI
@@ -454,7 +602,11 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     path: '/api/v1/ai/assessment/:symbol',
     auth: 'Bearer',
     summary: 'Structured assessment with explanation (AI_SERVICE_UNAVAILABLE)',
-    dataExample: { code: 'AI_SERVICE_UNAVAILABLE' },
+    errorExample: {
+      status: 503,
+      code: 'AI_SERVICE_UNAVAILABLE',
+      message: 'AI service is unavailable',
+    },
   },
   {
     method: 'post',
@@ -462,7 +614,11 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     auth: 'Bearer',
     summary: 'Explain a prediction (AI_SERVICE_UNAVAILABLE)',
     requestExample: { predictionId: 'pred_1' },
-    dataExample: { code: 'AI_SERVICE_UNAVAILABLE' },
+    errorExample: {
+      status: 503,
+      code: 'AI_SERVICE_UNAVAILABLE',
+      message: 'AI service is unavailable',
+    },
   },
   {
     method: 'post',
@@ -470,7 +626,11 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     auth: 'Bearer',
     summary: 'Grounded assistant chat (AI_SERVICE_UNAVAILABLE)',
     requestExample: { message: 'What changed for EUR/USD?' },
-    dataExample: { code: 'AI_SERVICE_UNAVAILABLE' },
+    errorExample: {
+      status: 503,
+      code: 'AI_SERVICE_UNAVAILABLE',
+      message: 'AI service is unavailable',
+    },
   },
 
   // Admin
@@ -478,8 +638,15 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     method: 'get',
     path: '/api/v1/admin/health',
     auth: 'ADMIN',
-    summary: 'System, database, Redis, provider and AI health',
-    dataExample: { status: 'ok', dependencies: { redis: 'up', database: 'up', ai: 'up' } },
+    summary: 'System, database, Redis and AI health',
+    dataExample: {
+      status: 'ok',
+      dependencies: {
+        redis: { status: 'up', latencyMs: 1, error: null },
+        database: { status: 'up', latencyMs: 2, error: null },
+        ai: { status: 'up', latencyMs: 3, error: null },
+      },
+    },
   },
   {
     method: 'get',
@@ -496,16 +663,28 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     dataExample: { items: [] },
   },
   {
+    method: 'patch',
+    path: '/api/v1/admin/providers',
+    auth: 'ADMIN',
+    summary: 'Disable an unhealthy market-data provider',
+    requestExample: { provider: 'twelvedata', enabled: false },
+    errorExample: {
+      status: 501,
+      code: 'NOT_IMPLEMENTED',
+      message: 'Feature is not implemented yet',
+    },
+  },
+  {
     method: 'get',
     path: '/api/v1/admin/models',
-    auth: 'ANALYST',
+    auth: 'ADMIN',
     summary: 'Model versions, runs and metrics',
     dataExample: { items: [], nextCursor: null, hasMore: false },
   },
   {
     method: 'get',
     path: '/api/v1/admin/predictions/performance',
-    auth: 'ANALYST',
+    auth: 'ADMIN',
     summary: 'Accuracy, Brier score, calibration and drift status',
     dataExample: { items: [] },
   },
@@ -530,7 +709,14 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
     path: '/api/v1/health/ready',
     auth: 'Public',
     summary: 'Readiness probe (database, Redis, AI)',
-    dataExample: { status: 'ok', dependencies: { redis: 'up', database: 'up', ai: 'up' } },
+    dataExample: {
+      status: 'ok',
+      dependencies: {
+        redis: { status: 'up', latencyMs: 1, error: null },
+        database: { status: 'up', latencyMs: 2, error: null },
+        ai: { status: 'up', latencyMs: 3, error: null },
+      },
+    },
   },
 ];
 

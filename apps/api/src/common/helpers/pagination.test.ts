@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import { cursorPage, decodeCursor, encodeCursor, emptyPage } from './pagination';
 
 describe('cursor pagination helper', () => {

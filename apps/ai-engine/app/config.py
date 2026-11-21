@@ -32,13 +32,14 @@ class Settings(BaseSettings):
     API_PORT: int = 4000
     AI_PORT: int = 8000
     CORS_ORIGINS: str = 'http://localhost:3000'
+    TRUST_PROXY: int = 1
 
     # Database and cache
     DATABASE_URL: str = (
-        'postgresql://tradesense:tradesense@localhost:5432/tradesense?schema=public'
+        'postgresql://tradesense:tradesense@localhost:5433/tradesense?schema=public'
     )
     DATABASE_POOL_SIZE: int = 10
-    REDIS_URL: str = 'redis://localhost:6379'
+    REDIS_URL: str = 'redis://localhost:6380'
     REDIS_PREFIX: str = 'tradesense:'
 
     # Authentication and sessions

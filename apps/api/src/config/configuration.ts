@@ -17,6 +17,7 @@ export const configuration = {
   cors: {
     origins: splitOrigins(env.CORS_ORIGINS ?? 'http://localhost:3000'),
   },
+  trustProxy: Number(env.TRUST_PROXY ?? 1),
   redis: {
     url: String(env.REDIS_URL ?? 'redis://localhost:6379'),
     prefix: String(env.REDIS_PREFIX ?? 'tradesense:'),

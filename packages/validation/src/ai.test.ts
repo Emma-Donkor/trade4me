@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import { predictResponseSchema, timeframeSchema } from './ai';
 
 describe('@ts/validation AI contracts', () => {

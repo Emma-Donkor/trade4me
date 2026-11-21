@@ -2,25 +2,53 @@ import { z } from 'zod';
 import { dateTimeSchema, paginationSchema, symbolSchema } from './common.schema';
 import { timeframeSchema } from './ai';
 
-/** README §9 — a bounded OHLC request; the repository always paginates it. */
+/**
+ * README §8.2/§9 — a bounded OHLC request. `start`/`end`/`limit` are the
+ * documented query names; `from`/`to`/`pageSize` remain accepted aliases so
+ * existing clients do not break while the shared contracts catch up.
+ */
 export const candleRangeQuerySchema = z
   .strictObject({
     symbol: symbolSchema,
     timeframe: timeframeSchema,
-    from: dateTimeSchema,
-    to: dateTimeSchema,
+    from: dateTimeSchema.optional(),
+    to: dateTimeSchema.optional(),
+    start: dateTimeSchema.optional(),
+    end: dateTimeSchema.optional(),
+    limit: paginationSchema.shape.pageSize,
     page: paginationSchema.shape.page,
     pageSize: paginationSchema.shape.pageSize,
     order: z.enum(['asc', 'desc']).optional(),
   })
-  .refine((value) => Date.parse(value.from) <= Date.parse(value.to), {
-    message: 'from must not be after to',
-    path: ['from'],
-  });
+  .refine(
+    (value) => {
+      const from = value.from ?? value.start;
+      const to = value.to ?? value.end;
+      return from !== undefined && to !== undefined && Date.parse(from) <= Date.parse(to);
+    },
+    {
+      message: 'start must be before end',
+      path: ['start'],
+    },
+  );
 
-export const quoteQuerySchema = z.strictObject({
-  symbol: symbolSchema,
-});
+const commaSeparatedSymbolsSchema = z.string().refine(
+  (value) => {
+    const symbols = value.split(',').map((symbol) => symbol.trim());
+    return symbols.length > 0 && symbols.every((symbol) => symbolSchema.safeParse(symbol).success);
+  },
+  { message: 'Expected a comma-separated list of pairs such as EUR/USD,GBP/USD' },
+);
+
+export const quoteQuerySchema = z
+  .strictObject({
+    symbol: symbolSchema.optional(),
+    symbols: z.union([commaSeparatedSymbolsSchema, z.array(symbolSchema).min(1)]).optional(),
+  })
+  .refine((value) => value.symbol !== undefined || value.symbols !== undefined, {
+    message: 'symbol or symbols is required',
+    path: ['symbols'],
+  });
 
 export const symbolParamSchema = z.strictObject({
   symbol: symbolSchema,

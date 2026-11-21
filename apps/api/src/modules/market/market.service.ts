@@ -14,7 +14,6 @@ export interface MarketPairView {
   pipSize: number;
   pointValue: number;
   spreadPipsTypical: number;
-  providerSymbols: unknown;
 }
 
 export abstract class MarketService {
@@ -43,7 +42,6 @@ export class Phase7MarketService extends MarketService {
         pipSize: true,
         pointValue: true,
         spreadPipsTypical: true,
-        providerSymbols: true,
       },
     });
     return cursorPage(
@@ -56,20 +54,26 @@ export class Phase7MarketService extends MarketService {
         pipSize: Number(pair.pipSize),
         pointValue: Number(pair.pointValue),
         spreadPipsTypical: Number(pair.spreadPipsTypical),
-        providerSymbols: pair.providerSymbols,
       })),
       query,
     );
   }
 
   quote(query: QuoteQuery): never {
-    insufficientData('current quotes', { symbol: query.symbol });
+    const symbols = query.symbols
+      ? Array.isArray(query.symbols)
+        ? query.symbols
+        : query.symbols.split(',').map((symbol) => symbol.trim())
+      : [query.symbol];
+    insufficientData('current quotes', { symbols });
   }
 
   candles(query: CandleRangeQuery): never {
     insufficientData('historical candles', {
       symbol: query.symbol,
       timeframe: query.timeframe,
+      start: query.start ?? query.from,
+      end: query.end ?? query.to,
     });
   }
 

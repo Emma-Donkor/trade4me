@@ -1,3 +1,4 @@
+import { describe, expect, it, jest } from '@jest/globals';
 import type { Server, Socket } from 'socket.io';
 import { JsonLogger } from '../../common/logger/json-logger';
 import { RedisService } from '../redis/redis.service';
@@ -41,7 +42,7 @@ describe('EventsGateway', () => {
     expect(server.adapter).toBeDefined();
   });
 
-  it('accepts a dev handshake without a token and assigns a dev user', () => {
+  it('rejects a handshake without a token in every environment', async () => {
     const gateway = new EventsGateway({} as RedisService, new JsonLogger());
     const client = {
       handshake: { auth: {}, headers: {} },
@@ -49,9 +50,9 @@ describe('EventsGateway', () => {
       disconnect: jest.fn(),
     } as unknown as Socket;
 
-    gateway.handleConnection(client);
+    await gateway.handleConnection(client);
 
-    expect(client.data.user).toEqual({ id: 'dev-user', roles: [] });
-    expect(client.disconnect).not.toHaveBeenCalled();
+    expect(client.data.user).toBeUndefined();
+    expect(client.disconnect).toHaveBeenCalledWith(true);
   });
 });

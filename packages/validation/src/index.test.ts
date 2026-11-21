@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import { healthStatusSchema, nonEmptyString } from './index';
 
 describe('@ts/validation', () => {
