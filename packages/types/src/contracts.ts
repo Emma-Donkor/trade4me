@@ -28,6 +28,7 @@ export type ErrorCode =
   | 'INTERNAL_ERROR'
   | 'BAD_GATEWAY'
   | 'SERVICE_UNAVAILABLE'
+  | 'NOT_IMPLEMENTED'
   | 'HTTP_ERROR';
 
 export interface IndicatorsRequest {

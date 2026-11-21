@@ -772,18 +772,18 @@ Depends on: PHASE 04, PHASE 05
 ```
 
 ### Tasks
-- [ ] **Registration:** email+password → bcrypt hash (cost `BCRYPT_ROUNDS=12`), create `User` + `UserProfile` + default `RiskProfile` (MODERATE defaults), send verification token
-- [ ] **Email verification:** single-use expiring token; unverified users blocked from data routes (configurable; dev mode logs the link)
-- [ ] **Login:** bcrypt compare, rate-limited (`RATE_LIMIT_AUTH_MAX`), returns 15-min access JWT + 7-day rotating refresh token in httpOnly/Secure/SameSite cookie
-- [ ] **Refresh:** rotation with `jti` tracking; reuse detection revokes family; **logout** blacklists `jti` in Redis (`tradesense:session:{jti}`)
-- [ ] **Password reset:** forgot → single-use token (TTL) → reset; invalidates sessions
-- [ ] **Session management:** idle timeout (`SESSION_IDLE_TIMEOUT_MINUTES`), list/revoke own sessions
-- [ ] **RBAC:** `JwtAuthGuard` (global default) + `@Public()` decorator + `RolesGuard` + `@Roles()`; role matrix per README §19.1 (ADMIN → admin routes; ANALYST → model/prediction routes; USER → own data)
-- [ ] **MFA-ready:** `mfaEnabled` field + `/auth/mfa/setup` scaffold returning `501 NOT_IMPLEMENTED` with documented extension point (do not fake MFA)
-- [ ] **Users module:** `GET/PATCH /users/me`, `GET/PATCH /users/me/risk-profile`
-- [ ] **Audit:** `LOGIN`, `LOGOUT`, `REGISTER`, `SETTINGS_CHANGE` written to `AuditLog` (with requestId, IP, no secrets)
-- [ ] **Frontend auth pages:** `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email` using React Hook Form + Zod (shared schemas), error mapping to envelope codes, httpOnly-cookie flow handled by API client
-- [ ] Auth middleware/guards for WebSocket handshake (P03 gateway validates JWT)
+- [x] **Registration:** email+password → bcrypt hash (cost `BCRYPT_ROUNDS=12`), create `User` + `UserProfile` + default `RiskProfile` (MODERATE defaults), send verification token
+- [x] **Email verification:** single-use expiring token; unverified users blocked from data routes (configurable; dev mode logs the link)
+- [x] **Login:** bcrypt compare, rate-limited (`RATE_LIMIT_AUTH_MAX`), returns 15-min access JWT + 7-day rotating refresh token in httpOnly/Secure/SameSite cookie
+- [x] **Refresh:** rotation with `jti` tracking; reuse detection revokes family; **logout** blacklists `jti` in Redis (`tradesense:session:{jti}`)
+- [x] **Password reset:** forgot → single-use token (TTL) → reset; invalidates sessions
+- [x] **Session management:** idle timeout (`SESSION_IDLE_TIMEOUT_MINUTES`), list/revoke own sessions
+- [x] **RBAC:** `JwtAuthGuard` (global default) + `@Public()` decorator + `RolesGuard` + `@Roles()`; role matrix per README §19.1 (ADMIN → admin routes; ANALYST → model/prediction routes; USER → own data)
+- [x] **MFA-ready:** `mfaEnabled` field + `/auth/mfa/setup` scaffold returning `501 NOT_IMPLEMENTED` with documented extension point (do not fake MFA)
+- [x] **Users module:** `GET/PATCH /users/me`, `GET/PATCH /users/me/risk-profile`
+- [x] **Audit:** `LOGIN`, `LOGOUT`, `REGISTER`, `SETTINGS_CHANGE` written to `AuditLog` (with requestId, IP, no secrets)
+- [x] **Frontend auth pages:** `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email` using React Hook Form + Zod (shared schemas), error mapping to envelope codes, httpOnly-cookie flow handled by API client
+- [x] Auth middleware/guards for WebSocket handshake (P03 gateway validates JWT)
 
 ### Files/Folders
 ```text
@@ -821,13 +821,13 @@ Auth pages, API client (TanStack Query mutations), auth Zustand store (access to
 bcrypt never logs plaintext; timing-safe comparison via bcrypt; refresh rotation + reuse detection; cookies httpOnly+Secure+SameSite; auth routes rate-limited 10/min; reset/verification tokens single-use & expiring; RBAC deny-by-default; audit without sensitive payloads.
 
 ### Testing
-- [ ] Unit: token service (expiry, rotation, reuse detection, blacklist)
-- [ ] Unit: password policy + hashing round-trip
-- [ ] Integration: valid login; wrong password 401; unverified blocked; expired access 401; revoked refresh 401
-- [ ] Integration: role matrix — USER denied `/admin/*`, ADMIN allowed, ANALYST allowed on model routes only
-- [ ] E2E (first Playwright flow): register → verify (dev link) → login → dashboard redirect → logout
-- [ ] Security: auth rate-limit triggers 429; no stack traces; no secrets in logs
-- [ ] Regression: P02–P05 tests pass
+- [x] Unit: token service (expiry, rotation, reuse detection, blacklist)
+- [x] Unit: password policy + hashing round-trip
+- [x] Integration: valid login; wrong password 401; unverified blocked; expired access 401; revoked refresh 401
+- [x] Integration: role matrix — USER denied `/admin/*`, ADMIN allowed, ANALYST allowed on model routes only
+- [x] E2E (first Playwright flow): register → verify (dev link) → login → dashboard redirect → logout
+- [x] Security: auth rate-limit triggers 429; no stack traces; no secrets in logs
+- [x] Regression: P02–P05 tests pass
 
 ### Completion Criteria
 Full auth lifecycle works in API and UI; RBAC enforced globally; audit records written; E2E login flow green.
@@ -3288,7 +3288,7 @@ Rules: two engineers may hold B/C/D and A simultaneously; never two phases writi
 | 03 | Architecture Foundation | COMPLETED | 02 | Cross-cutting API/AI/WS/queue skeleton |
 | 04 | Database Foundation | COMPLETED | 03 | Complete schema + migrations + seed |
 | 05 | Shared Types & Validation | COMPLETED | 04 | Enforced API contracts |
-| 06 | Authentication & Authorization | NOT STARTED | 04,05 | Full auth lifecycle + RBAC |
+| 06 | Authentication & Authorization | COMPLETED | 04,05 | Full auth lifecycle + RBAC |
 | 07 | Backend Core | NOT STARTED | 06 | Complete API surface (honest stubs) |
 | 08 | Market Data Infrastructure | NOT STARTED | 07 | Live quotes w/ failover + caching |
 | 09 | Historical Data Pipeline | NOT STARTED | 08 | Full validated history + fast API |

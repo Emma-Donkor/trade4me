@@ -22,6 +22,7 @@ export interface RiskAssessment {
 /** README §14.3 profile templates; user overrides stay within hard caps. */
 export interface RiskProfile {
   name: 'Conservative' | 'Moderate' | 'Aggressive' | string;
+  profileType?: 'CONSERVATIVE' | 'MODERATE' | 'AGGRESSIVE';
   riskPerTradePct: number;
   maxOpenPositions: number;
   maxDailyLossPct: number;

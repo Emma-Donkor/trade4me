@@ -1,5 +1,5 @@
 import { createAdapter } from '@socket.io/redis-adapter';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import {
   OnGatewayConnection,
   OnGatewayInit,
@@ -12,6 +12,7 @@ import { env } from '@ts/config';
 import type { WebSocketEvent, WebSocketEventName } from '@ts/types';
 import { configuration } from '../../config/configuration';
 import { JsonLogger } from '../../common/logger/json-logger';
+import { JwtStrategy } from '../auth/strategies/jwt.strategy';
 import { RedisService } from '../redis/redis.service';
 
 function handshakeToken(socket: Socket): string | undefined {
@@ -35,6 +36,7 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection {
   constructor(
     @Inject(RedisService) private readonly redis: RedisService,
     @Inject(JsonLogger) private readonly logger: JsonLogger,
+    @Optional() private readonly strategy?: JwtStrategy,
   ) {}
 
   afterInit(server: Server): void {
@@ -47,7 +49,7 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection {
     );
   }
 
-  handleConnection(client: Socket): void {
+  async handleConnection(client: Socket): Promise<void> {
     const token = handshakeToken(client);
     const secret = env.JWT_SECRET ? String(env.JWT_SECRET) : '';
 
@@ -65,7 +67,10 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection {
       return;
     }
     try {
-      client.data.user = verify(token, secret);
+      // P06: the same verification path as HTTP, including revocation checks.
+      client.data.user = this.strategy
+        ? await this.strategy.authenticate(token)
+        : verify(token, secret);
     } catch {
       client.disconnect(true);
     }

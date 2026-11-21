@@ -17,6 +17,7 @@ const CODE_BY_STATUS: Record<number, ErrorCode> = {
   500: 'INTERNAL_ERROR',
   502: 'BAD_GATEWAY',
   503: 'SERVICE_UNAVAILABLE',
+  501: 'NOT_IMPLEMENTED',
 };
 
 function detailsOf(exception: HttpException): unknown | undefined {

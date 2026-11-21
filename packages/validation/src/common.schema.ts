@@ -18,6 +18,7 @@ export const ERROR_CODES = [
   'INTERNAL_ERROR',
   'BAD_GATEWAY',
   'SERVICE_UNAVAILABLE',
+  'NOT_IMPLEMENTED',
   'HTTP_ERROR',
 ] as const satisfies readonly ErrorCode[];
 

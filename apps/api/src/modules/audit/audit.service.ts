@@ -11,6 +11,7 @@ export interface AuditEntry {
   entityId?: string;
   metadata?: Record<string, unknown>;
   requestId?: string;
+  ip?: string;
 }
 
 export interface BufferedAuditEntry extends AuditEntry {
@@ -83,6 +84,7 @@ export class AuditService {
         symbol: entry.entity === 'CurrencyPair' ? (entry.entityId ?? null) : null,
         metadata: (entry.metadata ?? {}) as Prisma.InputJsonValue,
         requestId: entry.requestId ?? 'unspecified',
+        ip: entry.ip ?? null,
         timestamp: new Date(entry.at),
       },
     });

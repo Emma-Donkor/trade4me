@@ -11,6 +11,8 @@ out/
 coverage/
 *.tsbuildinfo
 .npm/
+test-results/
+playwright-report/
 
 # ---- Python ----
 __pycache__/
@@ -29,6 +31,7 @@ htmlcov/
 .env
 .env.*
 !.env.example
+.auth-dev-links.log
 *.pem
 *.key
 *.p12

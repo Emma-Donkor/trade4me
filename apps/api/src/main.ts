@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { MONOREPO_ROOT_PACKAGE } from '@ts/types';
 import { AppModule } from './app.module';
 import { JsonLogger } from './common/logger/json-logger';
@@ -24,6 +25,8 @@ async function bootstrap(): Promise<void> {
       },
     }),
   );
+  // P06: the rotating refresh token travels in an httpOnly cookie.
+  app.use(cookieParser());
   app.enableCors({ origin: configuration.cors.origins, credentials: true });
   app.setGlobalPrefix('api/v1');
 

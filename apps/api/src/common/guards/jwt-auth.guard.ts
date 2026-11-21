@@ -1,12 +1,23 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Optional,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { verify } from 'jsonwebtoken';
 import { env } from '@ts/config';
+import { JwtStrategy } from '../../modules/auth/strategies/jwt.strategy';
 import { IS_PUBLIC_KEY } from '../decorators/public';
 
 export interface AuthenticatedUser {
   id: string;
   roles: string[];
+  email?: string;
+  sid?: string;
+  jti?: string;
+  exp?: number;
 }
 
 export type AuthenticatedRequest = Request & {
@@ -20,10 +31,17 @@ function bearerToken(header: string | undefined): string | undefined {
   return match?.[1];
 }
 
-/** JWT guard scaffold; wired globally in P06 once auth endpoints exist. */
+/**
+ * Global default guard (P06). `@Public()` opts a route out. When the auth
+ * strategy is available, tokens are checked against the Redis blacklist and
+ * session idle window; the synchronous fallback keeps isolated guard tests
+ * and pre-auth bootstrapping working.
+ */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
+  constructor(@Optional() private readonly strategy?: JwtStrategy) {}
+
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> {
     if (context.getType() !== 'http') return true;
 
     const handler = context.getHandler();
@@ -37,17 +55,19 @@ export class JwtAuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const token = bearerToken(request.headers.authorization);
-    const secret = env.JWT_SECRET ? String(env.JWT_SECRET) : '';
-
     if (!token) {
-      if (!secret && String(env.NODE_ENV) !== 'production') {
+      if (!this.strategy && !env.JWT_SECRET && String(env.NODE_ENV) !== 'production') {
         request.user = { id: 'dev-user', roles: ['USER'] };
         return true;
       }
       throw new UnauthorizedException('Missing bearer token');
     }
-    if (!secret) throw new UnauthorizedException('JWT secret is not configured');
 
+    if (this.strategy) return this.authenticate(request, token);
+
+    // Legacy synchronous path (no DI container): signature verification only.
+    const secret = env.JWT_SECRET ? String(env.JWT_SECRET) : '';
+    if (!secret) throw new UnauthorizedException('JWT secret is not configured');
     try {
       const payload = verify(token, secret) as { sub?: string; roles?: unknown };
       request.user = {
@@ -60,5 +80,11 @@ export class JwtAuthGuard implements CanActivate {
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
+  }
+
+  private async authenticate(request: AuthenticatedRequest, token: string): Promise<boolean> {
+    const identity = await this.strategy!.authenticate(token);
+    request.user = identity;
+    return true;
   }
 }

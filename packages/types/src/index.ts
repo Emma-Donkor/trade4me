@@ -5,6 +5,7 @@
  * stay in `contracts.ts` so the cross-language parity guard reads one file.
  */
 export * from './contracts';
+export * from './auth';
 export * from './market';
 export * from './news';
 export * from './ai';

@@ -393,9 +393,11 @@ sequenceDiagram
     U->>W: POST /auth/register (email, password)
     W->>A: POST /api/v1/auth/register
     A->>A: Zod/DTO validation + password hashing (bcrypt)
-    A->>D: INSERT User (unverified) + email verification token
+    A->>D: INSERT User (unverified) + profile + default risk profile
+    A->>R: store single-use email verification token
     A-->>W: 201 Created (no token until verified)
     U->>A: POST /auth/verify-email (token)
+    A->>R: consume single-use token
     A->>D: mark email verified
 
     U->>A: POST /auth/login
@@ -409,6 +411,8 @@ sequenceDiagram
 
     Note over U,A: Refresh — POST /auth/refresh rotates the refresh token<br/>Logout blacklists refresh jti in Redis
 ```
+
+In development (`NODE_ENV !== production`) verification and reset links are logged and appended to the gitignored `.auth-dev-links.log` so local and E2E flows can complete without SMTP. Production never writes links or tokens to logs.
 
 ### 6.4 Market-data pipeline
 
@@ -1387,7 +1391,8 @@ Register → Configure risk profile → Dashboard → Select currency pair
 - Access JWT (15 min) + rotating refresh token in httpOnly/Secure/SameSite cookie; refresh `jti` blacklisted in Redis on logout.
 - Email verification + password-reset flows with single-use, expiring tokens.
 - **MFA-ready architecture** (`mfaEnabled` field + `/auth/mfa/setup` scaffold).
-- RBAC: `USER`, `ADMIN`, `ANALYST` — enforced by NestJS guards on every route; admin/analyst endpoints double-checked per-resource.
+- RBAC: `USER`, `ADMIN`, `ANALYST` — enforced by global NestJS guards on every route (deny by default); admin/analyst endpoints double-checked per-resource.
+- Auth routes are rate-limited to 10 requests/minute; WebSocket handshakes use the same JWT strategy as HTTP.
 
 ### 19.2 Application hardening
 
@@ -1494,7 +1499,7 @@ E2E:     register → login → dashboard → pair analysis → scanner →
 
 Targets: strong coverage on business-critical modules (risk, scoring, sizing, features) — coverage thresholds enforced in CI for those directories.
 
-Commands: `npm test` · `npm run test:integration` · `npm run test:e2e` · `npm run test:ml`.
+Commands: `npm test` · `npm run test:ai` · `npm run test:e2e`.
 
 ---
 

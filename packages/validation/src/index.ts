@@ -11,6 +11,7 @@ export type HealthStatus = z.infer<typeof healthStatusSchema>;
 
 export * from './common.schema';
 export * from './auth.schema';
+export * from './user.schema';
 export * from './market.schema';
 export * from './backtest.schema';
 export * from './paper.schema';
