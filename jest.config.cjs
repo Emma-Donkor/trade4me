@@ -2,7 +2,12 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/apps/api/src', '<rootDir>/apps/web/src', '<rootDir>/packages'],
+  roots: [
+    '<rootDir>/apps/api/src',
+    '<rootDir>/apps/web/src',
+    '<rootDir>/packages',
+    '<rootDir>/tests',
+  ],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
@@ -15,6 +20,8 @@ module.exports = {
     '^.+\\.tsx?$': [
       'ts-jest',
       {
+        // One CommonJS transform for every test workspace, including the
+        // root `tests/` folder which sits under this ESM package.json.
         tsconfig: '<rootDir>/tsconfig.jest.json',
       },
     ],

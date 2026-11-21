@@ -1,11 +1,12 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import type { Response } from 'express';
 import { randomUUID } from 'node:crypto';
-import type { ApiError } from '@ts/types';
+import type { ApiError, ErrorCode } from '@ts/types';
+import { errorCodeSchema } from '@ts/validation';
 import { redact } from '../logger/redact';
 import type { RequestWithId } from '../interceptors/request-id.interceptor';
 
-const CODE_BY_STATUS: Record<number, string> = {
+const CODE_BY_STATUS: Record<number, ErrorCode> = {
   400: 'BAD_REQUEST',
   401: 'UNAUTHORIZED',
   403: 'FORBIDDEN',
@@ -27,11 +28,11 @@ function detailsOf(exception: HttpException): unknown | undefined {
   return undefined;
 }
 
-function codeOf(exception: HttpException, status: number): string {
+function codeOf(exception: HttpException, status: number): ErrorCode {
   const response = exception.getResponse();
   if (typeof response === 'object' && response !== null) {
-    const code = (response as Record<string, unknown>).code;
-    if (typeof code === 'string' && code.length > 0) return code;
+    const parsed = errorCodeSchema.safeParse((response as Record<string, unknown>).code);
+    if (parsed.success) return parsed.data;
   }
   return CODE_BY_STATUS[status] ?? 'HTTP_ERROR';
 }

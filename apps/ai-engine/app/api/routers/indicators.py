@@ -3,22 +3,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+
+from ...schemas import IndicatorsRequest, IndicatorsResponse
 
 router = APIRouter(tags=['indicators'])
-
-
-class IndicatorsRequest(BaseModel):
-    symbol: str
-    timeframe: str
-    indicators: list[str] | None = None
-
-
-class IndicatorsResponse(BaseModel):
-    symbol: str
-    timeframe: str
-    indicators: dict[str, object]
-    computedAt: str
 
 
 @router.post('/indicators', response_model=IndicatorsResponse)

@@ -3,25 +3,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+
+from ...schemas import PredictRequest, PredictResponse
 
 router = APIRouter(tags=['predict'])
-
-
-class PredictRequest(BaseModel):
-    symbol: str
-    timeframe: str
-    horizon: int
-
-
-class PredictResponse(BaseModel):
-    symbol: str
-    timeframe: str
-    direction: str
-    probability: float
-    confidence: float
-    riskLevel: str
-    modelVersion: str
 
 
 @router.post('/predict', response_model=PredictResponse)

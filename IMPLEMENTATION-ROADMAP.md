@@ -704,14 +704,14 @@ Depends on: PHASE 04
 ```
 
 ### Tasks
-- [ ] **`packages/types`** — domain types mirroring DB models + API DTOs:
+- [x] **`packages/types`** — domain types mirroring DB models + API DTOs:
   `MarketQuote`, `Candle`, `CurrencyPair`, `Timeframe`, `TechnicalIndicatorSnapshot`, `CandlePattern`, `MarketRegime`, `NewsArticle`, `NewsAnalysis`, `EconomicEvent`, `FeatureVector` (with `featureVersion`), `Prediction` + structured model output (symbol/timeframe/direction/probability/confidence/riskLevel/modelVersion), `TradeSignal` (scores, reasons, noTradeReasons), `RiskAssessment` (positionSize, maxLoss, riskReward, verdicts), `DecisionWeights`, `SignalScoreBand`, `PortfolioSummary`, `Position`, `BacktestConfig`/`BacktestResult`, `Watchlist(Item)`, `Notification`, `AIAnalysis` (supporting/contradicting evidence, freshness), `Paginated<T>`, API envelope types (`ApiResponse<T>`, `ApiError`)
-- [ ] **`packages/validation`** — Zod schemas for every request body/query/params: auth payloads, pagination (`limit`/`cursor`), candle range query, backtest config, paper order (entry/sl/tp/size with refinement: sl on correct side of entry, rr ≥ 0), risk calculate/evaluate, scanner query (`sortBy ∈ score|probability|risk|volatility`), AI assistant message, watchlist reorder
-- [ ] Shared error-code union (`MARKET_DATA_STALE`, `MARKET_DATA_UNAVAILABLE`, `NO_TRADE_RULE_VIOLATION`, `VALIDATION_ERROR`, `RATE_LIMITED`, `AI_SERVICE_UNAVAILABLE`, `INSUFFICIENT_DATA`, …) matching README §8.4
-- [ ] WebSocket event payload types matching README §8.3
-- [ ] Zod→OpenAPI helper so Swagger schemas derive from the same source
-- [ ] Contract test: every type has a corresponding Zod schema where it crosses a boundary (compile-time + runtime parity)
-- [ ] AI-engine parity: pydantic models for the same DTOs (P03 stubs updated to import from one `app/schemas/` module), cross-checked by fixture-based parity test
+- [x] **`packages/validation`** — Zod schemas for every request body/query/params: auth payloads, pagination (`limit`/`cursor`), candle range query, backtest config, paper order (entry/sl/tp/size with refinement: sl on correct side of entry, rr ≥ 0), risk calculate/evaluate, scanner query (`sortBy ∈ score|probability|risk|volatility`), AI assistant message, watchlist reorder
+- [x] Shared error-code union (`MARKET_DATA_STALE`, `MARKET_DATA_UNAVAILABLE`, `NO_TRADE_RULE_VIOLATION`, `VALIDATION_ERROR`, `RATE_LIMITED`, `AI_SERVICE_UNAVAILABLE`, `INSUFFICIENT_DATA`, …) matching README §8.4
+- [x] WebSocket event payload types matching README §8.3
+- [x] Zod→OpenAPI helper so Swagger schemas derive from the same source
+- [x] Contract test: every type has a corresponding Zod schema where it crosses a boundary (compile-time + runtime parity)
+- [x] AI-engine parity: pydantic models for the same DTOs (P03 stubs updated to import from one `app/schemas/` module), cross-checked by fixture-based parity test
 
 ### Files/Folders
 ```text
@@ -742,10 +742,10 @@ None (consumed in P18).
 Validation schemas reject unknown keys (`strict`) on auth and trading inputs; monetary inputs accept only numbers with max decimal precision; no `any` types in public contracts.
 
 ### Testing
-- [ ] Unit: every schema accepts valid fixture / rejects invalid fixture (table-driven)
-- [ ] Unit: paper-order refinement rejects SL on wrong side, negative size, zero R/R
-- [ ] Contract: TS↔Python payload parity for the four AI routes
-- [ ] Regression: P02–P04 tests pass
+- [x] Unit: every schema accepts valid fixture / rejects invalid fixture (table-driven)
+- [x] Unit: paper-order refinement rejects SL on wrong side, negative size, zero R/R
+- [x] Contract: TS↔Python payload parity for the four AI routes
+- [x] Regression: P02–P04 tests pass
 
 ### Completion Criteria
 All boundary contracts exist, validate, and are importable by api, web and (as pydantic) ai-engine; zero duplicated ad-hoc DTOs remain.
@@ -3287,7 +3287,7 @@ Rules: two engineers may hold B/C/D and A simultaneously; never two phases writi
 | 02 | Monorepo Foundation | COMPLETED | 01 | Buildable monorepo skeleton |
 | 03 | Architecture Foundation | COMPLETED | 02 | Cross-cutting API/AI/WS/queue skeleton |
 | 04 | Database Foundation | COMPLETED | 03 | Complete schema + migrations + seed |
-| 05 | Shared Types & Validation | NOT STARTED | 04 | Enforced API contracts |
+| 05 | Shared Types & Validation | COMPLETED | 04 | Enforced API contracts |
 | 06 | Authentication & Authorization | NOT STARTED | 04,05 | Full auth lifecycle + RBAC |
 | 07 | Backend Core | NOT STARTED | 06 | Complete API surface (honest stubs) |
 | 08 | Market Data Infrastructure | NOT STARTED | 07 | Live quotes w/ failover + caching |

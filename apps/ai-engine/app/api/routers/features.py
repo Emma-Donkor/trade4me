@@ -3,23 +3,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+
+from ...schemas import FeaturesRequest, FeaturesResponse
 
 router = APIRouter(tags=['features'])
-
-
-class FeaturesRequest(BaseModel):
-    symbol: str
-    timeframe: str
-    featureVersion: str | None = None
-
-
-class FeaturesResponse(BaseModel):
-    symbol: str
-    timeframe: str
-    featureVersion: str
-    features: dict[str, float]
-    timestamp: str
 
 
 @router.post('/features', response_model=FeaturesResponse)

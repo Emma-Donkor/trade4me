@@ -49,14 +49,31 @@ export const predictResponseSchema = z.object({
   modelVersion: z.string().min(1),
 });
 
-export const explainRequestSchema = z.object({
+export const explainRequestSchema = z.strictObject({
   predictionId: z.string().min(1),
 });
 
-export const explainResponseSchema = z.object({
+export const explainFactorSchema = z.strictObject({
+  name: z.string().min(1),
+  impact: z.number(),
+});
+
+export const explainResponseSchema = z.strictObject({
   predictionId: z.string().min(1),
   summary: z.string(),
-  factors: z.array(z.object({ name: z.string().min(1), impact: z.number() })),
+  factors: z.array(explainFactorSchema),
+});
+
+/** README §12.5 — grounded assistant input; history is bounded. */
+export const assistantMessageSchema = z.strictObject({
+  role: z.enum(['USER', 'ASSISTANT']),
+  content: z.string().min(1).max(4000),
+  at: z.string().min(1).optional(),
+});
+
+export const assistantRequestSchema = z.strictObject({
+  message: z.string().min(1).max(4000),
+  history: z.array(assistantMessageSchema).max(50).optional(),
 });
 
 /** PascalCase aliases for consumers that prefer class-style schema names. */
@@ -67,7 +84,10 @@ export const FeaturesResponseSchema = featuresResponseSchema;
 export const PredictRequestSchema = predictRequestSchema;
 export const PredictResponseSchema = predictResponseSchema;
 export const ExplainRequestSchema = explainRequestSchema;
+export const ExplainFactorSchema = explainFactorSchema;
 export const ExplainResponseSchema = explainResponseSchema;
+export const AssistantMessageSchema = assistantMessageSchema;
+export const AssistantRequestSchema = assistantRequestSchema;
 
 export type IndicatorsRequest = z.infer<typeof indicatorsRequestSchema>;
 export type IndicatorsResponse = z.infer<typeof indicatorsResponseSchema>;
@@ -77,3 +97,5 @@ export type PredictRequest = z.infer<typeof predictRequestSchema>;
 export type PredictResponse = z.infer<typeof predictResponseSchema>;
 export type ExplainRequest = z.infer<typeof explainRequestSchema>;
 export type ExplainResponse = z.infer<typeof explainResponseSchema>;
+export type AssistantMessage = z.infer<typeof assistantMessageSchema>;
+export type AssistantRequest = z.infer<typeof assistantRequestSchema>;
