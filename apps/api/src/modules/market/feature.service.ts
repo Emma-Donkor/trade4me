@@ -98,15 +98,19 @@ export class FeatureService {
   async latest(
     symbol: string,
     timeframe: Timeframe,
-    at: Date | string = new Date(),
+    at: Date | string | number = new Date(),
   ): Promise<FeatureVector> {
     const pair = await this.pairOf(symbol);
+    const timestamp = at instanceof Date ? at : new Date(at);
+    if (Number.isNaN(timestamp.getTime())) {
+      insufficientData('feature vector', { symbol, timeframe, at: String(at) });
+    }
     const row = await this.prisma.getClient().marketFeature.findFirst({
       where: {
         pairId: pair.id,
         timeframe,
         featureVersion: env.FEATURE_VERSION,
-        timestamp: { lte: new Date(at) },
+        timestamp: { lte: timestamp },
       },
       orderBy: { timestamp: 'desc' },
     });

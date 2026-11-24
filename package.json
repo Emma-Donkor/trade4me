@@ -27,7 +27,7 @@
     "start:web": "npm run start -w apps/web",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "npm run build:packages && npm run typecheck -w packages/types && npm run typecheck -w packages/validation && npm run typecheck -w packages/config && npm run typecheck -w packages/database && npm run typecheck -w apps/api && npm run typecheck -w apps/web && tsc -p tsconfig.json --noEmit",
+    "typecheck": "npm run build:packages && npm run typecheck -w packages/types && npm run typecheck -w packages/validation && npm run typecheck -w packages/config && npm run typecheck -w packages/database && npm run typecheck -w apps/api && npm run typecheck -w apps/web && tsc -p tsconfig.json --noEmit && tsc -p tsconfig.jest.json --noEmit",
     "test": "jest --config jest.config.cjs --runInBand",
     "test:ai": "node scripts/run-in-ai-venv.mjs pytest apps/ai-engine",
     "test:e2e": "playwright test --config playwright.config.ts",

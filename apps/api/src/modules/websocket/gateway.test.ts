@@ -27,8 +27,9 @@ describe('EventsGateway', () => {
     );
   });
 
-  it('installs the Redis adapter on the underlying Socket.IO server', () => {
+  it('connects lazy pub/sub clients before installing the Redis adapter', async () => {
     const redis = {
+      ensureConnected: jest.fn(async () => undefined),
       getPublisher: jest.fn(() => ({})),
       getSubscriber: jest.fn(() => ({})),
     } as unknown as RedisService;
@@ -37,12 +38,38 @@ describe('EventsGateway', () => {
     const io = { adapter: jest.fn() };
     const server = { emit: jest.fn(), server: io } as unknown as Server;
 
+    await gateway.onModuleInit();
     gateway.afterInit(server);
 
+    expect(redis.ensureConnected).toHaveBeenCalledTimes(1);
     expect(redis.getPublisher).toHaveBeenCalled();
     expect(redis.getSubscriber).toHaveBeenCalled();
     expect(io.adapter).toHaveBeenCalledTimes(1);
     expect(typeof io.adapter.mock.calls[0][0]).toBe('function');
+  });
+
+  it('starts without a shared adapter when Redis is unavailable', async () => {
+    const redis = {
+      ensureConnected: jest.fn(async () => {
+        throw new Error('redis down');
+      }),
+      getPublisher: jest.fn(),
+      getSubscriber: jest.fn(),
+    } as unknown as RedisService;
+    const logger = { warn: jest.fn() } as unknown as JsonLogger;
+    const gateway = new EventsGateway(redis, logger);
+    const io = { adapter: jest.fn() };
+    const server = { emit: jest.fn(), server: io } as unknown as Server;
+
+    await gateway.onModuleInit();
+    gateway.afterInit(server);
+
+    expect(io.adapter).not.toHaveBeenCalled();
+    expect(redis.getPublisher).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Redis pub/sub unavailable'),
+      'WS',
+    );
   });
 
   it('rejects a handshake without a token in every environment', async () => {

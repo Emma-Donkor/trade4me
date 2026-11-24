@@ -44,7 +44,7 @@ describe('P12 feature engineering engine', () => {
     await seedHistory(harness.prisma, {
       symbols: SYMBOLS,
       timeframes: TIMEFRAMES,
-      years: 0.6,
+      years: 2,
       end: END,
     });
     const article = await harness.prisma.newsArticle.create({

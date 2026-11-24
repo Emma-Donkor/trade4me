@@ -1,5 +1,5 @@
 import { createAdapter } from '@socket.io/redis-adapter';
-import { Inject, Injectable, Optional } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit, Optional } from '@nestjs/common';
 import {
   OnGatewayConnection,
   OnGatewayInit,
@@ -29,9 +29,11 @@ function handshakeToken(socket: Socket): string | undefined {
   namespace: '/',
   cors: { origin: configuration.cors.origins, credentials: true },
 })
-export class EventsGateway implements OnGatewayInit, OnGatewayConnection {
+export class EventsGateway implements OnModuleInit, OnGatewayInit, OnGatewayConnection {
   @WebSocketServer()
   server: Server | undefined;
+
+  private pubSubReady = false;
 
   constructor(
     @Inject(RedisService) private readonly redis: RedisService,
@@ -39,8 +41,23 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection {
     @Optional() private readonly strategy?: JwtStrategy,
   ) {}
 
+  /** Redis clients are lazy; connect them before Socket.IO calls `psubscribe`. */
+  async onModuleInit(): Promise<void> {
+    try {
+      await this.redis.ensureConnected();
+      this.pubSubReady = true;
+    } catch (error) {
+      this.pubSubReady = false;
+      this.logger.warn(
+        `Redis pub/sub unavailable; realtime runs without the shared adapter: ${String(error)}`,
+        'WS',
+      );
+    }
+  }
+
   afterInit(server: Server): void {
     this.server = server;
+    if (!this.pubSubReady) return;
     // Nest hands the gateway a Namespace (because `/` is configured), not the
     // root Server. `Namespace.adapter` is the live adapter instance, so it must
     // never be overwritten with a factory; install it on `Namespace.server`
