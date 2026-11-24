@@ -1160,25 +1160,28 @@ Depends on: PHASE 08 (patterns of provider plumbing), PHASE 07
 ```
 
 ### Tasks
-- [ ] `NewsProvider` interface + adapters: **MockProvider** (curated fixture articles covering rates/inflation/GDP/employment/central-bank/geopolitics, deterministic) and production adapter (e.g. NewsAPI/Finnhub) behind `NEWS_API_KEY`
-- [ ] Ingestion job (`news-ingest`, `NEWS_POLL_INTERVAL_MINUTES`): fetch → normalize → dedupe by `sourceUrl` + `contentHash` → store `NewsArticle`
-- [ ] **Analysis pipeline** (README §11.1): clean text → entity/currency extraction → event classification → sentiment (`BULLISH|BEARISH|NEUTRAL`) → impact (`LOW|MEDIUM|HIGH|EXTREME`) → confidence → `NewsAnalysis` (1:1 article)
-  - Initial classifier: rule/lexicon-based (financial sentiment lexicon + event keyword taxonomy) — deterministic, testable, no key required
-  - LLM-assisted classification path implemented as **optional enhancer** in P17 (same structured output)
-- [ ] **Economic events**: calendar ingestion (mock calendar + production adapter), `EconomicEvent` rows with `scheduledAt`, class, impact; upcoming-event proximity computed for risk rules (P15) and features (P12)
-- [ ] **Aggregation**: `GET /news/sentiment/:symbol` → impact×recency-weighted pair sentiment (0–100 + label) cached 5 min
-- [ ] Real route bodies: `GET /news` (filters: currency, sentiment, impact; paginated), `GET /news/:id`, `GET /news/events`
-- [ ] **Untrusted-content hardening**: strip markup, truncate, neutralize injection patterns before storage/any LLM use; article text never becomes instructions
-- [ ] WS/news cache invalidation on new high-impact items; `NEWS_ALERT` notification fan-out prepared for P27
+- [x] `NewsProvider` interface + adapters: **MockProvider** (curated fixture articles covering rates/inflation/GDP/employment/central-bank/geopolitics, deterministic) and production adapter (e.g. NewsAPI/Finnhub) behind `NEWS_API_KEY`
+- [x] Ingestion job (`news-ingest`, `NEWS_POLL_INTERVAL_MINUTES`): fetch → normalize → dedupe by `sourceUrl` + `contentHash` → store `NewsArticle`
+- [x] **Analysis pipeline** (README §11.1): clean text → entity/currency extraction → event classification → sentiment (`BULLISH|BEARISH|NEUTRAL`) → impact (`LOW|MEDIUM|HIGH|EXTREME`) → confidence → `NewsAnalysis` (1:1 article)
+  - [x] Initial classifier: rule/lexicon-based (financial sentiment lexicon + event keyword taxonomy) — deterministic, testable, no key required
+  - [x] LLM-assisted classification path implemented as **optional enhancer** in P17 (same structured output)
+- [x] **Economic events**: calendar ingestion (mock calendar + production adapter), `EconomicEvent` rows with `scheduledAt`, class, impact; upcoming-event proximity computed for risk rules (P15) and features (P12)
+- [x] **Aggregation**: `GET /news/sentiment/:symbol` → impact×recency-weighted pair sentiment (0–100 + label) cached 5 min
+- [x] Real route bodies: `GET /news` (filters: currency, sentiment, impact; paginated), `GET /news/:id`, `GET /news/events`
+- [x] **Untrusted-content hardening**: strip markup, truncate, neutralize injection patterns before storage/any LLM use; article text never becomes instructions
+- [x] WS/news cache invalidation on new high-impact items; `NEWS_ALERT` notification fan-out prepared for P27
 
 ### Files/Folders
 ```text
 apps/api/src/modules/news/{news.module.ts, controller, service, aggregator.service.ts,
-  providers/{news-provider.interface.ts, mock.provider.ts, production.provider.ts},
-  analysis/{extractor.ts, classifier.ts, lexicon.ts, events.ts}}
+  economic-events.service.ts, news-cache.service.ts, news-ingestion.service.ts,
+  providers/{news-provider.interface.ts, mock.provider.ts, production.provider.ts,
+    news.registry.ts, news-rate-limiter.ts, news.fixtures.ts},
+  analysis/{extractor.ts, classifier.ts, lexicon.ts, events.ts, sanitizer.ts, weighting.ts}}
 apps/api/src/jobs/processors/news-ingest.processor.ts
-apps/api/src/modules/news/... economic-events service
-tests/fixtures/news/*.json
+apps/api/src/modules/news/analysis/news-analysis.test.ts
+apps/api/test/phase11-integration.test.ts
+tests/fixtures/news/{articles.json,events.json}
 ```
 
 ### Implementation
@@ -1202,13 +1205,13 @@ None.
 Dedupe prevents flooding; source allowlisting; injection patterns scrubbed; raw article content never rendered as HTML; rate-limited provider calls; `NEWS_API_KEY` server-side only.
 
 ### Testing
-- [ ] Unit: each event class detected (rates/inflation/GDP/employment/central bank/geopolitics) on fixtures
-- [ ] Unit: sentiment/impact classifier on positive/negative/neutral/urgent fixtures
-- [ ] Unit: dedupe — same URL/content twice → one row
-- [ ] Unit: injection fixture (`"Ignore previous instructions…"`) is stored as inert text and flagged
-- [ ] Integration: ingest → classify → aggregate → `news/sentiment/EUR/USD` matches hand-computed weight
-- [ ] Integration: economic-event proximity computed correctly for a scheduled fixture event
-- [ ] Regression: P02–P10 tests pass
+- [x] Unit: each event class detected (rates/inflation/GDP/employment/central bank/geopolitics) on fixtures
+- [x] Unit: sentiment/impact classifier on positive/negative/neutral/urgent fixtures
+- [x] Unit: dedupe — same URL/content twice → one row
+- [x] Unit: injection fixture (`"Ignore previous instructions…"`) is stored as inert text and flagged
+- [x] Integration: ingest → classify → aggregate → `news/sentiment/EUR/USD` matches hand-computed weight
+- [x] Integration: economic-event proximity computed correctly for a scheduled fixture event
+- [x] Regression: P02–P10 tests pass
 
 ### Completion Criteria
 News flows provider → dedupe → structured classification → aggregation → API; safety scrubbing proven; no LLM key required for the core path.

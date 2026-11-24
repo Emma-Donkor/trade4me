@@ -1,0 +1,45 @@
+{
+  "proximity": [
+    { "name": "inWindow", "minutesAhead": 30, "minutesUntil": 30, "imminent": true },
+    { "name": "boundary", "minutesAhead": 60, "minutesUntil": 60, "imminent": true },
+    { "name": "outsideWindow", "minutesAhead": 61, "minutesUntil": 61, "imminent": false },
+    { "name": "past", "minutesAhead": -5, "minutesUntil": -5, "imminent": false }
+  ],
+  "calendar": [
+    {
+      "eventName": "Fed Interest Rate Decision",
+      "currency": "USD",
+      "hoursAhead": 0.5,
+      "impact": "HIGH",
+      "eventClass": "RATES"
+    },
+    {
+      "eventName": "US CPI YoY",
+      "currency": "USD",
+      "hoursAhead": 3,
+      "impact": "EXTREME",
+      "eventClass": "INFLATION"
+    },
+    {
+      "eventName": "ECB Monetary Policy Meeting",
+      "currency": "EUR",
+      "hoursAhead": 26,
+      "impact": "HIGH",
+      "eventClass": "CENTRAL_BANK"
+    },
+    {
+      "eventName": "UK GDP Growth QoQ",
+      "currency": "GBP",
+      "hoursAhead": -2,
+      "impact": "MEDIUM",
+      "eventClass": "GDP"
+    },
+    {
+      "eventName": "US Nonfarm Payrolls",
+      "currency": "USD",
+      "hoursAhead": 120,
+      "impact": "HIGH",
+      "eventClass": "EMPLOYMENT"
+    }
+  ]
+}

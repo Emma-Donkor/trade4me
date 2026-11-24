@@ -11,6 +11,7 @@ import { JsonLogger } from '../common/logger/json-logger';
 import { BackfillProcessor } from './processors/backfill.processor';
 import { IntegrityProcessor } from './processors/integrity.processor';
 import { MarketSyncProcessor } from './processors/market-sync.processor';
+import { NewsIngestProcessor } from './processors/news-ingest.processor';
 import { bullConnectionOptions, QUEUE_NAMES, QueueRegistry, type QueueName } from './queues';
 
 export interface CronRegistration {
@@ -111,6 +112,7 @@ export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
     @Optional() private readonly marketSyncProcessor?: MarketSyncProcessor,
     @Optional() private readonly backfillProcessor?: BackfillProcessor,
     @Optional() private readonly integrityProcessor?: IntegrityProcessor,
+    @Optional() private readonly newsIngestProcessor?: NewsIngestProcessor,
   ) {}
 
   onModuleInit(): void {
@@ -133,6 +135,10 @@ export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
           }
           if (queueName === 'integrity' && this.integrityProcessor) {
             await this.integrityProcessor.process(job);
+            return;
+          }
+          if (queueName === 'news-ingest' && this.newsIngestProcessor) {
+            await this.newsIngestProcessor.process(job);
             return;
           }
           this.logger.log('job received; processor arrives in a later phase', 'WORKER', {

@@ -56,6 +56,7 @@ import { WebsocketModule } from '../websocket/websocket.module';
     CandleSyncService,
     CandleIntegrityService,
     HistoryStateService,
+    SystemEventService,
     ProviderRegistry,
     ProviderHealthStore,
   ],

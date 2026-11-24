@@ -138,6 +138,11 @@ export function memoryRedis(): MemoryRedis {
     onModuleDestroy: jest.fn(async () => undefined),
     // Minimal Redis EVAL stand-in for the provider token-bucket Lua script.
     getClient: jest.fn(() => ({
+      // IdempotentProcessor lock check. Stray BullMQ jobs persisted in a local
+      // Redis must never mutate the shared test database, so report the lock
+      // as already held and let the processor skip them.
+      set: jest.fn(async () => null),
+      del: jest.fn(async () => 1),
       eval: jest.fn(
         async (
           _script: string,

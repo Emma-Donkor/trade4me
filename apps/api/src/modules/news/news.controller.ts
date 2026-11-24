@@ -16,7 +16,7 @@ const newsListQuerySchema = newsFeedQuerySchema.extend({
   cursor: paginationSchema.shape.cursor,
 });
 
-type NewsListQuery = z.infer<typeof newsListQuerySchema>;
+export type NewsListQuery = z.infer<typeof newsListQuerySchema>;
 type IdParam = z.infer<typeof idParamSchema>;
 
 @Controller('news')

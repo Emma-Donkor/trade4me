@@ -4114,7 +4114,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Paginated news feed",
+            "description": "Paginated, classified news feed (filters: currency, sentiment, impact)",
             "content": {
               "application/json": {
                 "schema": {
@@ -4123,7 +4123,20 @@
                 "example": {
                   "success": true,
                   "data": {
-                    "items": [],
+                    "items": [
+                      {
+                        "id": "news_01",
+                        "source": "mock-wire",
+                        "title": "Federal Reserve raises interest rates by 25 basis points",
+                        "publishedAt": "2026-01-15T11:00:00.000Z",
+                        "currencies": ["USD"],
+                        "analysis": {
+                          "eventType": "INTEREST_RATES",
+                          "sentiment": "BULLISH",
+                          "impact": "HIGH"
+                        }
+                      }
+                    ],
                     "nextCursor": null,
                     "hasMore": false
                   },
@@ -4278,7 +4291,7 @@
           }
         },
         "tags": ["News"],
-        "summary": "Paginated news feed",
+        "summary": "Paginated, classified news feed (filters: currency, sentiment, impact)",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "ip",
@@ -4298,7 +4311,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Economic calendar events",
+            "description": "Economic calendar events with risk-rule proximity",
             "content": {
               "application/json": {
                 "schema": {
@@ -4307,7 +4320,18 @@
                 "example": {
                   "success": true,
                   "data": {
-                    "items": [],
+                    "items": [
+                      {
+                        "id": "event_01",
+                        "eventName": "Fed Interest Rate Decision",
+                        "currency": "USD",
+                        "eventClass": "RATES",
+                        "scheduledAt": "2026-01-15T12:30:00.000Z",
+                        "impact": "HIGH",
+                        "minutesUntil": 30,
+                        "imminent": true
+                      }
+                    ],
                     "nextCursor": null,
                     "hasMore": false
                   },
@@ -4462,7 +4486,7 @@
           }
         },
         "tags": ["News"],
-        "summary": "Economic calendar events",
+        "summary": "Economic calendar events with risk-rule proximity",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "ip",
@@ -4491,6 +4515,27 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "Impact and recency weighted pair sentiment, cached 5 minutes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "symbol": "EUR/USD",
+                    "score": 72,
+                    "sentiment": "BULLISH",
+                    "articleCount": 3,
+                    "computedAt": "2026-01-15T12:00:00.000Z"
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
           "401": {
             "description": "UNAUTHORIZED",
             "content": {
@@ -4631,7 +4676,7 @@
           }
         },
         "tags": ["News"],
-        "summary": "Aggregated pair sentiment (INSUFFICIENT_DATA until ingestion lands)",
+        "summary": "Impact and recency weighted pair sentiment, cached 5 minutes",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "ip",
@@ -4660,6 +4705,37 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "News article with classification and safety metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "news_01",
+                    "source": "mock-wire",
+                    "title": "Federal Reserve raises interest rates by 25 basis points",
+                    "publishedAt": "2026-01-15T11:00:00.000Z",
+                    "currencies": ["USD"],
+                    "analysis": {
+                      "eventType": "INTEREST_RATES",
+                      "sentiment": "BULLISH",
+                      "impact": "HIGH"
+                    },
+                    "safety": {
+                      "injectionAttempted": false,
+                      "redactions": 0,
+                      "truncated": false
+                    }
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
           "401": {
             "description": "UNAUTHORIZED",
             "content": {
@@ -4690,6 +4766,24 @@
                   "error": {
                     "code": "FORBIDDEN",
                     "message": "Insufficient role",
+                    "requestId": "req_01Jexample"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Unknown news article news_01",
                     "requestId": "req_01Jexample"
                   }
                 }
@@ -4806,7 +4900,7 @@
           }
         },
         "tags": ["News"],
-        "summary": "News article with analysis",
+        "summary": "News article with classification and safety metadata",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "ip",

@@ -12,6 +12,13 @@ export type NewsEventType =
   | 'GEOPOLITICAL'
   | 'ECONOMIC_RELEASE';
 
+/** P11 — safety metadata derived from the scrubbed, stored article text. */
+export interface NewsSafety {
+  injectionAttempted: boolean;
+  redactions: number;
+  truncated: boolean;
+}
+
 export interface NewsAnalysis {
   articleId: string;
   eventType: NewsEventType;
@@ -32,17 +39,23 @@ export interface NewsArticle {
   publishedAt: string;
   currencies: string[];
   analysis?: NewsAnalysis;
+  /** Never contains executable markup; injection attempts are redacted. */
+  safety?: NewsSafety;
 }
 
 export interface EconomicEvent {
   id: string;
   eventName: string;
   currency: string;
+  eventClass: string;
   scheduledAt: string;
   impact: NewsImpact;
   previous?: number | null;
   forecast?: number | null;
   actual?: number | null;
+  /** P11 — computed proximity for the risk rule, not a stored column. */
+  minutesUntil?: number;
+  imminent?: boolean;
 }
 
 export interface PairSentiment {

@@ -1003,6 +1003,15 @@ Article → Clean text → Extract entities → Identify currencies
 
 News feed cached 5 minutes; per-pair sentiment 5 minutes; economic calendar 15 minutes. Never cached beyond acceptable freshness.
 
+### 11.4 Phase 11 implementation notes
+
+- **Keyless by default:** `NEWS_PROVIDER=mock` and `ECONOMIC_CALENDAR_PROVIDER=mock` serve deterministic fixtures covering every event class. Production adapters (`newsapi`, `finnhub`) activate only with `NEWS_API_KEY` / `ECONOMIC_CALENDAR_API_KEY`, which stay server-side. Provider hosts are allowlisted (`newsapi.org`, `finnhub.io`), requests are rate-limited, and only JSON is consumed.
+- **Pipeline:** the `news-ingest` cron (`NEWS_INGEST_CRON`, cadence documented by `NEWS_POLL_INTERVAL_MINUTES`) fetches → scrubs → dedupes by unique `sourceUrl` **and** SHA-256 hash of scrubbed title/description/body → classifies → writes `NewsArticle` + `NewsAnalysis` (1:1) and `EconomicEvent`. Provider failures are audited as `SystemEvent` rows.
+- **Untrusted text:** markup is stripped, content is capped at 4,000 characters, and prompt-injection phrases are replaced with the inert literal `[redacted]`. The scrubbed text and a machine-readable safety marker are stored in `rawText`; the API exposes `safety` (`injectionAttempted`, `redactions`, `truncated`). Raw article text is never rendered as HTML and never becomes instructions.
+- **Classifier:** deterministic rule/lexicon engine (`analyzedBy: lexicon-v1`) emits event class, sentiment, impact, confidence and affected pairs. An optional LLM enhancer can reuse the same structured schema in Phase 17 without a migration.
+- **Aggregation:** pair sentiment is a 0–100 score (`50 + 50×(weightedPositive − weightedNegative)/totalWeight`) where each article contributes `impactWeight × recencyWeight`, with recency decaying linearly over 72 hours to a 5% floor. HIGH/EXTREME events within 60 minutes are exposed as `imminent` for the risk rule (P15) and features (P12).
+- **Fan-out:** high-impact ingest invalidates the feed, sentiment and calendar caches and emits a typed `notification:new` `NEWS_ALERT` payload prepared for P27 delivery.
+
 ---
 
 ## 12. AI Architecture & Explainability
