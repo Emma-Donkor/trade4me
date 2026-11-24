@@ -26,5 +26,15 @@ export default tseslint.config(
       },
     },
   },
+  {
+    // A leading underscore is this codebase's convention for intentionally
+    // unused parameters (abstract stubs, jest fake signatures, etc.).
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
+    },
+  },
   prettier,
 );

@@ -1,0 +1,13 @@
+{
+  "symbol": "EUR/USD",
+  "name": "Euro / US Dollar",
+  "exchange": "FOREX",
+  "currency": "USD",
+  "datetime": "2026-11-24",
+  "timestamp": 1795521600,
+  "bid": 1.0849,
+  "ask": 1.0851,
+  "close": 1.085,
+  "previous_close": 1.083,
+  "status": "ok"
+}

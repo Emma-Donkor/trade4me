@@ -756,7 +756,7 @@ Stack traces are never returned to clients. Every response carries `requestId` f
 | Method | Path | Description | Auth |
 |---|---|---|---|
 | GET | `/market/pairs` | List supported currency pairs | Bearer |
-| GET | `/market/quote?symbols=` | Latest quotes | Bearer |
+| GET | `/market/quote?symbols=&freshOnly=` | Latest quotes (`freshOnly=true` → `MARKET_DATA_STALE`) | Bearer |
 | GET | `/market/candles?symbol&timeframe&start&end&limit` | Historical OHLC | Bearer |
 | GET | `/market/overview` | Aggregated market overview | Bearer |
 
@@ -912,7 +912,7 @@ Detected and handled conditions:
 
 | Condition | Handling |
 |---|---|
-| Stale data | Older than `MARKET_DATA_STALE_THRESHOLD_SECONDS` → mark stale, signals blocked with `MARKET_DATA_STALE` |
+| Stale data | Older than `MARKET_DATA_STALE_THRESHOLD_SECONDS` → flagged as `isStale`; `freshOnly=true` and downstream analysis block with `MARKET_DATA_STALE` |
 | Missing candles | Gap scan after each sync → backfill job; gaps are **never** filled with invented prices |
 | Malformed responses | Schema validation fails → provider marked DEGRADED, failover triggered |
 | Duplicates | Unique constraint `(pairId, timeframe, timestamp)` → upsert/ignore |

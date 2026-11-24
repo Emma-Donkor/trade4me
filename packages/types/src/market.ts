@@ -33,6 +33,8 @@ export interface CurrencyPair {
   name?: string;
   active: boolean;
   pipSize?: number;
+  /** README §9.1 — canonical symbol → provider-specific ticker map. */
+  providerSymbols?: Record<string, unknown>;
 }
 
 export interface MarketQuote {
@@ -78,4 +80,38 @@ export interface ProviderHealth {
   status: ProviderStatus;
   latencyMs?: number;
   lastCheckedAt: string;
+}
+
+/** README §7.5/§9.2 — a quote is always accompanied by its freshness. */
+export interface MarketQuoteView extends MarketQuote {
+  dataFreshnessSeconds: number;
+  isStale: boolean;
+  source: 'live' | 'cache';
+}
+
+export interface QuoteResponse {
+  items: MarketQuoteView[];
+  asOf: string;
+  unavailableSymbols?: string[];
+}
+
+export interface MarketOverview {
+  asOf: string;
+  totalPairs: number;
+  quotes: MarketQuoteView[];
+  freshCount: number;
+  staleCount: number;
+  unavailableCount: number;
+  byProvider: Record<string, number>;
+}
+
+/** P28 will write these flags; P08 exposes read-only health for admins. */
+export interface AdminProviderView {
+  name: string;
+  role: 'primary' | 'backup' | 'none';
+  status: ProviderStatus;
+  enabled: boolean;
+  latencyMs: number | null;
+  lastCheckedAt: string | null;
+  requestsPerMinute: number;
 }

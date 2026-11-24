@@ -89,6 +89,8 @@ describe('@ts/config', () => {
     expect(parsed.API_PORT).toBe(4000);
     expect(parsed.AI_PORT).toBe(8000);
     expect(parsed.MARKET_DATA_PROVIDER).toBe('mock');
+    // A full sync of the seeded pairs must fit the default keyless bucket.
+    expect(parsed.MARKET_REQUESTS_PER_MINUTE).toBe(60);
     expect(parsed.JWT_SECRET).toBe('');
     expect(parsed.JWT_REFRESH_SECRET).toBe('');
     expect(parsed.AI_API_KEY).toBe('');

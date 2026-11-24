@@ -1,0 +1,5 @@
+{
+  "status": "error",
+  "code": 429,
+  "message": "API rate limit exceeded. Please try again in a minute."
+}

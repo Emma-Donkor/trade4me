@@ -70,7 +70,8 @@ export const envSchema = z.object({
   MARKET_API_KEY: z.string().default(''),
   MARKET_BACKUP_PROVIDER: z.string().min(1).default('twelvedata'),
   MARKET_BACKUP_API_KEY: z.string().default(''),
-  MARKET_REQUESTS_PER_MINUTE: z.coerce.number().int().positive().default(5),
+  // Must cover a full seeded-pair sync even with the keyless mock provider.
+  MARKET_REQUESTS_PER_MINUTE: z.coerce.number().int().positive().default(60),
   MARKET_DATA_STALE_THRESHOLD_SECONDS: z.coerce.number().int().positive().default(120),
 
   // News provider

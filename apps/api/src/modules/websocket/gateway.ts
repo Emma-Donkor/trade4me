@@ -41,12 +41,12 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection {
 
   afterInit(server: Server): void {
     this.server = server;
-    // Socket.IO v4 exposes `adapter` as a settable property, not a method.
-    // The Redis adapter is a factory, so bypass Socket.IO's constructor-only typings.
-    (server as { adapter: unknown }).adapter = createAdapter(
-      this.redis.getPublisher(),
-      this.redis.getSubscriber(),
-    );
+    // Nest hands the gateway a Namespace (because `/` is configured), not the
+    // root Server. `Namespace.adapter` is the live adapter instance, so it must
+    // never be overwritten with a factory; install it on `Namespace.server`
+    // instead. Socket.IO v4's `Server.adapter()` rebinds every namespace.
+    const io = (server as unknown as { server?: Server }).server ?? server;
+    io.adapter(createAdapter(this.redis.getPublisher(), this.redis.getSubscriber()) as never);
   }
 
   async handleConnection(client: Socket): Promise<void> {

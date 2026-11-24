@@ -27,19 +27,22 @@ describe('EventsGateway', () => {
     );
   });
 
-  it('installs the Redis adapter on the Socket.IO server', () => {
+  it('installs the Redis adapter on the underlying Socket.IO server', () => {
     const redis = {
       getPublisher: jest.fn(() => ({})),
       getSubscriber: jest.fn(() => ({})),
     } as unknown as RedisService;
     const gateway = new EventsGateway(redis, new JsonLogger());
-    const server = { emit: jest.fn(), adapter: undefined } as unknown as Server;
+    // Nest supplies a Namespace for `/`; the root Server owns `adapter()`.
+    const io = { adapter: jest.fn() };
+    const server = { emit: jest.fn(), server: io } as unknown as Server;
 
     gateway.afterInit(server);
 
     expect(redis.getPublisher).toHaveBeenCalled();
     expect(redis.getSubscriber).toHaveBeenCalled();
-    expect(server.adapter).toBeDefined();
+    expect(io.adapter).toHaveBeenCalledTimes(1);
+    expect(typeof io.adapter.mock.calls[0][0]).toBe('function');
   });
 
   it('rejects a handshake without a token in every environment', async () => {

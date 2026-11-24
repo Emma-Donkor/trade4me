@@ -929,18 +929,18 @@ Depends on: PHASE 07 (and P04, P05, P06 already completed)
 ```
 
 ### Tasks
-- [ ] `MarketDataProvider` interface (per README §9.1) + `ProviderRegistry` with primary/backup selection and health state (`ProviderStatus`)
-- [ ] **MockProvider**: deterministic, realistic synthetic quotes/candles (seeded random walk, correct decimals incl. JPY pairs) — enables keyless development and CI
-- [ ] **AlphaVantageProvider** and **TwelveDataProvider**: symbol mapping via `CurrencyPair.providerSymbols`, response parsing, error taxonomy (quota/timeout/malformed)
-- [ ] **Rate-limit handler**: Redis token bucket per provider (`MARKET_REQUESTS_PER_MINUTE`), exponential backoff, jitter
-- [ ] **Response validation** (pydantic/Zod): schema, status, numeric sanity (OHLC consistency: `low ≤ open,close ≤ high`), decimal precision
-- [ ] **Normalization** → `MarketQuote` upsert (`tradesense:quote:{symbol}`, TTL 30–120s per `MARKET_DATA_STALE_THRESHOLD_SECONDS`)
-- [ ] **Timestamp validation**: reject future/out-of-order stamps; log `SystemEvent`
-- [ ] **Failover**: Provider A failure → Provider B → all-fail → `MARKET_DATA_UNAVAILABLE` (no fabricated analysis); provider health written for admin (P28)
-- [ ] **Quote sync job** (BullMQ `market-sync`, cron `MARKET_SYNC_CRON`) — idempotent, per-pair fan-out with rate-limit awareness
-- [ ] Implement real route bodies: `GET /market/quote`, `GET /market/overview` (with staleness flags), WebSocket `quote:update` emissions
-- [ ] Redis caching layer for quotes with documented TTLs (README §7.5)
-- [ ] Admin health provider status readable (`admin/providers` data source prepared)
+- [x] `MarketDataProvider` interface (per README §9.1) + `ProviderRegistry` with primary/backup selection and health state (`ProviderStatus`)
+- [x] **MockProvider**: deterministic, realistic synthetic quotes/candles (seeded random walk, correct decimals incl. JPY pairs) — enables keyless development and CI
+- [x] **AlphaVantageProvider** and **TwelveDataProvider**: symbol mapping via `CurrencyPair.providerSymbols`, response parsing, error taxonomy (quota/timeout/malformed)
+- [x] **Rate-limit handler**: Redis token bucket per provider (`MARKET_REQUESTS_PER_MINUTE`), exponential backoff, jitter
+- [x] **Response validation** (pydantic/Zod): schema, status, numeric sanity (OHLC consistency: `low ≤ open,close ≤ high`), decimal precision
+- [x] **Normalization** → `MarketQuote` upsert (`tradesense:quote:{symbol}`, TTL 30–120s per `MARKET_DATA_STALE_THRESHOLD_SECONDS`)
+- [x] **Timestamp validation**: reject future/out-of-order stamps; log `SystemEvent`
+- [x] **Failover**: Provider A failure → Provider B → all-fail → `MARKET_DATA_UNAVAILABLE` (no fabricated analysis); provider health written for admin (P28)
+- [x] **Quote sync job** (BullMQ `market-sync`, cron `MARKET_SYNC_CRON`) — idempotent, per-pair fan-out with rate-limit awareness
+- [x] Implement real route bodies: `GET /market/quote`, `GET /market/overview` (with staleness flags), WebSocket `quote:update` emissions
+- [x] Redis caching layer for quotes with documented TTLs (README §7.5)
+- [x] Admin health provider status readable (`admin/providers` data source prepared)
 
 ### Files/Folders
 ```text
@@ -960,10 +960,10 @@ Writes `MarketQuote` (upsert), `SystemEvent` (provider failures). No schema chan
 
 ### API Changes
 ```text
-GET  /api/v1/market/quote?symbols=…      (live, staleness-flagged)
+GET  /api/v1/market/quote?symbols=…      (live, staleness-flagged; `freshOnly=true` blocks with MARKET_DATA_STALE)
 GET  /api/v1/market/overview             (real)
 WS   quote:update                        (producer active)
-PATCH /api/v1/admin/providers/:id         (route exists; P28 uses it)
+PATCH /api/v1/admin/providers             (route exists; P28 uses it)
 ```
 
 ### AI/ML Changes
@@ -976,14 +976,17 @@ None (Track B consumes when ready).
 Provider API keys read only server-side (env); never logged, never in WS payloads; response payloads schema-validated before DB write (rejects malformed/hostile data).
 
 ### Testing
-- [ ] Unit: OHLC validation rejects `high < low`, NaN, negative prices
-- [ ] Unit: rate limiter allows N/min then blocks; backoff schedules correctly
-- [ ] Unit: timestamp validator rejects future/out-of-order
-- [ ] Integration: mock provider → quote persisted → cache TTL honored → API returns with `dataFreshnessSeconds`
-- [ ] Integration: fixture-based adapter tests for AlphaVantage/TwelveData (recorded responses, incl. error/quota payloads)
-- [ ] Failure test: primary throws → failover to backup → both down → `MARKET_DATA_UNAVAILABLE` + `SystemEvent` recorded
-- [ ] Staleness test: frozen timestamp > threshold → API flags stale / blocks
-- [ ] Regression: P02–P07 tests pass
+- [x] Unit: OHLC validation rejects `high < low`, NaN, negative prices
+- [x] Unit: rate limiter allows N/min then blocks; backoff schedules correctly
+- [x] Unit: timestamp validator rejects future/out-of-order
+- [x] Integration: mock provider → quote persisted → cache TTL honored → API returns with `dataFreshnessSeconds`
+- [x] Integration: fixture-based adapter tests for AlphaVantage/TwelveData (recorded responses, incl. error/quota payloads)
+- [x] Failure test: primary throws → failover to backup → both down → `MARKET_DATA_UNAVAILABLE` + `SystemEvent` recorded
+- [x] Staleness test: frozen timestamp > threshold → API flags stale / blocks (`freshOnly=true` → `MARKET_DATA_STALE`)
+- [x] Integration: `CurrencyPair.providerSymbols` reaches the adapter context end-to-end
+- [x] Integration: future/out-of-order stamps write `timestamp_rejected:*` SystemEvents with the real provider name
+- [x] Unit: real Redis Lua token bucket executes; default capacity covers a full 10-pair keyless sync
+- [x] Regression: P02–P07 tests pass
 
 ### Completion Criteria
 Live quotes flow provider → validation → DB/Redis → API → WS; failover and staleness proven by tests; mock mode fully keyless.

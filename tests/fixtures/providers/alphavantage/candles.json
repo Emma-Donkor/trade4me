@@ -1,0 +1,25 @@
+{
+  "Meta Data": {
+    "1. Information": "Intraday prices and volume",
+    "2. Symbol": "EURUSD",
+    "3. Last Refreshed": "2026-11-24T12:00:00Z",
+    "4. Interval": "60min",
+    "5. Output Size": "Compact"
+  },
+  "Time Series (60min)": {
+    "2026-11-24T11:00:00Z": {
+      "1. open": "1.0850",
+      "2. high": "1.0870",
+      "3. low": "1.0845",
+      "4. close": "1.0860",
+      "5. volume": "0"
+    },
+    "2026-11-24T10:00:00Z": {
+      "1. open": "1.0840",
+      "2. high": "1.0860",
+      "3. low": "1.0835",
+      "4. close": "1.0850",
+      "5. volume": "0"
+    }
+  }
+}

@@ -1,7 +1,14 @@
-import { Inject, Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Optional,
+  type OnModuleDestroy,
+  type OnModuleInit,
+} from '@nestjs/common';
 import { Worker } from 'bullmq';
 import { env } from '@ts/config';
 import { JsonLogger } from '../common/logger/json-logger';
+import { MarketSyncProcessor } from './processors/market-sync.processor';
 import { bullConnectionOptions, QUEUE_NAMES, QueueRegistry, type QueueName } from './queues';
 
 export interface CronRegistration {
@@ -87,12 +94,15 @@ export class SchedulerService implements OnModuleInit {
   }
 }
 
-/** Starts one idle worker per registered queue; processors arrive with features. */
+/** One worker per queue; market-sync runs the real P08 processor. */
 @Injectable()
 export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
   private readonly workers: Worker[] = [];
 
-  constructor(@Inject(JsonLogger) private readonly logger: JsonLogger) {}
+  constructor(
+    @Inject(JsonLogger) private readonly logger: JsonLogger,
+    @Optional() private readonly marketSyncProcessor?: MarketSyncProcessor,
+  ) {}
 
   onModuleInit(): void {
     this.start();
@@ -104,6 +114,10 @@ export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
       const worker = new Worker(
         queueName,
         async (job) => {
+          if (queueName === 'market-sync' && this.marketSyncProcessor) {
+            await this.marketSyncProcessor.process(job);
+            return;
+          }
           this.logger.log('job received; processor arrives in a later phase', 'WORKER', {
             queue: queueName,
             jobName: job.name,

@@ -1,0 +1,8 @@
+{
+  "symbol": "EUR/USD",
+  "bid": 1.08491,
+  "ask": 1.08511,
+  "spread": 0.0002,
+  "timestamp": "2026-11-24T12:00:00.000Z",
+  "provider": "mock"
+}

@@ -3447,9 +3447,47 @@
               "description": "One symbol or a comma-separated symbol list",
               "example": "EUR/USD"
             }
+          },
+          {
+            "name": "freshOnly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
+          "200": {
+            "description": "Latest live quotes with data-freshness flags (freshOnly=true blocks stale data)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "items": [
+                      {
+                        "symbol": "EUR/USD",
+                        "bid": 1.0849,
+                        "ask": 1.0851,
+                        "spread": 0.0002,
+                        "timestamp": "2026-11-24T12:00:00.000Z",
+                        "provider": "mock",
+                        "dataFreshnessSeconds": 2,
+                        "isStale": false,
+                        "source": "live"
+                      }
+                    ],
+                    "asOf": "2026-11-24T12:00:02.000Z"
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
           "401": {
             "description": "UNAUTHORIZED",
             "content": {
@@ -3487,7 +3525,7 @@
             }
           },
           "422": {
-            "description": "INSUFFICIENT_DATA",
+            "description": "VALIDATION_ERROR",
             "content": {
               "application/json": {
                 "schema": {
@@ -3496,8 +3534,14 @@
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "INSUFFICIENT_DATA",
-                    "message": "Not enough data is available yet",
+                    "code": "VALIDATION_ERROR",
+                    "message": "Validation failed",
+                    "details": [
+                      {
+                        "field": "email",
+                        "message": "Expected a valid email address"
+                      }
+                    ],
                     "requestId": "req_01Jexample"
                   }
                 }
@@ -3571,7 +3615,7 @@
             }
           },
           "503": {
-            "description": "AI_SERVICE_UNAVAILABLE",
+            "description": "MARKET_DATA_UNAVAILABLE",
             "content": {
               "application/json": {
                 "schema": {
@@ -3580,8 +3624,8 @@
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "AI_SERVICE_UNAVAILABLE",
-                    "message": "AI service is unavailable",
+                    "code": "MARKET_DATA_UNAVAILABLE",
+                    "message": "Current market data is unavailable.",
                     "requestId": "req_01Jexample"
                   }
                 }
@@ -3590,7 +3634,7 @@
           }
         },
         "tags": ["Market"],
-        "summary": "Latest quotes (INSUFFICIENT_DATA until market ingestion lands)",
+        "summary": "Latest live quotes with data-freshness flags (freshOnly=true blocks stale data)",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "ip",
@@ -3815,6 +3859,43 @@
         "operationId": "MarketController_overview",
         "parameters": [],
         "responses": {
+          "200": {
+            "description": "Aggregated market overview with staleness counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "asOf": "2026-11-24T12:00:02.000Z",
+                    "totalPairs": 10,
+                    "quotes": [
+                      {
+                        "symbol": "EUR/USD",
+                        "bid": 1.0849,
+                        "ask": 1.0851,
+                        "spread": 0.0002,
+                        "timestamp": "2026-11-24T12:00:00.000Z",
+                        "provider": "mock",
+                        "dataFreshnessSeconds": 2,
+                        "isStale": false,
+                        "source": "cache"
+                      }
+                    ],
+                    "freshCount": 10,
+                    "staleCount": 0,
+                    "unavailableCount": 0,
+                    "byProvider": {
+                      "mock": 10
+                    }
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
           "401": {
             "description": "UNAUTHORIZED",
             "content": {
@@ -3852,7 +3933,7 @@
             }
           },
           "422": {
-            "description": "INSUFFICIENT_DATA",
+            "description": "VALIDATION_ERROR",
             "content": {
               "application/json": {
                 "schema": {
@@ -3861,8 +3942,14 @@
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "INSUFFICIENT_DATA",
-                    "message": "Not enough data is available yet",
+                    "code": "VALIDATION_ERROR",
+                    "message": "Validation failed",
+                    "details": [
+                      {
+                        "field": "email",
+                        "message": "Expected a valid email address"
+                      }
+                    ],
                     "requestId": "req_01Jexample"
                   }
                 }
@@ -3936,7 +4023,7 @@
             }
           },
           "503": {
-            "description": "AI_SERVICE_UNAVAILABLE",
+            "description": "MARKET_DATA_UNAVAILABLE",
             "content": {
               "application/json": {
                 "schema": {
@@ -3945,8 +4032,8 @@
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "AI_SERVICE_UNAVAILABLE",
-                    "message": "AI service is unavailable",
+                    "code": "MARKET_DATA_UNAVAILABLE",
+                    "message": "Current market data is unavailable.",
                     "requestId": "req_01Jexample"
                   }
                 }
@@ -3955,7 +4042,7 @@
           }
         },
         "tags": ["Market"],
-        "summary": "Aggregated market overview (INSUFFICIENT_DATA until P08)",
+        "summary": "Aggregated market overview with staleness counts",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "ip",
@@ -10851,7 +10938,17 @@
                 "example": {
                   "success": true,
                   "data": {
-                    "items": []
+                    "items": [
+                      {
+                        "name": "mock",
+                        "role": "primary",
+                        "status": "HEALTHY",
+                        "enabled": true,
+                        "latencyMs": 3,
+                        "lastCheckedAt": "2026-11-24T12:00:00.000Z",
+                        "requestsPerMinute": 5
+                      }
+                    ]
                   },
                   "requestId": "req_01Jexample"
                 }

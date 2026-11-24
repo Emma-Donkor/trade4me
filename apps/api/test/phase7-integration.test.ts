@@ -42,15 +42,21 @@ describe('P07 integration contract', () => {
     expect(response.body.data.items[0]).not.toHaveProperty('providerSymbols');
   });
 
-  it('fails honestly for unimplemented market, analysis and AI routes', async () => {
+  it('serves live quotes and fails honestly for unimplemented OHLC routes', async () => {
     const symbol = encodeURIComponent('EUR/USD');
 
-    // Query names are the README §8.2 contract, not internal aliases.
+    // Phase 8 replaced the quote stub with validated mock-provider ingestion.
     const quote = await request(harness.app.getHttpServer())
       .get(`/api/v1/market/quote?symbols=${symbol}`)
       .set('Authorization', bearer(userToken))
-      .expect(422);
-    expect(quote.body.error.code).toBe('INSUFFICIENT_DATA');
+      .expect(200);
+    expect(quote.body.data.items[0]).toMatchObject({
+      symbol: 'EUR/USD',
+      provider: 'mock',
+      isStale: false,
+      source: 'live',
+    });
+    expect(quote.body.data.items[0].dataFreshnessSeconds).toBeGreaterThanOrEqual(0);
 
     const candles = await request(harness.app.getHttpServer())
       .get(

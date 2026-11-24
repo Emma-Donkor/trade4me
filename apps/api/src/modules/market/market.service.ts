@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import type { MarketOverview, QuoteResponse } from '@ts/types';
 import type { PaginationQuery } from '@ts/types';
 import type { CandleRangeQuery, QuoteQuery } from '@ts/validation';
 import { cursorPage, type CursorPage } from '../../common/helpers/pagination';
 import { insufficientData } from '../../common/errors/stub-errors';
 import { PrismaService } from '../prisma/prisma.service';
+import { QuoteService } from './quote.service';
 
 export interface MarketPairView {
   id: string;
@@ -18,15 +20,18 @@ export interface MarketPairView {
 
 export abstract class MarketService {
   abstract listPairs(query: PaginationQuery): Promise<CursorPage<MarketPairView>>;
-  abstract quote(query: QuoteQuery): never;
+  abstract quote(query: QuoteQuery): Promise<QuoteResponse>;
+  /** P09 replaces the honest OHLC stub with cached range reads. */
   abstract candles(query: CandleRangeQuery): never;
-  abstract overview(): never;
+  abstract overview(): Promise<MarketOverview>;
 }
 
-/** P07 wires only the real pair read; quotes and candles arrive in P08/P09. */
 @Injectable()
-export class Phase7MarketService extends MarketService {
-  constructor(private readonly prisma: PrismaService) {
+export class MarketServiceImpl extends MarketService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly quotes: QuoteService,
+  ) {
     super();
   }
 
@@ -59,13 +64,13 @@ export class Phase7MarketService extends MarketService {
     );
   }
 
-  quote(query: QuoteQuery): never {
+  quote(query: QuoteQuery): Promise<QuoteResponse> {
     const symbols = query.symbols
       ? Array.isArray(query.symbols)
         ? query.symbols
         : query.symbols.split(',').map((symbol) => symbol.trim())
-      : [query.symbol];
-    insufficientData('current quotes', { symbols });
+      : [query.symbol as string];
+    return query.freshOnly ? this.quotes.requireFresh(symbols) : this.quotes.quotes(symbols);
   }
 
   candles(query: CandleRangeQuery): never {
@@ -77,7 +82,10 @@ export class Phase7MarketService extends MarketService {
     });
   }
 
-  overview(): never {
-    insufficientData('market overview');
+  overview(): Promise<MarketOverview> {
+    return this.quotes.overview();
   }
 }
+
+/** Backwards-compatible name used by the P07 module wiring. */
+export { MarketServiceImpl as Phase7MarketService };

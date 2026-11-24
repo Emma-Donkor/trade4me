@@ -40,10 +40,19 @@ const commaSeparatedSymbolsSchema = z.string().refine(
   { message: 'Expected a comma-separated list of pairs such as EUR/USD,GBP/USD' },
 );
 
+/** Query strings are strings; `z.coerce.boolean()` would treat `false` as true. */
+const queryBoolean = z.preprocess((value) => {
+  if (value === 'true' || value === '1') return true;
+  if (value === 'false' || value === '0') return false;
+  return value;
+}, z.boolean());
+
 export const quoteQuerySchema = z
   .strictObject({
     symbol: symbolSchema.optional(),
     symbols: z.union([commaSeparatedSymbolsSchema, z.array(symbolSchema).min(1)]).optional(),
+    /** README §9.2 — refuse stale/unavailable quotes with MARKET_DATA_STALE. */
+    freshOnly: queryBoolean.optional().default(false),
   })
   .refine((value) => value.symbol !== undefined || value.symbols !== undefined, {
     message: 'symbol or symbols is required',
