@@ -55,10 +55,53 @@ export interface IndicatorsResponse {
   computedAt: string;
 }
 
+/** P12 — bounded inputs sent to the Python feature authority. */
+export interface FeatureInputCandle {
+  timestamp: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume?: number;
+}
+
+export interface FeatureNewsInput {
+  publishedAt: string;
+  currencies?: string[];
+  affectedPairs?: string[];
+  sentiment: string;
+  impact: string;
+  confidence?: number;
+}
+
+export interface FeatureEventInput {
+  scheduledAt: string;
+  currency: string;
+  impact: string;
+}
+
+export interface FeatureRegimeInput {
+  regime: string;
+  confidence: number;
+  evidence?: Record<string, unknown>;
+}
+
+export interface FeatureVectorItem {
+  timestamp: string;
+  features: Record<string, number>;
+}
+
 export interface FeaturesRequest {
   symbol: string;
   timeframe: Timeframe;
   featureVersion?: string;
+  asOf: string;
+  candles: FeatureInputCandle[];
+  peerCandles?: Record<string, FeatureInputCandle[]>;
+  news?: FeatureNewsInput[];
+  events?: FeatureEventInput[];
+  regime?: FeatureRegimeInput | null;
+  timestamps?: string[];
 }
 
 export interface FeaturesResponse {
@@ -67,6 +110,7 @@ export interface FeaturesResponse {
   featureVersion: string;
   features: Record<string, number>;
   timestamp: string;
+  vectors: FeatureVectorItem[];
 }
 
 export interface PredictRequest {

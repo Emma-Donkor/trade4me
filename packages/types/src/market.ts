@@ -114,9 +114,9 @@ export interface HistoricalAnalysisView {
   asOf: string;
   periods: HistoricalPeriodChange[];
   volatility: HistoricalVolatilityStats;
-  /** P12 replaces this deterministic shape scan with feature-space NN. */
+  /** P12 — live nearest neighbours over versioned MarketFeature vectors. */
   similarConditions: SimilarHistoricalWindow[];
-  similarityMethod: 'deterministic-euclidean';
+  similarityMethod: 'feature-euclidean-v1.0';
   dataPoints: number;
 }
 

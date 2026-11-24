@@ -1,4 +1,5 @@
-import type { IndicatorsResponse } from '@ts/types';
+import { FEATURE_NAMES, env } from '@ts/config';
+import type { FeaturesResponse, IndicatorsResponse } from '@ts/types';
 import type { AiFetch } from '../../src/modules/technical-analysis/ai-engine.client';
 
 /** Deterministic P10 AI response; the API still owns persistence and caching. */
@@ -80,6 +81,12 @@ export interface FakeAiCall {
     timeframe?: string;
     indicators?: string[];
     candles?: Array<Record<string, unknown>>;
+    featureVersion?: string;
+    asOf?: string;
+    timestamps?: string[];
+    news?: unknown[];
+    events?: unknown[];
+    peerCandles?: Record<string, unknown[]>;
   };
 }
 
@@ -97,6 +104,43 @@ export function fakeAiFetch(response: IndicatorsResponse = fakeIndicatorsRespons
         symbol: body.symbol ?? response.symbol,
         timeframe: body.timeframe ?? response.timeframe,
       }),
+    } as Response;
+  };
+  return { fetch, calls };
+}
+
+/**
+ * Deterministic P12 AI response. Vector values vary with the timestamp so NN
+ * similarity can be asserted without standing up the Python service.
+ */
+export function fakeFeaturesFetch() {
+  const calls: FakeAiCall[] = [];
+  const fetch: AiFetch = async (url, init) => {
+    const body = JSON.parse(String(init?.body ?? '{}')) as FakeAiCall['body'];
+    calls.push({ url, init, body });
+    const timestamps = body.timestamps ?? [body.asOf ?? '2026-11-24T00:00:00.000Z'];
+    const vectors = timestamps.map((timestamp, index) => {
+      const seed = Date.parse(timestamp) / 3_600_000;
+      const features = Object.fromEntries(
+        FEATURE_NAMES.map((name, featureIndex) => [
+          name,
+          Number(((seed % 97) / 97 + featureIndex / 1000 + index / 10000).toFixed(8)),
+        ]),
+      );
+      return { timestamp, features };
+    });
+    const response: FeaturesResponse = {
+      symbol: body.symbol ?? 'EUR/USD',
+      timeframe: (body.timeframe ?? 'H1') as FeaturesResponse['timeframe'],
+      featureVersion: body.featureVersion ?? env.FEATURE_VERSION,
+      timestamp: vectors[vectors.length - 1].timestamp,
+      features: vectors[vectors.length - 1].features,
+      vectors,
+    };
+    return {
+      ok: true,
+      status: 200,
+      json: async () => response,
     } as Response;
   };
   return { fetch, calls };

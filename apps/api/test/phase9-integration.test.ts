@@ -121,7 +121,7 @@ describe('P09 historical data pipeline', () => {
     expect(data).toMatchObject({
       symbol: 'EUR/USD',
       timeframe: 'D1',
-      similarityMethod: 'deterministic-euclidean',
+      similarityMethod: 'feature-euclidean-v1.0',
     });
     expect(data.periods.map((period: { period: string }) => period.period)).toEqual([
       'previous_day',

@@ -400,7 +400,7 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
           changePct: 0.24,
         },
       ],
-      similarityMethod: 'deterministic-euclidean',
+      similarityMethod: 'feature-euclidean-v1.0',
       dataPoints: 730,
     },
     errorExample: {

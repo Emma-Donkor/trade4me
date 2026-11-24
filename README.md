@@ -1121,6 +1121,8 @@ Time of day (UTC session) · Day of week
 
 Features are stored in `MarketFeature` with a **`featureVersion`**; a model permanently references the feature version it was trained on, guaranteeing reproducibility.
 
+The P12 authority is `apps/ai-engine/app/services/features.py`. Every vector has the exact key set declared in the committed `feature_manifest_v1.json`, whose SHA-256 checksum covers each feature's **name, type, source, window, required flag and missing-value policy**. The same names/checksum are mirrored in `packages/config/src/features.ts` and verified by tests; adding or removing a feature requires a `FEATURE_VERSION` bump and a regenerated manifest. The internal `POST /api/v1/ai/features` accepts bounded candles, peer candles, news, events and an explicit `asOf`; Python filters candles/news at `≤ asOf` and calendar events at `> asOf` before computing anything. Missing optional inputs are imputed deterministically and always carry a companion `*_missing` flag (for example `news_sentiment=50` with `news_missing=1`); a missing required input returns `INSUFFICIENT_DATA`. The `features` cron (`FEATURE_JOB_CRON`) recomputes rolling vectors and upserts on `(pairId, timeframe, timestamp, featureVersion)`. Historical-analysis similarity is a live nearest-neighbour search over these versioned vectors, standardised per feature before Euclidean ranking.
+
 ### 13.3 Data-leakage prevention (mandatory)
 
 - Features at time *t* use only data with timestamp ≤ *t*.

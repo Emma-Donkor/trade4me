@@ -1238,19 +1238,19 @@ Depends on: PHASE 10, PHASE 11
 ```
 
 ### Tasks
-- [ ] `app/services/features.py`: assemble feature vector per README §13.2:
+- [x] `app/services/features.py`: assemble feature vector per README §13.2:
   - Technical: RSI, MACD(+hist), EMA20/50/200 distances, ADX, Bollinger width, ATR-normalized
   - Momentum/volatility: returns (1/4/12/24 bars), realized + Parkinson volatility, ATR percentile
   - Levels: distance from support/resistance (normalized by ATR)
   - Regime: one-hot encoded
   - News: pair sentiment score, sentiment impact, minutes-to-next HIGH/EXTREME event
   - Cross: currency strength index, correlation vs majors, time-of-day (UTC session), day-of-week
-- [ ] **`featureVersion` discipline**: version constant in config (`FEATURE_VERSION=v1.0`), every vector persisted to `MarketFeature` with version; adding/removing a feature requires a version bump (enforced by a feature-manifest file + checksum)
-- [ ] **Leakage guarantee**: every builder takes an `as_of` timestamp; only rows with `timestamp ≤ as_of` are read; news features use `publishedAt ≤ as_of`; event features use `scheduledAt > as_of` (future-known calendar events only)
-- [ ] Feature generation job (`features`, cron `FEATURE_JOB_CRON`): recompute rolling vectors for all pairs/timeframes; idempotent upsert on `(pairId, timeframe, timestamp, featureVersion)`
-- [ ] API surface: internal `POST /features` (AI service) + `MarketFeature` reads for prediction/scoring; historical-analysis similarity search now completed (NN over feature space)
-- [ ] `Missing required features → INSUFFICIENT_DATA` (feeds NO-TRADE rule)
-- [ ] Feature manifest documented (name, type, source, window) → committed `feature_manifest_v1.json`
+- [x] **`featureVersion` discipline**: version constant in config (`FEATURE_VERSION=v1.0`), every vector persisted to `MarketFeature` with version; adding/removing a feature requires a version bump (enforced by a feature-manifest file + checksum)
+- [x] **Leakage guarantee**: every builder takes an `as_of` timestamp; only rows with `timestamp ≤ as_of` are read; news features use `publishedAt ≤ as_of`; event features use `scheduledAt > as_of` (future-known calendar events only)
+- [x] Feature generation job (`features`, cron `FEATURE_JOB_CRON`): recompute rolling vectors for all pairs/timeframes; idempotent upsert on `(pairId, timeframe, timestamp, featureVersion)`
+- [x] API surface: internal `POST /features` (AI service) + `MarketFeature` reads for prediction/scoring; historical-analysis similarity search now completed (NN over feature space)
+- [x] `Missing required features → INSUFFICIENT_DATA` (feeds NO-TRADE rule)
+- [x] Feature manifest documented (name, type, source, window) → committed `feature_manifest_v1.json`
 
 ### Files/Folders
 ```text
@@ -1284,12 +1284,12 @@ None.
 `as_of` strictly enforced (leakage is a correctness+integrity issue); feature rows carry version for auditability.
 
 ### Testing
-- [ ] **Leakage tests (mandatory)**: shuffle-detection — features at `t` unchanged when future rows are mutated/deleted; boundary test at exact `t`
-- [ ] Unit: each feature family on hand-built fixtures (known values)
-- [ ] Unit: missing news/regime inputs → NaN policy documented (imputed with flags, never silently zero)
-- [ ] Integration: generate vectors for seeded history → `MarketFeature` rows match manifest count → re-run idempotent
-- [ ] Reproducibility: same `as_of` + same inputs → byte-identical vector
-- [ ] Regression: P02–P11 tests pass
+- [x] **Leakage tests (mandatory)**: shuffle-detection — features at `t` unchanged when future rows are mutated/deleted; boundary test at exact `t`
+- [x] Unit: each feature family on hand-built fixtures (known values)
+- [x] Unit: missing news/regime inputs → NaN policy documented (imputed with flags, never silently zero)
+- [x] Integration: generate vectors for seeded history → `MarketFeature` rows match manifest count → re-run idempotent
+- [x] Reproducibility: same `as_of` + same inputs → byte-identical vector
+- [x] Regression: P02–P11 tests pass
 
 ### Completion Criteria
 Versioned, leakage-tested feature vectors exist for all seeded history; manifest committed; similarity search live.

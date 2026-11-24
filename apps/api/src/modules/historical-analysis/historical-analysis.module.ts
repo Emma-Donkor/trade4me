@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { FeatureModule } from '../market/feature.module';
 import { MarketModule } from '../market/market.module';
 import { HistoricalAnalysisController } from './historical-analysis.controller';
 import {
@@ -7,7 +8,7 @@ import {
 } from './historical-analysis.service';
 
 @Module({
-  imports: [MarketModule],
+  imports: [MarketModule, FeatureModule],
   controllers: [HistoricalAnalysisController],
   providers: [{ provide: HistoricalAnalysisService, useClass: HistoricalAnalysisServiceImpl }],
   exports: [HistoricalAnalysisService],

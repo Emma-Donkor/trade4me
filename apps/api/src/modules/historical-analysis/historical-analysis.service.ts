@@ -3,6 +3,7 @@ import type { HistoricalAnalysisView, Timeframe } from '@ts/types';
 import type { HistoricalQuery, SymbolParam } from '@ts/validation';
 import { insufficientData } from '../../common/errors/stub-errors';
 import { CandleService } from '../market/candles.service';
+import { FeatureService } from '../market/feature.service';
 import { aggregateHistorical } from './aggregations';
 
 function lookbackMs(timeframe: Timeframe): number {
@@ -16,10 +17,13 @@ export abstract class HistoricalAnalysisService {
   ): Promise<HistoricalAnalysisView>;
 }
 
-/** README §9.3 — aggregations and volatility are real; NN similarity is P12. */
+/** README §9.3 — real OHLC aggregations plus live feature-space NN. */
 @Injectable()
 export class HistoricalAnalysisServiceImpl extends HistoricalAnalysisService {
-  constructor(private readonly candles: CandleService) {
+  constructor(
+    private readonly candles: CandleService,
+    private readonly features: FeatureService,
+  ) {
     super();
   }
 
@@ -39,12 +43,19 @@ export class HistoricalAnalysisServiceImpl extends HistoricalAnalysisService {
     if (rows.length === 0) {
       insufficientData('historical candles', { symbol: symbol.symbol, timeframe });
     }
+    const similarConditions = await this.features.nearest(
+      symbol.symbol,
+      timeframe,
+      asOf,
+      rows,
+      query.limit,
+    );
     return aggregateHistorical({
       symbol: symbol.symbol,
       timeframe,
       asOf,
       candles: rows,
-      limit: query.limit,
+      similarConditions,
     });
   }
 }

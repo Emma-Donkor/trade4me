@@ -1,0 +1,406 @@
+{
+  "featureVersion": "v1.0",
+  "features": [
+    {
+      "name": "rsi14",
+      "type": "float",
+      "source": "technical",
+      "window": "14 bars",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "macd_line_atr",
+      "type": "float",
+      "source": "technical",
+      "window": "26 bars; ATR14-normalised",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "macd_signal_atr",
+      "type": "float",
+      "source": "technical",
+      "window": "35 bars; ATR14-normalised",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "macd_hist_atr",
+      "type": "float",
+      "source": "technical",
+      "window": "35 bars; ATR14-normalised",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "ema20_distance_pct",
+      "type": "float",
+      "source": "technical",
+      "window": "20 bars",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "ema50_distance_pct",
+      "type": "float",
+      "source": "technical",
+      "window": "50 bars",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "ema200_distance_pct",
+      "type": "float",
+      "source": "technical",
+      "window": "200 bars",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "adx14",
+      "type": "float",
+      "source": "technical",
+      "window": "28 bars",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "bollinger_width_pct",
+      "type": "float",
+      "source": "technical",
+      "window": "20 bars",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "atr_pct",
+      "type": "float",
+      "source": "technical",
+      "window": "14 bars",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "return_1",
+      "type": "float",
+      "source": "momentum",
+      "window": "1 bar",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "return_4",
+      "type": "float",
+      "source": "momentum",
+      "window": "4 bars",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "return_12",
+      "type": "float",
+      "source": "momentum",
+      "window": "12 bars",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "return_24",
+      "type": "float",
+      "source": "momentum",
+      "window": "24 bars",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "realized_vol_pct",
+      "type": "float",
+      "source": "volatility",
+      "window": "24 bars, annualised",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "parkinson_vol_pct",
+      "type": "float",
+      "source": "volatility",
+      "window": "24 bars, annualised",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "atr_percentile",
+      "type": "float",
+      "source": "volatility",
+      "window": "100 mature ATR14% observations",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "distance_to_support_atr",
+      "type": "float",
+      "source": "levels",
+      "window": "200 bars",
+      "required": false,
+      "missingPolicy": "NaN -> 0.0 with levels_missing=1"
+    },
+    {
+      "name": "distance_to_resistance_atr",
+      "type": "float",
+      "source": "levels",
+      "window": "200 bars",
+      "required": false,
+      "missingPolicy": "NaN -> 0.0 with levels_missing=1"
+    },
+    {
+      "name": "regime_STRONG_UPTREND",
+      "type": "float",
+      "source": "regime",
+      "window": "200 bars",
+      "required": false,
+      "missingPolicy": "NaN -> UNCERTAIN=1.0 with regime_missing=1"
+    },
+    {
+      "name": "regime_WEAK_UPTREND",
+      "type": "float",
+      "source": "regime",
+      "window": "200 bars",
+      "required": false,
+      "missingPolicy": "NaN -> UNCERTAIN=1.0 with regime_missing=1"
+    },
+    {
+      "name": "regime_RANGE",
+      "type": "float",
+      "source": "regime",
+      "window": "200 bars",
+      "required": false,
+      "missingPolicy": "NaN -> UNCERTAIN=1.0 with regime_missing=1"
+    },
+    {
+      "name": "regime_WEAK_DOWNTREND",
+      "type": "float",
+      "source": "regime",
+      "window": "200 bars",
+      "required": false,
+      "missingPolicy": "NaN -> UNCERTAIN=1.0 with regime_missing=1"
+    },
+    {
+      "name": "regime_STRONG_DOWNTREND",
+      "type": "float",
+      "source": "regime",
+      "window": "200 bars",
+      "required": false,
+      "missingPolicy": "NaN -> UNCERTAIN=1.0 with regime_missing=1"
+    },
+    {
+      "name": "regime_HIGH_VOLATILITY",
+      "type": "float",
+      "source": "regime",
+      "window": "200 bars",
+      "required": false,
+      "missingPolicy": "NaN -> UNCERTAIN=1.0 with regime_missing=1"
+    },
+    {
+      "name": "regime_LOW_VOLATILITY",
+      "type": "float",
+      "source": "regime",
+      "window": "200 bars",
+      "required": false,
+      "missingPolicy": "NaN -> UNCERTAIN=1.0 with regime_missing=1"
+    },
+    {
+      "name": "regime_UNCERTAIN",
+      "type": "float",
+      "source": "regime",
+      "window": "200 bars",
+      "required": false,
+      "missingPolicy": "NaN -> UNCERTAIN=1.0 with regime_missing=1"
+    },
+    {
+      "name": "news_sentiment",
+      "type": "float",
+      "source": "news",
+      "window": "72 hours, publishedAt <= as_of",
+      "required": false,
+      "missingPolicy": "NaN -> neutral 50.0 with news_missing=1"
+    },
+    {
+      "name": "news_impact",
+      "type": "float",
+      "source": "news",
+      "window": "72 hours, publishedAt <= as_of",
+      "required": false,
+      "missingPolicy": "NaN -> 0.0 with news_missing=1"
+    },
+    {
+      "name": "minutes_to_high_event",
+      "type": "float",
+      "source": "economic-events",
+      "window": "next HIGH/EXTREME event with scheduledAt > as_of",
+      "required": false,
+      "missingPolicy": "NaN -> 43200.0 (30 days) with events_missing=1"
+    },
+    {
+      "name": "currency_strength_index",
+      "type": "float",
+      "source": "cross",
+      "window": "24 bars vs major-pair basket",
+      "required": false,
+      "missingPolicy": "NaN -> 0.0 with cross_missing=1"
+    },
+    {
+      "name": "correlation_vs_majors",
+      "type": "float",
+      "source": "cross",
+      "window": "24 aligned log returns vs major pairs",
+      "required": false,
+      "missingPolicy": "NaN -> 0.0 with cross_missing=1"
+    },
+    {
+      "name": "time_of_day_utc",
+      "type": "float",
+      "source": "time",
+      "window": "as_of instant (UTC day fraction)",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "day_of_week",
+      "type": "float",
+      "source": "time",
+      "window": "as_of instant (Monday=1..Sunday=7, /7)",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "session_asia",
+      "type": "float",
+      "source": "time",
+      "window": "as_of instant (UTC)",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "session_london",
+      "type": "float",
+      "source": "time",
+      "window": "as_of instant (UTC)",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "session_overlap",
+      "type": "float",
+      "source": "time",
+      "window": "as_of instant (UTC)",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "session_new_york",
+      "type": "float",
+      "source": "time",
+      "window": "as_of instant (UTC)",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "dow_mon",
+      "type": "float",
+      "source": "time",
+      "window": "as_of instant (UTC)",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "dow_tue",
+      "type": "float",
+      "source": "time",
+      "window": "as_of instant (UTC)",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "dow_wed",
+      "type": "float",
+      "source": "time",
+      "window": "as_of instant (UTC)",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "dow_thu",
+      "type": "float",
+      "source": "time",
+      "window": "as_of instant (UTC)",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "dow_fri",
+      "type": "float",
+      "source": "time",
+      "window": "as_of instant (UTC)",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "dow_sat",
+      "type": "float",
+      "source": "time",
+      "window": "as_of instant (UTC)",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "dow_sun",
+      "type": "float",
+      "source": "time",
+      "window": "as_of instant (UTC)",
+      "required": true,
+      "missingPolicy": "required \u2014 absent value raises INSUFFICIENT_DATA"
+    },
+    {
+      "name": "levels_missing",
+      "type": "float",
+      "source": "imputed",
+      "window": "as_of instant",
+      "required": false,
+      "missingPolicy": "1.0 when the parent family was imputed, else 0.0"
+    },
+    {
+      "name": "news_missing",
+      "type": "float",
+      "source": "imputed",
+      "window": "as_of instant",
+      "required": false,
+      "missingPolicy": "1.0 when the parent family was imputed, else 0.0"
+    },
+    {
+      "name": "events_missing",
+      "type": "float",
+      "source": "imputed",
+      "window": "as_of instant",
+      "required": false,
+      "missingPolicy": "1.0 when the parent family was imputed, else 0.0"
+    },
+    {
+      "name": "regime_missing",
+      "type": "float",
+      "source": "imputed",
+      "window": "as_of instant",
+      "required": false,
+      "missingPolicy": "1.0 when the parent family was imputed, else 0.0"
+    },
+    {
+      "name": "cross_missing",
+      "type": "float",
+      "source": "imputed",
+      "window": "as_of instant",
+      "required": false,
+      "missingPolicy": "1.0 when the parent family was imputed, else 0.0"
+    }
+  ],
+  "checksum": "7b05adc6dd15cb81b6c5f21a0f681b346c521e95cccf204cef9d19b75046a7af"
+}

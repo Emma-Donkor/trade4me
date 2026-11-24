@@ -29,10 +29,52 @@ export const indicatorsResponseSchema = z.object({
   computedAt: z.string().min(1),
 });
 
+export const featureInputCandleSchema = z.object({
+  timestamp: z.string().min(1),
+  open: z.number().finite(),
+  high: z.number().finite(),
+  low: z.number().finite(),
+  close: z.number().finite(),
+  volume: z.number().finite().optional(),
+});
+
+export const featureNewsInputSchema = z.object({
+  publishedAt: z.string().min(1),
+  currencies: z.array(z.string()).optional(),
+  affectedPairs: z.array(z.string()).optional(),
+  sentiment: z.string().min(1),
+  impact: z.string().min(1),
+  confidence: z.number().finite().optional(),
+});
+
+export const featureEventInputSchema = z.object({
+  scheduledAt: z.string().min(1),
+  currency: z.string(),
+  impact: z.string().min(1),
+});
+
+export const featureRegimeInputSchema = z.object({
+  regime: z.string().min(1),
+  confidence: z.number(),
+  evidence: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const featureVectorItemSchema = z.object({
+  timestamp: z.string().min(1),
+  features: z.record(z.string(), z.number()),
+});
+
 export const featuresRequestSchema = z.object({
   symbol: z.string().min(1),
   timeframe: timeframeSchema,
   featureVersion: z.string().min(1).optional(),
+  asOf: z.string().min(1),
+  candles: z.array(featureInputCandleSchema),
+  peerCandles: z.record(z.string(), z.array(featureInputCandleSchema)).optional(),
+  news: z.array(featureNewsInputSchema).optional(),
+  events: z.array(featureEventInputSchema).optional(),
+  regime: featureRegimeInputSchema.nullable().optional(),
+  timestamps: z.array(z.string().min(1)).optional(),
 });
 
 export const featuresResponseSchema = z.object({
@@ -41,6 +83,7 @@ export const featuresResponseSchema = z.object({
   featureVersion: z.string().min(1),
   features: z.record(z.string(), z.number()),
   timestamp: z.string().min(1),
+  vectors: z.array(featureVectorItemSchema),
 });
 
 export const predictRequestSchema = z.object({

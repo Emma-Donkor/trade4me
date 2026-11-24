@@ -9,6 +9,7 @@ import { Worker } from 'bullmq';
 import { env } from '@ts/config';
 import { JsonLogger } from '../common/logger/json-logger';
 import { BackfillProcessor } from './processors/backfill.processor';
+import { FeaturesProcessor } from './processors/features.processor';
 import { IntegrityProcessor } from './processors/integrity.processor';
 import { MarketSyncProcessor } from './processors/market-sync.processor';
 import { NewsIngestProcessor } from './processors/news-ingest.processor';
@@ -113,6 +114,7 @@ export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
     @Optional() private readonly backfillProcessor?: BackfillProcessor,
     @Optional() private readonly integrityProcessor?: IntegrityProcessor,
     @Optional() private readonly newsIngestProcessor?: NewsIngestProcessor,
+    @Optional() private readonly featuresProcessor?: FeaturesProcessor,
   ) {}
 
   onModuleInit(): void {
@@ -139,6 +141,10 @@ export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
           }
           if (queueName === 'news-ingest' && this.newsIngestProcessor) {
             await this.newsIngestProcessor.process(job);
+            return;
+          }
+          if (queueName === 'features' && this.featuresProcessor) {
+            await this.featuresProcessor.process(job);
             return;
           }
           this.logger.log('job received; processor arrives in a later phase', 'WORKER', {

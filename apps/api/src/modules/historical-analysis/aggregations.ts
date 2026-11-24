@@ -15,8 +15,6 @@ const PERIOD_DAYS: ReadonlyArray<[HistoricalPeriodChange['period'], number]> = [
   ['previous_year', 365],
 ];
 
-const WINDOW = 20;
-
 function returns(candles: readonly Candle[]): number[] {
   const result: number[] = [];
   for (let index = 1; index < candles.length; index += 1) {
@@ -74,51 +72,12 @@ export function volatilityStats(
   };
 }
 
-function normalizeShape(values: readonly number[]): number[] {
-  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
-  const deviation = Math.sqrt(
-    values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length,
-  );
-  if (deviation < 1e-12) return values.map(() => 0);
-  return values.map((value) => (value - mean) / deviation);
-}
-
-/**
- * P09 skeleton: deterministic shape match on normalized log-return windows.
- * P12 replaces this with feature-space nearest neighbors; the ranking here is
- * already computed from real candles and needs no AI service.
- */
-export function similarWindows(
-  candles: readonly Candle[],
-  limit: number,
-): SimilarHistoricalWindow[] {
-  if (candles.length < WINDOW * 2) return [];
-  const values = returns(candles);
-  const target = normalizeShape(values.slice(-WINDOW));
-  const scored: SimilarHistoricalWindow[] = [];
-  for (let end = WINDOW; end <= values.length - WINDOW; end += 1) {
-    const candidate = normalizeShape(values.slice(end - WINDOW, end));
-    const squared = candidate.reduce((sum, value, index) => sum + (value - target[index]) ** 2, 0);
-    const anchor = candles[end];
-    const previous = candles[end - 1];
-    scored.push({
-      timestamp: anchor.timestamp,
-      distance: Math.sqrt(squared / WINDOW),
-      close: anchor.close,
-      changePct: previous.close > 0 ? ((anchor.close - previous.close) / previous.close) * 100 : 0,
-    });
-  }
-  return scored
-    .sort((a, b) => a.distance - b.distance || a.timestamp.localeCompare(b.timestamp))
-    .slice(0, limit);
-}
-
 export function aggregateHistorical(input: {
   symbol: string;
   timeframe: Timeframe;
   asOf: Date;
   candles: readonly Candle[];
-  limit: number;
+  similarConditions: SimilarHistoricalWindow[];
 }): HistoricalAnalysisView {
   return {
     symbol: input.symbol,
@@ -126,8 +85,8 @@ export function aggregateHistorical(input: {
     asOf: input.asOf.toISOString(),
     periods: periodChanges(input.candles, input.asOf),
     volatility: volatilityStats(input.candles, input.timeframe, input.asOf),
-    similarConditions: similarWindows(input.candles, input.limit),
-    similarityMethod: 'deterministic-euclidean',
+    similarConditions: input.similarConditions,
+    similarityMethod: 'feature-euclidean-v1.0',
     dataPoints: input.candles.length,
   };
 }

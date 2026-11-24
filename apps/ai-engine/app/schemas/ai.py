@@ -32,10 +32,52 @@ class IndicatorsResponse(BaseModel):
     computedAt: str
 
 
+class FeatureInputCandle(BaseModel):
+    timestamp: str
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float | None = None
+
+
+class FeatureNewsInput(BaseModel):
+    publishedAt: str
+    currencies: list[str] | None = None
+    affectedPairs: list[str] | None = None
+    sentiment: str
+    impact: str
+    confidence: float | None = None
+
+
+class FeatureEventInput(BaseModel):
+    scheduledAt: str
+    currency: str
+    impact: str
+
+
+class RegimeInput(BaseModel):
+    regime: str
+    confidence: float
+    evidence: dict[str, object] | None = None
+
+
 class FeaturesRequest(BaseModel):
     symbol: str
     timeframe: str
     featureVersion: str | None = None
+    asOf: str
+    candles: list[FeatureInputCandle]
+    peerCandles: dict[str, list[FeatureInputCandle]] | None = None
+    news: list[FeatureNewsInput] | None = None
+    events: list[FeatureEventInput] | None = None
+    regime: RegimeInput | None = None
+    timestamps: list[str] | None = None
+
+
+class FeatureVectorItem(BaseModel):
+    timestamp: str
+    features: dict[str, float]
 
 
 class FeaturesResponse(BaseModel):
@@ -44,6 +86,7 @@ class FeaturesResponse(BaseModel):
     featureVersion: str
     features: dict[str, float]
     timestamp: str
+    vectors: list[FeatureVectorItem]
 
 
 class PredictRequest(BaseModel):

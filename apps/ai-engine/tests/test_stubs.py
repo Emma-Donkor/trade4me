@@ -5,24 +5,18 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from fastapi.testclient import TestClient
-
 from app.api.routers.explain import ExplainRequest, ExplainResponse
 from app.api.routers.features import FeaturesRequest, FeaturesResponse
 from app.api.routers.indicators import IndicatorsRequest, IndicatorsResponse
 from app.api.routers.predict import PredictRequest, PredictResponse
 from app.main import app
+from fastapi.testclient import TestClient  # pyright: ignore[reportMissingImports]
 
 client = TestClient(app)
 
 SERVICE_HEADERS = {'X-Service-Token': 'tradesense-dev-service-token'}
 
 STUB_CASES = [
-    (
-        '/api/v1/ai/features',
-        {'symbol': 'EURUSD', 'timeframe': '1h'},
-        'Not implemented until PHASE 12',
-    ),
     (
         '/api/v1/ai/predict',
         {'symbol': 'EURUSD', 'timeframe': '1h', 'horizon': 5},
@@ -38,10 +32,31 @@ STUB_CASES = [
 MODEL_FIELDS: list[tuple[Any, set[str]]] = [
     (IndicatorsRequest, {'symbol', 'timeframe', 'indicators', 'candles'}),
     (IndicatorsResponse, {'symbol', 'timeframe', 'indicators', 'computedAt'}),
-    (FeaturesRequest, {'symbol', 'timeframe', 'featureVersion'}),
+    (
+        FeaturesRequest,
+        {
+            'symbol',
+            'timeframe',
+            'featureVersion',
+            'asOf',
+            'candles',
+            'peerCandles',
+            'news',
+            'events',
+            'regime',
+            'timestamps',
+        },
+    ),
     (
         FeaturesResponse,
-        {'symbol', 'timeframe', 'featureVersion', 'features', 'timestamp'},
+        {
+            'symbol',
+            'timeframe',
+            'featureVersion',
+            'features',
+            'timestamp',
+            'vectors',
+        },
     ),
     (PredictRequest, {'symbol', 'timeframe', 'horizon'}),
     (
