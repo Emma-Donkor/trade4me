@@ -199,4 +199,25 @@ export class CandleService {
       provider: row.provider,
     }));
   }
+
+  /**
+   * P10: latest bounded window for indicator computation. Anchoring on stored
+   * timestamps (not the request clock) keeps TA cache fingerprints stable
+   * between identical calls.
+   */
+  async latestSeries(symbol: string, timeframe: Timeframe, limit: number): Promise<CandleView[]> {
+    const pair = await this.pairOf(symbol);
+    const rows = await this.repository.findSeries({
+      pairId: pair.id,
+      timeframe,
+      from: new Date(0),
+      to: new Date(),
+      order: 'desc',
+      limit: Math.max(1, Math.min(500, Math.trunc(limit))),
+    });
+    return rows
+      .slice(0, Math.max(1, Math.min(500, Math.trunc(limit))))
+      .reverse()
+      .map((row) => view(row, pair.symbol));
+  }
 }

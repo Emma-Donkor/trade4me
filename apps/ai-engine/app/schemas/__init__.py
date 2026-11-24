@@ -1,6 +1,7 @@
 """Single import surface for AI service request/response schemas."""
 
 from .ai import (
+    IndicatorCandle,
     ExplainFactor,
     ExplainRequest,
     ExplainResponse,
@@ -13,6 +14,7 @@ from .ai import (
 )
 
 __all__ = [
+    'IndicatorCandle',
     'IndicatorsRequest',
     'IndicatorsResponse',
     'FeaturesRequest',

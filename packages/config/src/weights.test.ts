@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { assertWeightsSumTo1, DEFAULT_DECISION_WEIGHTS } from './weights';
+import { assertWeightsSumTo1, DEFAULT_DECISION_WEIGHTS, TECHNICAL_SUBWEIGHTS } from './weights';
 
 describe('@ts/config decision weights', () => {
   it('sums the default weights to 1', () => {
@@ -10,6 +10,12 @@ describe('@ts/config decision weights', () => {
 
     expect(sum).toBeCloseTo(1, 10);
     expect(() => assertWeightsSumTo1(DEFAULT_DECISION_WEIGHTS)).not.toThrow();
+  });
+
+  it('keeps technical sub-weights normalised', () => {
+    const sum = Object.values(TECHNICAL_SUBWEIGHTS).reduce((total, weight) => total + weight, 0);
+
+    expect(sum).toBeCloseTo(1, 10);
   });
 
   it('rejects a weight set that does not sum to 1', () => {

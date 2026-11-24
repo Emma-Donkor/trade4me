@@ -1,6 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import request from 'supertest';
+import { disconnect } from '@ts/database';
 import { accessTokenFor, createPhase7TestApp, type Phase7TestApp } from './helpers/test-app';
+import { fakeAiFetch } from './helpers/fake-ai';
+import { seedHistory } from '../../../scripts/seed-history';
+import { AI_ENGINE_FETCH } from '../src/modules/technical-analysis/ai-engine.client';
 
 function bearer(token: string): string {
   return `Bearer ${token}`;
@@ -9,14 +13,33 @@ function bearer(token: string): string {
 describe('P07 integration contract', () => {
   let harness: Phase7TestApp;
   let userToken: string;
+  const originalDatabaseUrl = process.env.DATABASE_URL;
+  const testDatabaseUrl =
+    process.env.TEST_DATABASE_URL ??
+    'postgresql://tradesense:tradesense@localhost:5433/tradesense_test';
 
   beforeAll(async () => {
-    harness = await createPhase7TestApp();
+    // Phase 10 technical routes read the same repository singleton as P09.
+    process.env.DATABASE_URL = testDatabaseUrl;
+    await disconnect();
+    const ai = fakeAiFetch();
+    harness = await createPhase7TestApp({
+      configure: (builder) => builder.overrideProvider(AI_ENGINE_FETCH).useValue(ai.fetch),
+    });
     userToken = await accessTokenFor(harness, 'USER');
+    await seedHistory(harness.prisma, {
+      symbols: ['EUR/USD'],
+      timeframes: ['H1'],
+      years: 0.1,
+      end: new Date(),
+    });
   }, 120_000);
 
   afterAll(async () => {
     await harness?.close();
+    await disconnect();
+    if (originalDatabaseUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = originalDatabaseUrl;
   }, 120_000);
 
   it('returns seeded pairs with pip and point metadata', async () => {
@@ -74,11 +97,18 @@ describe('P07 integration contract', () => {
       expect(candle).not.toHaveProperty('id');
     }
 
+    // Phase 10 replaced the 503 stub with a real, AI-backed technical view.
     const analysis = await request(harness.app.getHttpServer())
       .get(`/api/v1/analysis/${symbol}/technical`)
       .set('Authorization', bearer(userToken))
-      .expect(503);
-    expect(analysis.body.error.code).toBe('AI_SERVICE_UNAVAILABLE');
+      .expect(200);
+    expect(analysis.body.data).toMatchObject({
+      symbol: 'EUR/USD',
+      timeframe: 'H1',
+      regime: { regime: 'WEAK_UPTREND' },
+    });
+    expect(analysis.body.data.score.score).toBeGreaterThanOrEqual(0);
+    expect(analysis.body.data.score.score).toBeLessThanOrEqual(100);
 
     const ai = await request(harness.app.getHttpServer())
       .post('/api/v1/ai/assistant')

@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from ...deps.auth import require_service_token
 from ...schemas import FeaturesRequest, FeaturesResponse
 
-router = APIRouter(tags=['features'])
+router = APIRouter(tags=['features'], dependencies=[Depends(require_service_token)])
 
 
 @router.post('/features', response_model=FeaturesResponse)

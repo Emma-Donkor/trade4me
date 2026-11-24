@@ -31,10 +31,21 @@ export type ErrorCode =
   | 'NOT_IMPLEMENTED'
   | 'HTTP_ERROR';
 
+export interface IndicatorCandle {
+  timestamp: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume?: number;
+}
+
 export interface IndicatorsRequest {
   symbol: string;
   timeframe: Timeframe;
   indicators?: string[];
+  /** Bounded OHLC window; the AI engine is the single math authority. */
+  candles?: IndicatorCandle[];
 }
 
 export interface IndicatorsResponse {

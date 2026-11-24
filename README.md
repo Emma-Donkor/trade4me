@@ -771,7 +771,7 @@ Stack traces are never returned to clients. Every response carries `requestId` f
 #### `/api/v1/analysis`
 | Method | Path | Description | Auth |
 |---|---|---|---|
-| GET | `/analysis/:symbol/technical` | Indicator snapshot + scores | Bearer |
+| GET | `/analysis/:symbol/technical?timeframe&indicators` | Indicator snapshot, contextual patterns + technical score | Bearer |
 | GET | `/analysis/:symbol/historical?timeframe&limit` | Real period changes/volatility + deterministic shape similarity (feature-space NN in P12) | Bearer |
 | GET | `/analysis/:symbol/regime` | Current regime classification | Bearer |
 | GET | `/analysis/:symbol` | Full combined assessment | Bearer |
@@ -948,7 +948,7 @@ Detected and handled conditions:
 | Price levels | Support/Resistance (swing clustering), Swing High/Low, Pivot Points (classic/Fibonacci) |
 | Volume (cautious) | OBV, VWAP — flagged as **indicative only** because spot forex has no centralized exchange volume |
 
-Each indicator is computed by the AI service (pandas-ta), versioned and stored in `TechnicalIndicator`; results are cached in Redis keyed by symbol/timeframe/params.
+Each indicator is computed by the AI service (deterministic pure-Python math, Wilder smoothing where applicable), versioned and stored in `TechnicalIndicator`; results are cached in Redis for 60s under `tradesense:ta:{symbol}:{timeframe}:{paramsHash}`.
 
 ### 10.2 Candlestick patterns
 

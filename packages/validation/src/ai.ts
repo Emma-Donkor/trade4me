@@ -6,10 +6,20 @@ export const directionSchema = z.enum(['LONG', 'SHORT', 'NEUTRAL']);
 
 export const riskLevelSchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'EXTREME']);
 
+export const indicatorCandleSchema = z.object({
+  timestamp: z.string().min(1),
+  open: z.number().finite(),
+  high: z.number().finite(),
+  low: z.number().finite(),
+  close: z.number().finite(),
+  volume: z.number().finite().optional(),
+});
+
 export const indicatorsRequestSchema = z.object({
   symbol: z.string().min(1),
   timeframe: timeframeSchema,
   indicators: z.array(z.string().min(1)).optional(),
+  candles: z.array(indicatorCandleSchema).optional(),
 });
 
 export const indicatorsResponseSchema = z.object({

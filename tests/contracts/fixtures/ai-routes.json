@@ -1,10 +1,20 @@
 {
   "IndicatorsRequest": {
-    "fields": ["symbol", "timeframe", "indicators"],
+    "fields": ["symbol", "timeframe", "indicators", "candles"],
     "payload": {
       "symbol": "EUR/USD",
       "timeframe": "H1",
-      "indicators": ["RSI", "EMA20"]
+      "indicators": ["RSI", "EMA20"],
+      "candles": [
+        {
+          "timestamp": "2026-11-21T07:00:00.000Z",
+          "open": 1.084,
+          "high": 1.0852,
+          "low": 1.0831,
+          "close": 1.0841,
+          "volume": 120
+        }
+      ]
     }
   },
   "IndicatorsResponse": {

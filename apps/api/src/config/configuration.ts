@@ -13,6 +13,7 @@ export const configuration = {
     nodeEnv: String(env.NODE_ENV ?? 'development'),
     port: Number(env.API_PORT ?? 4000),
     aiUrl: String(env.AI_SERVICE_URL ?? 'http://localhost:8000').replace(/\/$/, ''),
+    aiServiceToken: String(env.AI_SERVICE_TOKEN ?? 'tradesense-dev-service-token'),
   },
   cors: {
     origins: splitOrigins(env.CORS_ORIGINS ?? 'http://localhost:3000'),

@@ -149,6 +149,75 @@ export interface PatternDetection {
   detectedAt: string;
 }
 
+/** P10 — Python engine output for one named indicator. */
+export interface TechnicalIndicatorValue {
+  value: number | Record<string, number> | Record<string, unknown>;
+  series?: number[];
+  indicative?: boolean;
+}
+
+/** P10 — the market state that existed when a candle pattern was detected. */
+export interface PatternContext {
+  trend: 'UP' | 'DOWN' | 'RANGE';
+  regime: MarketRegime;
+  supportResistanceDistancePct: number;
+  volatilityPct: number;
+  momentum: number;
+}
+
+export interface ContextualPatternDetection extends PatternDetection {
+  bodyRatio: number;
+  rangeRatio: number;
+  upperWickRatio: number;
+  lowerWickRatio: number;
+  context: PatternContext;
+}
+
+export interface RegimeSnapshot {
+  regime: MarketRegime;
+  confidence: number;
+  evidence: Record<string, unknown>;
+}
+
+export interface TechnicalScoreBreakdown {
+  score: number;
+  subScores: Record<string, number>;
+  weights: Record<string, number>;
+  regime: MarketRegime;
+  evidenceCount: number;
+  band?: { min: number; max: number; label: string };
+}
+
+export interface TechnicalAnalysisView {
+  symbol: string;
+  timeframe: Timeframe;
+  asOf: string;
+  source: 'ai' | 'cache';
+  indicators: Record<string, TechnicalIndicatorValue>;
+  patterns: ContextualPatternDetection[];
+  regime: RegimeSnapshot;
+  score: TechnicalScoreBreakdown;
+  metadata?: Record<string, unknown>;
+}
+
+export interface RegimeAnalysisView extends RegimeSnapshot {
+  symbol: string;
+  timeframe: Timeframe;
+  asOf: string;
+  source: 'ai' | 'cache';
+}
+
+/** P10 — P17 adds news/LLM sections; the assembled shape stays stable. */
+export interface CombinedAssessmentView {
+  symbol: string;
+  timeframe: Timeframe;
+  asOf: string;
+  technical: TechnicalAnalysisView;
+  historical: HistoricalAnalysisView;
+  regime: RegimeSnapshot;
+  pendingPhases: readonly ('P11' | 'P12' | 'P17')[];
+}
+
 export interface ProviderHealth {
   name: string;
   status: ProviderStatus;

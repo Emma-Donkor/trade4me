@@ -9,10 +9,20 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
+class IndicatorCandle(BaseModel):
+    timestamp: str
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float | None = None
+
+
 class IndicatorsRequest(BaseModel):
     symbol: str
     timeframe: str
     indicators: list[str] | None = None
+    candles: list[IndicatorCandle] | None = None
 
 
 class IndicatorsResponse(BaseModel):

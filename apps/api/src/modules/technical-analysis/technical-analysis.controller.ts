@@ -1,14 +1,12 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { timeframeSchema, z, type SymbolParam, symbolParamSchema } from '@ts/validation';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
-import { TechnicalAnalysisService } from './technical-analysis.service';
+import { TechnicalAnalysisService, type TechnicalQuery } from './technical-analysis.service';
 
 const technicalQuerySchema = z.strictObject({
   timeframe: timeframeSchema.optional(),
-  indicators: z.array(z.string().min(1)).optional(),
+  indicators: z.array(z.string().min(1)).max(40).optional(),
 });
-
-type TechnicalQuery = z.infer<typeof technicalQuerySchema>;
 
 @Controller('analysis')
 export class TechnicalAnalysisController {
@@ -19,8 +17,7 @@ export class TechnicalAnalysisController {
     @Param(new ZodValidationPipe(symbolParamSchema)) symbol: SymbolParam,
     @Query(new ZodValidationPipe(technicalQuerySchema)) query: TechnicalQuery,
   ) {
-    void query;
-    return this.analysis.technical(symbol);
+    return this.analysis.technical(symbol, query);
   }
 
   @Get(':symbol/regime')

@@ -41,6 +41,8 @@ export const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
   API_URL: z.string().url().default('http://localhost:4000'),
   AI_SERVICE_URL: z.string().url().default('http://localhost:8000'),
+  /** Internal API→AI bearer token; override in every deployed environment. */
+  AI_SERVICE_TOKEN: z.string().min(1).default('tradesense-dev-service-token'),
   API_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   AI_PORT: z.coerce.number().int().min(1).max(65535).default(8000),
   CORS_ORIGINS: z.string().min(1).default('http://localhost:3000'),

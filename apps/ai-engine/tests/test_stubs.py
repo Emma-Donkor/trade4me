@@ -15,12 +15,9 @@ from app.main import app
 
 client = TestClient(app)
 
+SERVICE_HEADERS = {'X-Service-Token': 'tradesense-dev-service-token'}
+
 STUB_CASES = [
-    (
-        '/api/v1/ai/indicators',
-        {'symbol': 'EURUSD', 'timeframe': '1h'},
-        'Not implemented until PHASE 10',
-    ),
     (
         '/api/v1/ai/features',
         {'symbol': 'EURUSD', 'timeframe': '1h'},
@@ -39,7 +36,7 @@ STUB_CASES = [
 ]
 
 MODEL_FIELDS: list[tuple[Any, set[str]]] = [
-    (IndicatorsRequest, {'symbol', 'timeframe', 'indicators'}),
+    (IndicatorsRequest, {'symbol', 'timeframe', 'indicators', 'candles'}),
     (IndicatorsResponse, {'symbol', 'timeframe', 'indicators', 'computedAt'}),
     (FeaturesRequest, {'symbol', 'timeframe', 'featureVersion'}),
     (
@@ -66,10 +63,17 @@ MODEL_FIELDS: list[tuple[Any, set[str]]] = [
 
 @pytest.mark.parametrize(('path', 'payload', 'detail'), STUB_CASES)
 def test_stub_endpoints_return_501(path: str, payload: dict[str, Any], detail: str) -> None:
-    response = client.post(path, json=payload)
+    response = client.post(path, json=payload, headers=SERVICE_HEADERS)
 
     assert response.status_code == 501
     assert response.json() == {'detail': detail}
+
+
+@pytest.mark.parametrize(('path', 'payload', '_detail'), STUB_CASES)
+def test_internal_routes_require_service_token(
+    path: str, payload: dict[str, Any], _detail: str
+) -> None:
+    assert client.post(path, json=payload).status_code == 401
 
 
 @pytest.mark.parametrize(('model', 'expected'), MODEL_FIELDS)

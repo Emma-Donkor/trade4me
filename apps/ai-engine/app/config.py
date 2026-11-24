@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     NEXT_PUBLIC_APP_URL: str = 'http://localhost:3000'
     API_URL: str = 'http://localhost:4000'
     AI_SERVICE_URL: str = 'http://localhost:8000'
+    # Internal API→AI bearer token. Override in every deployed environment.
+    AI_SERVICE_TOKEN: str = 'tradesense-dev-service-token'
     API_PORT: int = 4000
     AI_PORT: int = 8000
     CORS_ORIGINS: str = 'http://localhost:3000'
@@ -84,6 +86,7 @@ class Settings(BaseSettings):
 
     # Background jobs (BullMQ)
     MARKET_SYNC_CRON: str = '0 * * * *'
+    MARKET_INTEGRITY_CRON: str = '0 4 * * *'
     NEWS_INGEST_CRON: str = '*/15 * * * *'
     FEATURE_JOB_CRON: str = '*/30 * * * *'
     OUTCOME_JOB_CRON: str = '0 * * * *'
@@ -91,6 +94,7 @@ class Settings(BaseSettings):
 
     @field_validator(
         'MARKET_SYNC_CRON',
+        'MARKET_INTEGRITY_CRON',
         'NEWS_INGEST_CRON',
         'FEATURE_JOB_CRON',
         'OUTCOME_JOB_CRON',

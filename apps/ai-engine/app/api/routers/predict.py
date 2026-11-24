@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from ...deps.auth import require_service_token
 from ...schemas import PredictRequest, PredictResponse
 
-router = APIRouter(tags=['predict'])
+router = APIRouter(tags=['predict'], dependencies=[Depends(require_service_token)])
 
 
 @router.post('/predict', response_model=PredictResponse)

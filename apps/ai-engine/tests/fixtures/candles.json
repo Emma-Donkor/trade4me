@@ -1,0 +1,21 @@
+{
+  "wilderRsi": {
+    "description": "Wilder's canonical RSI(14) example; RSI at the final close is ~70.46",
+    "closes": [
+      44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.1, 45.42, 45.84, 46.08, 45.89, 46.03, 45.61,
+      46.28, 46.28
+    ]
+  },
+  "rising": {
+    "description": "60 monotonically rising bars for trend/regime reference values",
+    "start": 1.0,
+    "step": 0.001,
+    "count": 60
+  },
+  "range": {
+    "description": "60 flat bars with alternating closes for RANGE/UNCERTAIN classification",
+    "center": 1.1,
+    "amplitude": 0.0004,
+    "count": 60
+  }
+}

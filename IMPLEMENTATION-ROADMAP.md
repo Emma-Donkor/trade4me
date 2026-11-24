@@ -1086,14 +1086,14 @@ Depends on: PHASE 09
 ```
 
 ### Tasks
-- [ ] `app/services/indicators.py` (pandas-ta): Trend — SMA(20/50/100/200), EMA(20/50/200), MACD(12/26/9), ADX(14); Momentum — RSI(14), Stochastic(14/3/3), CCI(20), ROC(12); Volatility — ATR(14), Bollinger(20,2), Historical Volatility (annualized); Levels — support/resistance (swing clustering), swing high/low, pivots (classic + Fibonacci); Volume-aware — OBV, VWAP **flagged indicative** (spot-forex caveat surfaced in API metadata)
-- [ ] `app/services/patterns.py`: Doji, Hammer, Inverted Hammer, Shooting Star, Bullish/Bearish Engulfing, Morning Star, Evening Star, Harami — with body/range ratios; each detection returns **context fields** (trend, regime, S/R distance, volatility, momentum) — never a standalone "prediction"
-- [ ] `app/services/regime.py`: classify `STRONG_UPTREND|WEAK_UPTREND|RANGE|WEAK_DOWNTREND|STRONG_DOWNTREND|HIGH_VOLATILITY|LOW_VOLATILITY|UNCERTAIN` from ADX, EMA slope/stacking, price vs EMA200, ATR percentile; `UNCERTAIN` is a valid output
-- [ ] Replace P03 stub: `POST /indicators` computes for symbol/timeframe/candle window; results persisted to `TechnicalIndicator` + cached (`tradesense:ta:…`, 60s) by the API layer
-- [ ] `technical-analysis` module real body: `GET /analysis/:symbol/technical` → indicator snapshot + **technical score 0–100** (weighted sub-scores; weights in `packages/config`)
-- [ ] Pattern results attached to the technical assessment with contextual scores
-- [ ] Regime endpoint: `GET /analysis/:symbol/regime` real; regime persisted/emitted on change (`regime:changed` WS)
-- [ ] `GET /analysis/:symbol` assembles technical + regime + historical (+ news when P11 lands)
+- [x] `app/services/indicators.py` (pandas-ta): Trend — SMA(20/50/100/200), EMA(20/50/200), MACD(12/26/9), ADX(14); Momentum — RSI(14), Stochastic(14/3/3), CCI(20), ROC(12); Volatility — ATR(14), Bollinger(20,2), Historical Volatility (annualized); Levels — support/resistance (swing clustering), swing high/low, pivots (classic + Fibonacci); Volume-aware — OBV, VWAP **flagged indicative** (spot-forex caveat surfaced in API metadata)
+- [x] `app/services/patterns.py`: Doji, Hammer, Inverted Hammer, Shooting Star, Bullish/Bearish Engulfing, Morning Star, Evening Star, Harami — with body/range ratios; each detection returns **context fields** (trend, regime, S/R distance, volatility, momentum) — never a standalone "prediction"
+- [x] `app/services/regime.py`: classify `STRONG_UPTREND|WEAK_UPTREND|RANGE|WEAK_DOWNTREND|STRONG_DOWNTREND|HIGH_VOLATILITY|LOW_VOLATILITY|UNCERTAIN` from ADX, EMA slope/stacking, price vs EMA200, ATR percentile; `UNCERTAIN` is a valid output
+- [x] Replace P03 stub: `POST /indicators` computes for symbol/timeframe/candle window; results persisted to `TechnicalIndicator` + cached (`tradesense:ta:…`, 60s) by the API layer
+- [x] `technical-analysis` module real body: `GET /analysis/:symbol/technical` → indicator snapshot + **technical score 0–100** (weighted sub-scores; weights in `packages/config`)
+- [x] Pattern results attached to the technical assessment with contextual scores
+- [x] Regime endpoint: `GET /analysis/:symbol/regime` real; regime persisted/emitted on change (`regime:changed` WS)
+- [x] `GET /analysis/:symbol` assembles technical + regime + historical (+ news when P11 lands)
 
 ### Files/Folders
 ```text
@@ -1114,7 +1114,7 @@ Writes `TechnicalIndicator` (unique per pair/timeframe/name/timestamp) and regim
 ```text
 GET /api/v1/analysis/:symbol/technical    (real)
 GET /api/v1/analysis/:symbol/regime       (real)
-GET /api/v1/analysis/:symbol              (partially real → complete in P17)
+GET /api/v1/analysis/:symbol              (real technical+regime+historical assembly; P17 adds news/LLM)
 POST (ai) /indicators                     (internal)
 ```
 
@@ -1128,12 +1128,12 @@ None.
 Internal AI routes callable only with service token (network-level in P34; header check now); input candle windows bounded.
 
 ### Testing
-- [ ] **Reference-value tests**: RSI/MACD/ATR/ADX/EMA against manually computed or pandas-ta canonical outputs on fixture series (the non-negotiable correctness gate)
-- [ ] Unit: each pattern detected on crafted candles (e.g., classic hammer geometry) and *not* detected on near-miss geometry
-- [ ] Unit: regime classifier on synthetic uptrend/downtrend/range/volatile series + `UNCERTAIN` on noise
-- [ ] Unit: technical score bounds [0,100]; weight changes alter score as configured
-- [ ] Integration: API → AI service → persisted indicators → cached second call is cache-hit
-- [ ] Regression: P02–P09 tests pass
+- [x] **Reference-value tests**: RSI/MACD/ATR/ADX/EMA against manually computed or pandas-ta canonical outputs on fixture series (the non-negotiable correctness gate)
+- [x] Unit: each pattern detected on crafted candles (e.g., classic hammer geometry) and *not* detected on near-miss geometry
+- [x] Unit: regime classifier on synthetic uptrend/downtrend/range/volatile series + `UNCERTAIN` on noise
+- [x] Unit: technical score bounds [0,100]; weight changes alter score as configured
+- [x] Integration: API → AI service → persisted indicators → cached second call is cache-hit
+- [x] Regression: P02–P09 tests pass
 
 ### Completion Criteria
 Every indicator/pattern/regime output proven against reference values; technical scores served live; cache path verified.

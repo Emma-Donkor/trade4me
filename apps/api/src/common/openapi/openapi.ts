@@ -40,6 +40,12 @@ const QUERY_SCHEMAS: Record<string, Record<string, unknown>> = {
   },
   symbol: { type: 'string', example: 'EUR/USD' },
   timeframe: { type: 'string', example: 'H1' },
+  indicators: {
+    type: 'array',
+    items: { type: 'string', example: 'RSI14' },
+    style: 'form',
+    explode: true,
+  },
   start: { type: 'string', format: 'date-time' },
   end: { type: 'string', format: 'date-time' },
   limit: { type: 'integer', minimum: 1, maximum: 500 },

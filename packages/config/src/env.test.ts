@@ -8,6 +8,7 @@ const ENV_NAMES = [
   'NEXT_PUBLIC_APP_URL',
   'API_URL',
   'AI_SERVICE_URL',
+  'AI_SERVICE_TOKEN',
   'API_PORT',
   'AI_PORT',
   'CORS_ORIGINS',

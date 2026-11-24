@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from ...deps.auth import require_service_token
 from ...schemas import ExplainFactor, ExplainRequest, ExplainResponse
 
-router = APIRouter(tags=['explain'])
+router = APIRouter(tags=['explain'], dependencies=[Depends(require_service_token)])
 
 
 @router.post('/explain', response_model=ExplainResponse)
