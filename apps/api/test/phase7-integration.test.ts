@@ -42,7 +42,7 @@ describe('P07 integration contract', () => {
     expect(response.body.data.items[0]).not.toHaveProperty('providerSymbols');
   });
 
-  it('serves live quotes and fails honestly for unimplemented OHLC routes', async () => {
+  it('serves live quotes and real cached OHLC series', async () => {
     const symbol = encodeURIComponent('EUR/USD');
 
     // Phase 8 replaced the quote stub with validated mock-provider ingestion.
@@ -58,13 +58,21 @@ describe('P07 integration contract', () => {
     });
     expect(quote.body.data.items[0].dataFreshnessSeconds).toBeGreaterThanOrEqual(0);
 
+    // Phase 9 replaced the honest OHLC stub with real projected reads. The
+    // test database may not have history seeded, so assert the contract shape.
     const candles = await request(harness.app.getHttpServer())
       .get(
         `/api/v1/market/candles?symbol=${symbol}&timeframe=H1&start=2026-01-01T00:00:00Z&end=2026-01-02T00:00:00Z&limit=50`,
       )
       .set('Authorization', bearer(userToken))
-      .expect(422);
-    expect(candles.body.error.code).toBe('INSUFFICIENT_DATA');
+      .expect(200);
+    expect(candles.body.data).toMatchObject({ limit: 50, source: 'db' });
+    expect(Array.isArray(candles.body.data.items)).toBe(true);
+    for (const candle of candles.body.data.items) {
+      expect(candle).toMatchObject({ symbol: 'EUR/USD', timeframe: 'H1' });
+      expect(candle).not.toHaveProperty('pairId');
+      expect(candle).not.toHaveProperty('id');
+    }
 
     const analysis = await request(harness.app.getHttpServer())
       .get(`/api/v1/analysis/${symbol}/technical`)

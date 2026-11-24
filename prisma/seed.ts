@@ -259,8 +259,18 @@ async function main(): Promise<void> {
     skipDuplicates: true,
   });
 
+  // P09 — deterministic two-year D1/H1 history so technical analysis, ML and
+  // backtesting have real data on a fresh install. Re-running is idempotent;
+  // fast test resets can opt out with MARKET_SEED_HISTORY=0.
+  if (process.env.MARKET_SEED_HISTORY !== '0') {
+    const { seedHistory } = await import('../scripts/seed-history.js');
+    const history = await seedHistory(prisma);
+    console.log('History seed:', JSON.stringify(history));
+  }
+
   const counts = {
     pairs: await prisma.currencyPair.count(),
+    candles: await prisma.marketCandle.count(),
     riskProfiles: await prisma.riskProfile.count(),
     users: await prisma.user.count(),
     modelVersions: await prisma.modelVersion.count(),

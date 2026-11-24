@@ -1,14 +1,53 @@
 import { Injectable } from '@nestjs/common';
-import type { SymbolParam } from '@ts/validation';
-import { aiUnavailable } from '../../common/errors/stub-errors';
+import type { HistoricalAnalysisView, Timeframe } from '@ts/types';
+import type { HistoricalQuery, SymbolParam } from '@ts/validation';
+import { insufficientData } from '../../common/errors/stub-errors';
+import { CandleService } from '../market/candles.service';
+import { aggregateHistorical } from './aggregations';
+
+function lookbackMs(timeframe: Timeframe): number {
+  return timeframe === 'D1' ? 730 * 86_400_000 : 180 * 86_400_000;
+}
 
 export abstract class HistoricalAnalysisService {
-  abstract historical(_symbol: SymbolParam): never;
+  abstract historical(
+    symbol: SymbolParam,
+    query?: HistoricalQuery,
+  ): Promise<HistoricalAnalysisView>;
 }
 
+/** README §9.3 — aggregations and volatility are real; NN similarity is P12. */
 @Injectable()
-export class Phase7HistoricalAnalysisService extends HistoricalAnalysisService {
-  historical(): never {
-    aiUnavailable('historical analysis');
+export class HistoricalAnalysisServiceImpl extends HistoricalAnalysisService {
+  constructor(private readonly candles: CandleService) {
+    super();
+  }
+
+  async historical(
+    symbol: SymbolParam,
+    query: HistoricalQuery = { timeframe: 'D1', limit: 5 },
+  ): Promise<HistoricalAnalysisView> {
+    const asOf = new Date();
+    const timeframe = query.timeframe;
+    const rows = await this.candles.series(
+      symbol.symbol,
+      timeframe,
+      new Date(asOf.getTime() - lookbackMs(timeframe)),
+      asOf,
+      5_000,
+    );
+    if (rows.length === 0) {
+      insufficientData('historical candles', { symbol: symbol.symbol, timeframe });
+    }
+    return aggregateHistorical({
+      symbol: symbol.symbol,
+      timeframe,
+      asOf,
+      candles: rows,
+      limit: query.limit,
+    });
   }
 }
+
+/** Backwards-compatible name used by the P07 module wiring. */
+export { HistoricalAnalysisServiceImpl as Phase7HistoricalAnalysisService };

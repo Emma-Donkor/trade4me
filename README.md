@@ -683,6 +683,14 @@ BacktestStatus      : QUEUED | RUNNING | COMPLETED | FAILED
 - Aggregations (daily pivots, historical similarity) executed with SQL `GROUP BY` over indexed ranges, results cached in Redis.
 - TimescaleDB migration path: `create_hypertable('MarketCandle', 'timestamp')` + continuous aggregates — the Prisma model stays unchanged.
 
+#### 7.4.1 Historical data pipeline (P09)
+
+- `BackfillService` imports bounded, provider-only ranges in 500-candle chunks with Redis checkpoints (`history:checkpoint:*`), so interrupted runs resume exactly.
+- `CandleSyncService` fetches only buckets newer than the last stored timestamp; `(pairId, timeframe, timestamp)` upserts make replays idempotent.
+- `CandleIntegrityService` (daily `MARKET_INTEGRITY_CRON`, default `0 4 * * *`) scans stored clock buckets. Holes produce a `SystemEvent` and a deduplicated `backfill` repair job — **never interpolated or forward-filled**. If a provider still omits a bucket, the gap remains reported.
+- Last-sync freshness per pair/timeframe feeds `/health/ready` (`history`) and is available to assessments via `HistoryStateService`.
+- `npm run db:seed` includes a deterministic two-year D1/H1 mock history for all ten pairs (idempotent). `npm run db:seed:history` re-runs only that step; `MARKET_SEED_HISTORY=0` skips it (used by test resets).
+
 ### 7.5 Redis key design
 
 | Key pattern | Purpose | TTL |
@@ -757,14 +765,14 @@ Stack traces are never returned to clients. Every response carries `requestId` f
 |---|---|---|---|
 | GET | `/market/pairs` | List supported currency pairs | Bearer |
 | GET | `/market/quote?symbols=&freshOnly=` | Latest quotes (`freshOnly=true` → `MARKET_DATA_STALE`) | Bearer |
-| GET | `/market/candles?symbol&timeframe&start&end&limit` | Historical OHLC | Bearer |
+| GET | `/market/candles?symbol&timeframe&start&end&limit&order&cursor` | Bounded, projected, cached OHLC with keyset pagination (max range 1098 days) | Bearer |
 | GET | `/market/overview` | Aggregated market overview | Bearer |
 
 #### `/api/v1/analysis`
 | Method | Path | Description | Auth |
 |---|---|---|---|
 | GET | `/analysis/:symbol/technical` | Indicator snapshot + scores | Bearer |
-| GET | `/analysis/:symbol/historical` | Similarity, past behavior, volatility | Bearer |
+| GET | `/analysis/:symbol/historical?timeframe&limit` | Real period changes/volatility + deterministic shape similarity (feature-space NN in P12) | Bearer |
 | GET | `/analysis/:symbol/regime` | Current regime classification | Bearer |
 | GET | `/analysis/:symbol` | Full combined assessment | Bearer |
 | GET | `/analysis/:symbol/report` | AI market report (scenarios, decision, warnings) | Bearer |
@@ -1578,7 +1586,7 @@ cp .env.example .env.local    # defaults work for keyless local dev
 docker compose up -d postgres redis
 
 npm run db:migrate            # prisma migrate dev
-npm run db:seed               # pairs, demo user, risk profiles, model registry
+npm run db:seed               # pairs, demo user, risk profiles, model registry, 2y D1/H1 history
 
 cd apps/ai-engine
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
@@ -1602,8 +1610,9 @@ npm run dev:ai       # FastAPI (+ docs at :8000/docs)
 
 ```bash
 npm run db:migrate   # apply migrations
-npm run db:seed      # reference data + demo account
-npm run db:studio    # Prisma Studio → :5555
+npm run db:seed            # reference data + demo account + deterministic history
+npm run db:seed:history    # re-import the two-year D1/H1 mock series only (idempotent)
+npm run db:studio          # Prisma Studio → :5555
 ```
 
 ---

@@ -1,6 +1,9 @@
 import { z } from 'zod';
-import { dateTimeSchema, paginationSchema, symbolSchema } from './common.schema';
+import { dateTimeSchema, nonEmptyString, paginationSchema, symbolSchema } from './common.schema';
 import { timeframeSchema } from './ai';
+
+/** README §P09 — bounded ranges prevent DoS scans of deep history. */
+export const MAX_CANDLE_RANGE_DAYS = 3 * 366;
 
 /**
  * README §8.2/§9 — a bounded OHLC request. `start`/`end`/`limit` are the
@@ -19,6 +22,8 @@ export const candleRangeQuerySchema = z
     page: paginationSchema.shape.page,
     pageSize: paginationSchema.shape.pageSize,
     order: z.enum(['asc', 'desc']).optional(),
+    /** Keyset cursor for deep history; encoded as an opaque base64 string. */
+    cursor: nonEmptyString.optional(),
   })
   .refine(
     (value) => {
@@ -29,6 +34,19 @@ export const candleRangeQuerySchema = z
     {
       message: 'start must be before end',
       path: ['start'],
+    },
+  )
+  .refine(
+    (value) => {
+      const from = value.from ?? value.start;
+      const to = value.to ?? value.end;
+      if (!from || !to) return true;
+      const spanDays = (Date.parse(to) - Date.parse(from)) / 86_400_000;
+      return spanDays <= MAX_CANDLE_RANGE_DAYS;
+    },
+    {
+      message: `Range must not exceed ${String(MAX_CANDLE_RANGE_DAYS)} days`,
+      path: ['end'],
     },
   );
 
@@ -89,7 +107,14 @@ function nonEmptyIndicator() {
   return z.string().min(1);
 }
 
+/** README §9.3 — historical aggregation query (similarity NN arrives in P12). */
+export const historicalQuerySchema = z.strictObject({
+  timeframe: timeframeSchema.optional().default('D1'),
+  limit: z.coerce.number().int().positive().max(50).optional().default(5),
+});
+
 export type CandleRangeQuery = z.infer<typeof candleRangeQuerySchema>;
+export type HistoricalQuery = z.infer<typeof historicalQuerySchema>;
 export type QuoteQuery = z.infer<typeof quoteQuerySchema>;
 export type SymbolParam = z.infer<typeof symbolParamSchema>;
 export type ScannerQuery = z.infer<typeof scannerQuerySchema>;

@@ -1,8 +1,14 @@
 import { Module } from '@nestjs/common';
+import { CandleRepository } from '@ts/database';
 import { MarketController } from './market.controller';
 import { MarketService, MarketServiceImpl } from './market.service';
 import { QuoteService } from './quote.service';
 import { SystemEventService } from './system-event.service';
+import { BackfillService } from './backfill.service';
+import { CandleService } from './candles.service';
+import { CandleIntegrityService } from './integrity.service';
+import { CandleSyncService } from './sync.service';
+import { HistoryStateService } from './history-state.service';
 import { AlphaVantageProvider } from './providers/alphavantage.provider';
 import { MockProvider } from './providers/mock.provider';
 import { ProviderHealthStore } from './providers/provider.health';
@@ -18,6 +24,12 @@ import { WebsocketModule } from '../websocket/websocket.module';
   providers: [
     { provide: MarketService, useClass: MarketServiceImpl },
     QuoteService,
+    CandleRepository,
+    CandleService,
+    BackfillService,
+    CandleSyncService,
+    CandleIntegrityService,
+    HistoryStateService,
     SystemEventService,
     ProviderHealthStore,
     ProviderRateLimiter,
@@ -36,6 +48,16 @@ import { WebsocketModule } from '../websocket/websocket.module';
       inject: [MockProvider, AlphaVantageProvider, TwelveDataProvider],
     },
   ],
-  exports: [MarketService, QuoteService, ProviderRegistry, ProviderHealthStore],
+  exports: [
+    MarketService,
+    QuoteService,
+    CandleService,
+    BackfillService,
+    CandleSyncService,
+    CandleIntegrityService,
+    HistoryStateService,
+    ProviderRegistry,
+    ProviderHealthStore,
+  ],
 })
 export class MarketModule {}

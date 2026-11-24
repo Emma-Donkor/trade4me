@@ -69,7 +69,8 @@ export const providerCandleSchema = z
     high: flexibleNumber.optional(),
     low: flexibleNumber.optional(),
     close: flexibleNumber.optional(),
-    volume: flexibleNumber.optional(),
+    // Mock pairs have no volume; `null` means "not provided", not malformed.
+    volume: flexibleNumber.nullable().optional(),
   })
   .passthrough();
 

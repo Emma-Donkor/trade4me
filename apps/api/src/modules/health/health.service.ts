@@ -1,6 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import { HEALTH_CHECK_TIMEOUT_MS } from '@ts/config';
+import type { HistoryFreshnessView } from '@ts/types';
 import { configuration } from '../../config/configuration';
+import { HistoryStateService } from '../market/history-state.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { dependencyError, type DependencyStatus } from './dependency-status';
@@ -14,6 +16,8 @@ export interface ReadinessResult {
     database: DependencyStatus;
     ai: DependencyStatus;
   };
+  /** P09 — last-sync age per pair/timeframe, also used by assessments (P33). */
+  history?: HistoryFreshnessView;
 }
 
 @Injectable()
@@ -21,6 +25,7 @@ export class HealthService {
   constructor(
     @Inject(RedisService) private readonly redis: RedisService,
     @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Optional() private readonly history?: HistoryStateService,
   ) {}
 
   liveness(): { status: 'ok' } {
@@ -34,7 +39,8 @@ export class HealthService {
       this.checkAi(),
     ]);
     const status = [redis, database, ai].every((item) => item.status === 'up') ? 'ok' : 'degraded';
-    return { status, dependencies: { redis, database, ai } };
+    const history = this.history ? await this.history.snapshot().catch(() => undefined) : undefined;
+    return { status, dependencies: { redis, database, ai }, ...(history ? { history } : {}) };
   }
 
   private async checkAi(): Promise<DependencyStatus> {

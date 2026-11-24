@@ -36,6 +36,15 @@ export class SystemEventService {
     });
   }
 
+  /** P09 — history ingestion, gap detection and repair are auditable. */
+  async history(
+    code: string,
+    details: Record<string, unknown> = {},
+    level: 'INFO' | 'WARN' | 'ERROR' = 'WARN',
+  ): Promise<void> {
+    await this.record(level, 'WORKER', code, details);
+  }
+
   private async record(
     level: 'INFO' | 'WARN' | 'ERROR',
     source: 'API' | 'AI' | 'WORKER' | 'PROVIDER',

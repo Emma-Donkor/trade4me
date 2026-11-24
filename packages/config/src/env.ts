@@ -100,6 +100,7 @@ export const envSchema = z.object({
 
   // Background jobs
   MARKET_SYNC_CRON: cronExpression.default('0 * * * *'),
+  MARKET_INTEGRITY_CRON: cronExpression.default('0 4 * * *'),
   NEWS_INGEST_CRON: cronExpression.default('*/15 * * * *'),
   FEATURE_JOB_CRON: cronExpression.default('*/30 * * * *'),
   OUTCOME_JOB_CRON: cronExpression.default('0 * * * *'),

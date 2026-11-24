@@ -28,6 +28,17 @@ export interface CandleRangeInput extends PaginationInput {
   order?: 'asc' | 'desc';
 }
 
+/** Keyset cursor for deep history; offset scans degrade on large ranges. */
+export interface CandleCursor {
+  timestamp: Date;
+  id: string;
+}
+
+export interface CandleSeriesInput extends Omit<CandleRangeInput, keyof PaginationInput> {
+  limit: number;
+  cursor?: CandleCursor;
+}
+
 export interface CandleUpsertInput {
   pairId: string;
   timeframe: Timeframe;
@@ -63,6 +74,122 @@ export class CandleRepository extends BaseRepository {
     return pageOf(items, total, query);
   }
 
+  /**
+   * P09 deep-history read: keyset pagination on the composite DESC index.
+   * Takes one extra row so the caller can build a truthful `nextCursor`.
+   */
+  async findSeries(input: CandleSeriesInput): Promise<CandleRow[]> {
+    const direction = input.order ?? 'desc';
+    const cursorFilter: Prisma.MarketCandleWhereInput = input.cursor
+      ? {
+          OR: [
+            {
+              timestamp:
+                direction === 'desc'
+                  ? { lt: input.cursor.timestamp }
+                  : { gt: input.cursor.timestamp },
+            },
+            {
+              timestamp: input.cursor.timestamp,
+              id: direction === 'desc' ? { lt: input.cursor.id } : { gt: input.cursor.id },
+            },
+          ],
+        }
+      : {};
+
+    return this.client.marketCandle.findMany({
+      where: {
+        pairId: input.pairId,
+        timeframe: input.timeframe,
+        timestamp: { gte: input.from, lte: input.to },
+        ...cursorFilter,
+      },
+      select: CANDLE_SELECT,
+      orderBy: [{ timestamp: direction }, { id: direction }],
+      // API callers are bounded by `candleRangeQuerySchema`; internal analysis
+      // and integrity scans can request larger bounded series explicitly.
+      take: Math.max(1, Math.min(50_000, Math.trunc(input.limit))) + 1,
+    });
+  }
+
+  /**
+   * Fast bounded scan for analysis/fixtures: raw SQL with float casts avoids
+   * Prisma's per-Decimal allocation cost on >10k-row reads. Still an explicit
+   * projection on the composite index — no SELECT * anywhere in this path.
+   */
+  async findSeriesFast(input: {
+    pairId: string;
+    timeframe: Timeframe;
+    from: Date;
+    to: Date;
+    limit: number;
+  }): Promise<
+    Array<{
+      timestamp: Date;
+      open: number;
+      high: number;
+      low: number;
+      close: number;
+      volume: number | null;
+      provider: string;
+    }>
+  > {
+    return this.client.$queryRaw`
+      SELECT "timestamp",
+        "open"::float8 AS open, "high"::float8 AS high,
+        "low"::float8 AS low, "close"::float8 AS close,
+        "volume"::float8 AS volume, "provider"
+      FROM "MarketCandle"
+      WHERE "pairId" = ${input.pairId}
+        AND "timeframe" = ${input.timeframe}::"Timeframe"
+        AND "timestamp" >= ${input.from}
+        AND "timestamp" <= ${input.to}
+      ORDER BY "timestamp" ASC, "id" ASC
+      LIMIT ${Math.max(1, Math.min(50_000, Math.trunc(input.limit)))}
+    `;
+  }
+
+  /** Projected timestamp scan for the integrity job — no OHLC columns loaded. */
+  async findTimestamps(input: {
+    pairId: string;
+    timeframe: Timeframe;
+    from: Date;
+    to: Date;
+    after?: Date;
+    limit?: number;
+  }): Promise<Date[]> {
+    const rows = await this.client.marketCandle.findMany({
+      where: {
+        pairId: input.pairId,
+        timeframe: input.timeframe,
+        timestamp: {
+          gte: input.from,
+          lte: input.to,
+          ...(input.after ? { gt: input.after } : {}),
+        },
+      },
+      select: { timestamp: true },
+      orderBy: { timestamp: 'asc' },
+      take: input.limit ?? 20_000,
+    });
+    return rows.map((row) => row.timestamp);
+  }
+
+  async latestTimestamp(pairId: string, timeframe: Timeframe): Promise<Date | null> {
+    const row = await this.client.marketCandle.findFirst({
+      where: { pairId, timeframe },
+      select: { timestamp: true },
+      orderBy: { timestamp: 'desc' },
+    });
+    return row?.timestamp ?? null;
+  }
+
+  async countInRange(pairId: string, timeframe: Timeframe, from: Date, to: Date): Promise<number> {
+    return this.client.marketCandle.count({
+      where: { pairId, timeframe, timestamp: { gte: from, lte: to } },
+    });
+  }
+
   /** Duplicate clock ticks are the same candle, not a second row. */
   async upsert(input: CandleUpsertInput): Promise<CandleRow> {
     const key = {
@@ -83,5 +210,18 @@ export class CandleRepository extends BaseRepository {
       },
       select: CANDLE_SELECT,
     });
+  }
+
+  /**
+   * Backfill/seed insert path: the unique key deduplicates replays, and an
+   * existing candle is never overwritten with provider data on a re-import.
+   */
+  async upsertMany(inputs: readonly CandleUpsertInput[]): Promise<number> {
+    if (inputs.length === 0) return 0;
+    const result = await this.client.marketCandle.createMany({
+      data: inputs as CandleUpsertInput[],
+      skipDuplicates: true,
+    });
+    return result.count;
   }
 }

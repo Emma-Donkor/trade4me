@@ -15,6 +15,7 @@ export {
 export {
   CANDLE_SELECT,
   CandleRepository,
+  type CandleCursor,
   type CandleRangeInput,
   type CandleRow,
   type CandleUpsertInput,

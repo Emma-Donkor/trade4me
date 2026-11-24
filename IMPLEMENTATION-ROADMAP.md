@@ -1013,15 +1013,15 @@ Depends on: PHASE 08
 ```
 
 ### Tasks
-- [ ] **Backfill service**: per pair/timeframe range import from provider (1m…1M per availability), chunked requests, resumable (checkpoint in Redis/DB)
-- [ ] **Incremental sync job**: fetch candles newer than last stored timestamp; upsert on `(pairId, timeframe, timestamp)`
-- [ ] **Gap detection**: daily integrity job scans ranges for missing candles → writes `SystemEvent` + enqueues `backfill` tasks
-- [ ] **Never-invent-data rule**: gaps are reported and re-requested from provider only — never interpolated, never forward-filled into storage
-- [ ] Implement `GET /market/candles` real body: column projection, composite-index range query, `limit`/`start`/`end` validation, cursor pagination for deep history
-- [ ] Candle series Redis cache (per README §7.5 TTLs: 60s intraday / 1h daily)
-- [ ] **Historical analysis groundwork**: `historical-analysis` module — previous days/weeks/months/years aggregations, historical volatility stats, similar-condition search endpoint skeleton (feature-space NN completed in P12)
-- [ ] Freshness tracking: last-sync timestamps per pair/timeframe → feed `dataFreshness` in assessments and `/admin/health` (P33)
-- [ ] Seed script extension: import ~2 years of D1/H1 history for all 10 pairs in mock mode (deterministic) so analysis/ML/backtest phases have data
+- [x] **Backfill service**: per pair/timeframe range import from provider (1m…1M per availability), chunked requests, resumable (checkpoint in Redis/DB)
+- [x] **Incremental sync job**: fetch candles newer than last stored timestamp; upsert on `(pairId, timeframe, timestamp)`
+- [x] **Gap detection**: daily integrity job scans ranges for missing candles → writes `SystemEvent` + enqueues `backfill` tasks
+- [x] **Never-invent-data rule**: gaps are reported and re-requested from provider only — never interpolated, never forward-filled into storage
+- [x] Implement `GET /market/candles` real body: column projection, composite-index range query, `limit`/`start`/`end` validation, cursor pagination for deep history
+- [x] Candle series Redis cache (per README §7.5 TTLs: 60s intraday / 1h daily)
+- [x] **Historical analysis groundwork**: `historical-analysis` module — previous days/weeks/months/years aggregations, historical volatility stats, similar-condition search endpoint skeleton (feature-space NN completed in P12)
+- [x] Freshness tracking: last-sync timestamps per pair/timeframe → feed `dataFreshness` in assessments and `/admin/health` (P33)
+- [x] Seed script extension: import ~2 years of D1/H1 history for all 10 pairs in mock mode (deterministic) so analysis/ML/backtest phases have data
 
 ### Files/Folders
 ```text
@@ -1053,13 +1053,13 @@ None.
 Range queries bounded (max span/limit) to prevent DoS scans; provider keys remain server-side.
 
 ### Testing
-- [ ] Unit: gap detector identifies artificial holes in fixture series
-- [ ] Unit: upsert dedupes replayed ranges (idempotency)
-- [ ] Integration: backfill 6 months D1 for 2 pairs → counts match fixture → no gaps reported
-- [ ] Integration: candle endpoint returns correct OHLC ordering, respects start/end/limit, projection excludes unused columns
-- [ ] Performance: range query >10k rows uses composite index (EXPLAIN assertion) and returns < 100ms locally
-- [ ] Integrity: corrupted provider fixture → validation rejects, gap logged, no partial rows
-- [ ] Regression: P02–P08 tests pass
+- [x] Unit: gap detector identifies artificial holes in fixture series
+- [x] Unit: upsert dedupes replayed ranges (idempotency)
+- [x] Integration: backfill 6 months D1 for 2 pairs → counts match fixture → no gaps reported
+- [x] Integration: candle endpoint returns correct OHLC ordering, respects start/end/limit, projection excludes unused columns
+- [x] Performance: range query >10k rows uses composite index (EXPLAIN assertion) and returns < 100ms locally
+- [x] Integrity: corrupted provider fixture → validation rejects, gap logged, no partial rows
+- [x] Regression: P02–P08 tests pass
 
 ### Completion Criteria
 Full history available for all seeded pairs; incremental sync + gap repair proven; candle API fast and correct; no invented data anywhere.

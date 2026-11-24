@@ -392,6 +392,7 @@ describe('PHASE 05 contract parity', () => {
           page: 1,
           pageSize: 50,
           order: 'desc',
+          cursor: 'Y3Vyc29yOjI=',
         },
       },
       {

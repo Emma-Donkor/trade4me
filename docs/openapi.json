@@ -3697,9 +3697,61 @@
               "minimum": 1,
               "maximum": 500
             }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"]
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
           }
         ],
         "responses": {
+          "200": {
+            "description": "Bounded OHLC history with keyset pagination and cached series",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "items": [
+                      {
+                        "symbol": "EUR/USD",
+                        "timeframe": "D1",
+                        "timestamp": "2026-11-20T00:00:00.000Z",
+                        "open": 1.0842,
+                        "high": 1.091,
+                        "low": 1.0801,
+                        "close": 1.0876,
+                        "volume": null,
+                        "provider": "mock"
+                      }
+                    ],
+                    "limit": 50,
+                    "nextCursor": "eyJ0IjoiMjAyNi0xMS0yMFQwMDowMDowMC4wMDBaIiwiaSI6ImNkXzEifQ",
+                    "hasMore": true,
+                    "asOf": "2026-11-24T12:00:02.000Z",
+                    "source": "cache"
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
           "401": {
             "description": "UNAUTHORIZED",
             "content": {
@@ -3737,7 +3789,7 @@
             }
           },
           "422": {
-            "description": "INSUFFICIENT_DATA",
+            "description": "BAD_REQUEST",
             "content": {
               "application/json": {
                 "schema": {
@@ -3746,8 +3798,8 @@
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "INSUFFICIENT_DATA",
-                    "message": "Not enough data is available yet",
+                    "code": "BAD_REQUEST",
+                    "message": "Range must not exceed 1098 days",
                     "requestId": "req_01Jexample"
                   }
                 }
@@ -3840,7 +3892,7 @@
           }
         },
         "tags": ["Market"],
-        "summary": "Bounded OHLC history (INSUFFICIENT_DATA until P09)",
+        "summary": "Bounded OHLC history with keyset pagination and cached series",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "ip",
@@ -5130,9 +5182,77 @@
               "type": "string",
               "minLength": 1
             }
+          },
+          {
+            "name": "timeframe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "H1"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            }
           }
         ],
         "responses": {
+          "200": {
+            "description": "Real historical changes/volatility; feature-space NN similarity in P12",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "symbol": "EUR/USD",
+                    "timeframe": "D1",
+                    "asOf": "2026-11-24T12:00:02.000Z",
+                    "periods": [
+                      {
+                        "period": "previous_day",
+                        "from": "2026-11-23T12:00:02.000Z",
+                        "to": "2026-11-24T12:00:02.000Z",
+                        "open": 1.0842,
+                        "close": 1.0876,
+                        "changePct": 0.31,
+                        "high": 1.091,
+                        "low": 1.0801,
+                        "candles": 1
+                      }
+                    ],
+                    "volatility": {
+                      "timeframe": "D1",
+                      "annualizedPct": 6.42,
+                      "periodPct": 0.38,
+                      "sampleSize": 729,
+                      "asOf": "2026-11-24T12:00:02.000Z"
+                    },
+                    "similarConditions": [
+                      {
+                        "timestamp": "2026-05-12T00:00:00.000Z",
+                        "distance": 0.18,
+                        "close": 1.0861,
+                        "changePct": 0.24
+                      }
+                    ],
+                    "similarityMethod": "deterministic-euclidean",
+                    "dataPoints": 730
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
           "401": {
             "description": "UNAUTHORIZED",
             "content": {
@@ -5170,7 +5290,7 @@
             }
           },
           "422": {
-            "description": "VALIDATION_ERROR",
+            "description": "INSUFFICIENT_DATA",
             "content": {
               "application/json": {
                 "schema": {
@@ -5179,14 +5299,8 @@
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "VALIDATION_ERROR",
-                    "message": "Validation failed",
-                    "details": [
-                      {
-                        "field": "email",
-                        "message": "Expected a valid email address"
-                      }
-                    ],
+                    "code": "INSUFFICIENT_DATA",
+                    "message": "Not enough data is available yet",
                     "requestId": "req_01Jexample"
                   }
                 }
@@ -5279,7 +5393,7 @@
           }
         },
         "tags": ["HistoricalAnalysis"],
-        "summary": "Historical similarity assessment (AI_SERVICE_UNAVAILABLE)",
+        "summary": "Real historical changes/volatility; feature-space NN similarity in P12",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "ip",

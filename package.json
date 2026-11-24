@@ -34,6 +34,7 @@
     "openapi:export": "npm run build -w apps/api && node apps/api/dist/openapi-export.js && prettier --write docs/openapi.json",
     "db:migrate": "node scripts/prisma.mjs migrate dev",
     "db:seed": "node scripts/prisma.mjs db seed",
+    "db:seed:history": "tsx scripts/seed-history.ts",
     "db:reset": "node scripts/prisma.mjs migrate reset --force",
     "db:studio": "node scripts/prisma.mjs studio",
     "format": "prettier --write .",

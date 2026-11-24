@@ -8,6 +8,8 @@ import { configuration } from '../config/configuration';
 
 export const QUEUE_NAMES = [
   'market-sync',
+  'backfill',
+  'integrity',
   'news-ingest',
   'features',
   'outcomes',

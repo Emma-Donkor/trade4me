@@ -8,6 +8,8 @@ import {
 import { Worker } from 'bullmq';
 import { env } from '@ts/config';
 import { JsonLogger } from '../common/logger/json-logger';
+import { BackfillProcessor } from './processors/backfill.processor';
+import { IntegrityProcessor } from './processors/integrity.processor';
 import { MarketSyncProcessor } from './processors/market-sync.processor';
 import { bullConnectionOptions, QUEUE_NAMES, QueueRegistry, type QueueName } from './queues';
 
@@ -30,6 +32,11 @@ export const CRON_REGISTRATIONS: CronRegistration[] = [
     queue: 'market-sync',
     name: 'market-sync-hourly',
     pattern: cronPattern(env.MARKET_SYNC_CRON, '0 * * * *'),
+  },
+  {
+    queue: 'integrity',
+    name: 'history-integrity-daily',
+    pattern: cronPattern(env.MARKET_INTEGRITY_CRON, '0 4 * * *'),
   },
   {
     queue: 'news-ingest',
@@ -94,7 +101,7 @@ export class SchedulerService implements OnModuleInit {
   }
 }
 
-/** One worker per queue; market-sync runs the real P08 processor. */
+/** One worker per queue; P08/P09 queues run their real processors. */
 @Injectable()
 export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
   private readonly workers: Worker[] = [];
@@ -102,6 +109,8 @@ export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
   constructor(
     @Inject(JsonLogger) private readonly logger: JsonLogger,
     @Optional() private readonly marketSyncProcessor?: MarketSyncProcessor,
+    @Optional() private readonly backfillProcessor?: BackfillProcessor,
+    @Optional() private readonly integrityProcessor?: IntegrityProcessor,
   ) {}
 
   onModuleInit(): void {
@@ -118,13 +127,25 @@ export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
             await this.marketSyncProcessor.process(job);
             return;
           }
+          if (queueName === 'backfill' && this.backfillProcessor) {
+            await this.backfillProcessor.process(job);
+            return;
+          }
+          if (queueName === 'integrity' && this.integrityProcessor) {
+            await this.integrityProcessor.process(job);
+            return;
+          }
           this.logger.log('job received; processor arrives in a later phase', 'WORKER', {
             queue: queueName,
             jobName: job.name,
             jobId: job.id,
           });
         },
-        { connection: bullConnectionOptions() },
+        // BullModule.forRoot prefixes queue keys; raw workers must match it.
+        {
+          connection: bullConnectionOptions(),
+          prefix: `${String(env.REDIS_PREFIX ?? 'tradesense:')}bull`,
+        },
       );
       worker.on('failed', (job, error) => {
         this.logger.error(

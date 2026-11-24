@@ -20,7 +20,7 @@ function resetTestDatabase(): void {
     const prismaCli = resolve(ROOT, 'node_modules', 'prisma', 'build', 'index.js');
     execFileSync(process.execPath, [prismaCli, 'migrate', 'reset', '--force', '--skip-generate'], {
       cwd: ROOT,
-      env: { ...process.env, DATABASE_URL: TEST_URL },
+      env: { ...process.env, DATABASE_URL: TEST_URL, MARKET_SEED_HISTORY: '0' },
       stdio: 'pipe',
       timeout: 180_000,
     });
@@ -384,6 +384,34 @@ describe('database integration: migrate → seed → query', () => {
       where: { pairId, timeframe: 'H1', timestamp: tick.timestamp },
     });
     expect(rows).toHaveLength(1);
+  });
+
+  it('deduplicates replayed ranges through upsertMany without overwriting rows', async () => {
+    const repository = new CandleRepository();
+    const ticks = [0, 1, 2].map((hour) => ({
+      pairId,
+      timeframe: 'D1' as const,
+      // Outside the seeded 2024–2026 history window so these rows are new.
+      timestamp: new Date(Date.UTC(2030, 0, 1 + hour)),
+      open: 1.1,
+      high: 1.2,
+      low: 1.05,
+      close: 1.15,
+      provider: 'mock',
+    }));
+    expect(await repository.upsertMany(ticks)).toBe(3);
+    // A replay with different values must not create rows nor mutate existing ones.
+    expect(await repository.upsertMany(ticks.map((tick) => ({ ...tick, close: 9 })))).toBe(0);
+    const stored = await repository.findSeries({
+      pairId,
+      timeframe: 'D1',
+      from: new Date('2030-01-01T00:00:00Z'),
+      to: new Date('2030-01-04T00:00:00Z'),
+      limit: 10,
+      order: 'asc',
+    });
+    expect(stored).toHaveLength(3);
+    expect(stored.every((row) => row.close.toNumber() === 1.15)).toBe(true);
   });
 
   it('uses a composite (pair, timeframe, timestamp) index for candle ranges', async () => {

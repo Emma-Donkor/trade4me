@@ -38,7 +38,7 @@ export interface PairMetadata {
 }
 
 /** Prisma Json columns are not guaranteed to be objects at runtime. */
-function symbolsOf(value: unknown): Record<string, unknown> {
+export function symbolsOf(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};

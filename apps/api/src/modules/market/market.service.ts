@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import type { MarketOverview, QuoteResponse } from '@ts/types';
+import type { CandleHistoryPage, MarketOverview, QuoteResponse } from '@ts/types';
 import type { PaginationQuery } from '@ts/types';
 import type { CandleRangeQuery, QuoteQuery } from '@ts/validation';
 import { cursorPage, type CursorPage } from '../../common/helpers/pagination';
-import { insufficientData } from '../../common/errors/stub-errors';
 import { PrismaService } from '../prisma/prisma.service';
+import { CandleService } from './candles.service';
 import { QuoteService } from './quote.service';
 
 export interface MarketPairView {
@@ -21,8 +21,8 @@ export interface MarketPairView {
 export abstract class MarketService {
   abstract listPairs(query: PaginationQuery): Promise<CursorPage<MarketPairView>>;
   abstract quote(query: QuoteQuery): Promise<QuoteResponse>;
-  /** P09 replaces the honest OHLC stub with cached range reads. */
-  abstract candles(query: CandleRangeQuery): never;
+  /** Real, projected and cached range reads (P09). */
+  abstract candles(query: CandleRangeQuery): Promise<CandleHistoryPage>;
   abstract overview(): Promise<MarketOverview>;
 }
 
@@ -31,6 +31,7 @@ export class MarketServiceImpl extends MarketService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly quotes: QuoteService,
+    private readonly candlesService: CandleService,
   ) {
     super();
   }
@@ -73,13 +74,8 @@ export class MarketServiceImpl extends MarketService {
     return query.freshOnly ? this.quotes.requireFresh(symbols) : this.quotes.quotes(symbols);
   }
 
-  candles(query: CandleRangeQuery): never {
-    insufficientData('historical candles', {
-      symbol: query.symbol,
-      timeframe: query.timeframe,
-      start: query.start ?? query.from,
-      end: query.end ?? query.to,
-    });
+  candles(query: CandleRangeQuery): Promise<CandleHistoryPage> {
+    return this.candlesService.query(query);
   }
 
   overview(): Promise<MarketOverview> {
