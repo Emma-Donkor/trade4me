@@ -9,11 +9,13 @@ import { Worker } from 'bullmq';
 import { env } from '@ts/config';
 import { JsonLogger } from '../common/logger/json-logger';
 import { BackfillProcessor } from './processors/backfill.processor';
+import { DriftProcessor } from './processors/drift.processor';
 import { FeaturesProcessor } from './processors/features.processor';
 import { IntegrityProcessor } from './processors/integrity.processor';
 import { MarketSyncProcessor } from './processors/market-sync.processor';
 import { ModelEvalProcessor } from './processors/model-eval.processor';
 import { NewsIngestProcessor } from './processors/news-ingest.processor';
+import { OutcomesProcessor } from './processors/outcomes.processor';
 import { bullConnectionOptions, QUEUE_NAMES, QueueRegistry, type QueueName } from './queues';
 
 export interface CronRegistration {
@@ -60,6 +62,11 @@ export const CRON_REGISTRATIONS: CronRegistration[] = [
     queue: 'outcomes',
     name: 'prediction-outcomes',
     pattern: cronPattern(env.OUTCOME_JOB_CRON, '0 * * * *'),
+  },
+  {
+    queue: 'drift',
+    name: 'model-drift-daily',
+    pattern: cronPattern(env.DRIFT_JOB_CRON, '0 6 * * *'),
   },
   {
     queue: 'cleanup',
@@ -122,6 +129,8 @@ export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
     @Optional() private readonly newsIngestProcessor?: NewsIngestProcessor,
     @Optional() private readonly featuresProcessor?: FeaturesProcessor,
     @Optional() private readonly modelEvalProcessor?: ModelEvalProcessor,
+    @Optional() private readonly outcomesProcessor?: OutcomesProcessor,
+    @Optional() private readonly driftProcessor?: DriftProcessor,
   ) {}
 
   onModuleInit(): void {
@@ -156,6 +165,14 @@ export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
           }
           if (queueName === 'model-eval' && this.modelEvalProcessor) {
             await this.modelEvalProcessor.process(job);
+            return;
+          }
+          if (queueName === 'outcomes' && this.outcomesProcessor) {
+            await this.outcomesProcessor.process(job);
+            return;
+          }
+          if (queueName === 'drift' && this.driftProcessor) {
+            await this.driftProcessor.process(job);
             return;
           }
           this.logger.log('job received; processor arrives in a later phase', 'WORKER', {

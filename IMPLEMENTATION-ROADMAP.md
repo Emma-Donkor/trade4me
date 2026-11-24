@@ -1388,13 +1388,13 @@ Depends on: PHASE 13 (and P08/P09 for live inputs)
 ```
 
 ### Tasks
-- [ ] `app/services/predict.py`: load `ACTIVE` model + its exact `featureVersion`; fetch current feature vector; emit structured output per README §13.7 (`symbol, timeframe, direction, probability, confidence, riskLevel, modelVersion`); confidence combines calibrated probability distance-from-0.5 with model reliability + data freshness
-- [ ] API `POST /predict` (internal) + `prediction` module: `GET /api/v1/analysis/:symbol` includes prediction; persistence to `Prediction` with `modelRunId`, `featuresSnapshot` (exact inputs — audit requirement)
-- [ ] **Outcome tracking job** (`outcomes`, hourly): resolve matured predictions — compute actual move over horizon → `PredictionOutcome` (label, actualMovePct, correct)
-- [ ] **Drift detection** (`app/services/drift.py`, daily): rolling-window recent accuracy/Brier vs historical; degradation beyond threshold → `ModelStatus = DRIFT_WARNING` + `SystemEvent` + notification hook (P27) + admin signal (P28); drifting model down-weights or blocks signals per config (never silently continues)
-- [ ] Probability **never** converted to guarantee anywhere in serialization
-- [ ] Prediction cache (5 min per symbol) with model-version keying
-- [ ] Confidence/risk inputs wired for the decision engine (P16)
+- [x] `app/services/predict.py`: load `ACTIVE` model + its exact `featureVersion`; fetch current feature vector; emit structured output per README §13.7 (`symbol, timeframe, direction, probability, confidence, riskLevel, modelVersion`); confidence combines calibrated probability distance-from-0.5 with model reliability + data freshness
+- [x] API `POST /predict` (internal) + `prediction` module: `GET /api/v1/analysis/:symbol` includes prediction; persistence to `Prediction` with `modelRunId`, `featuresSnapshot` (exact inputs — audit requirement)
+- [x] **Outcome tracking job** (`outcomes`, hourly): resolve matured predictions — compute actual move over horizon → `PredictionOutcome` (label, actualMovePct, correct)
+- [x] **Drift detection** (`app/services/drift.py`, daily): rolling-window recent accuracy/Brier vs historical; degradation beyond threshold → `ModelStatus = DRIFT_WARNING` + `SystemEvent` + notification hook (P27) + admin signal (P28); drifting model down-weights or blocks signals per config (never silently continues)
+- [x] Probability **never** converted to guarantee anywhere in serialization
+- [x] Prediction cache (5 min per symbol) with model-version keying
+- [x] Confidence/risk inputs wired for the decision engine (P16)
 
 ### Files/Folders
 ```text
@@ -1427,12 +1427,12 @@ None (P20 displays it).
 `featuresSnapshot` stored for audit; model artifacts loaded only from registry path; prediction endpoint internal-auth only.
 
 ### Testing
-- [ ] Contract: prediction JSON matches README §13.7 schema exactly
-- [ ] Unit: confidence decreases with stale features / weak probability
-- [ ] Unit: drift detector triggers at configured degradation (68%→51% fixture) and does not trigger on noise
-- [ ] Integration: predict → persist → simulate horizon → outcome resolved → accuracy recomputed
-- [ ] Leakage: outcome resolution uses only post-prediction candles
-- [ ] Regression: P02–P13 tests pass
+- [x] Contract: prediction JSON matches README §13.7 schema exactly
+- [x] Unit: confidence decreases with stale features / weak probability
+- [x] Unit: drift detector triggers at configured degradation (68%→51% fixture) and does not trigger on noise
+- [x] Integration: predict → persist → simulate horizon → outcome resolved → accuracy recomputed
+- [x] Leakage: outcome resolution uses only post-prediction candles
+- [x] Regression: P02–P13 tests pass
 
 ### Completion Criteria
 Live predictions recorded with model+feature versions; outcomes resolve automatically; drift warns loudly; probabilities calibrated end-to-end.
@@ -3307,7 +3307,7 @@ Rules: two engineers may hold B/C/D and A simultaneously; never two phases writi
 | 11 | News Intelligence | NOT STARTED | 08,07 | Structured news + economic events |
 | 12 | Feature Engineering | NOT STARTED | 10,11 | Versioned leakage-free features |
 | 13 | Machine Learning Pipeline | NOT STARTED | 12 | Calibrated versioned models |
-| 14 | Prediction Engine | NOT STARTED | 13 | Recorded predictions + outcomes + drift |
+| 14 | Prediction Engine | COMPLETED | 13 | Recorded predictions + outcomes + drift |
 | 15 | Risk Management Engine | NOT STARTED | 07,06,09 | Tested sizing + rule engine |
 | 16 | Decision Engine | NOT STARTED | 10,11,14,15 | Signals, NO-TRADE, scanner |
 | 17 | AI Explanation Engine | NOT STARTED | 16,11 | Validated explanations/reports/assistant |

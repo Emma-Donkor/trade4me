@@ -19,11 +19,6 @@ SERVICE_HEADERS = {'X-Service-Token': 'tradesense-dev-service-token'}
 
 STUB_CASES = [
     (
-        '/api/v1/ai/predict',
-        {'symbol': 'EURUSD', 'timeframe': '1h', 'horizon': 5},
-        'Not implemented until PHASE 14',
-    ),
-    (
         '/api/v1/ai/explain',
         {'predictionId': 'prediction-1'},
         'Not implemented until PHASE 17',
@@ -59,7 +54,10 @@ MODEL_FIELDS: list[tuple[Any, set[str]]] = [
             'vectors',
         },
     ),
-    (PredictRequest, {'symbol', 'timeframe', 'horizon'}),
+    (
+        PredictRequest,
+        {'symbol', 'timeframe', 'horizon', 'featureVersion', 'asOf', 'features'},
+    ),
     (
         PredictResponse,
         {
@@ -123,10 +121,15 @@ def test_stub_endpoints_return_501(path: str, payload: dict[str, Any], detail: s
     assert response.json() == {'detail': detail}
 
 
-@pytest.mark.parametrize(('path', 'payload', '_detail'), STUB_CASES)
-def test_internal_routes_require_service_token(
-    path: str, payload: dict[str, Any], _detail: str
-) -> None:
+@pytest.mark.parametrize(
+    ('path', 'payload'),
+    [
+        ('/api/v1/ai/predict', {'symbol': 'EUR/USD', 'timeframe': 'H1', 'horizon': 5}),
+        ('/api/v1/ai/explain', {'predictionId': 'prediction-1'}),
+        ('/api/v1/ai/ml/drift', {}),
+    ],
+)
+def test_internal_routes_require_service_token(path: str, payload: dict[str, Any]) -> None:
     assert client.post(path, json=payload).status_code == 401
 
 

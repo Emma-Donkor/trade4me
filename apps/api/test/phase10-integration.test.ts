@@ -197,6 +197,9 @@ describe('P10 technical analysis engine', () => {
       regime: { regime: 'WEAK_UPTREND' },
       technical: { symbol: 'EUR/USD', score: { score: 68.4 } },
       historical: { symbol: 'EUR/USD', timeframe: 'D1' },
+      prediction: null,
+      modelStatus: 'TRAINING',
+      signalPolicy: { weight: 0, block: true },
     });
     expect(eventSpy).toHaveBeenCalledTimes(1);
   });

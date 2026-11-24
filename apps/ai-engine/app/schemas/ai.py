@@ -93,6 +93,9 @@ class PredictRequest(BaseModel):
     symbol: str
     timeframe: str
     horizon: int
+    featureVersion: str
+    asOf: str
+    features: dict[str, float]
 
 
 class PredictResponse(BaseModel):

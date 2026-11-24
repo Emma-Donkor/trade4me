@@ -124,6 +124,60 @@ def load_artifact(root: str | Path, name: str, version: str) -> tuple[dict[str, 
     return payload, manifest
 
 
+@dataclass(frozen=True)
+class ActiveModel:
+    """The single promoted model plus the run that produced its artifact."""
+
+    id: str
+    name: str
+    version: str
+    feature_version: str
+    dataset_version: str
+    run_id: str
+    artifacts_path: str
+    metrics: dict[str, Any]
+
+
+async def load_active_model(database_url: str) -> ActiveModel:
+    """Read the ACTIVE ModelVersion and its newest ModelRun in a read-only tx.
+
+    Phase 13 guarantees at most one ACTIVE version.  Inference never trusts a
+    configured model name/version alone: the registry is the authority.
+    """
+    import asyncpg
+
+    connection = await asyncpg.connect(asyncpg_dsn(database_url))
+    try:
+        async with connection.transaction():
+            await connection.execute('SET TRANSACTION READ ONLY')
+            row = await connection.fetchrow(
+                '''
+                SELECT mv."id" AS "versionId", mv."name", mv."version",
+                       mv."featureVersion", mv."trainingDatasetVersion", mv."metrics",
+                       mr."id" AS "runId", mr."artifactsPath", mr."createdAt"
+                FROM "ModelVersion" mv
+                JOIN "ModelRun" mr ON mr."modelVersionId" = mv."id"
+                WHERE mv."status"::text = 'ACTIVE'
+                ORDER BY mr."createdAt" DESC, mr."id" DESC
+                LIMIT 1
+                '''
+            )
+    finally:
+        await connection.close()
+    if row is None:
+        raise ValueError('no ACTIVE model in the registry; train and promote a model first')
+    return ActiveModel(
+        id=str(row['versionId']),
+        name=str(row['name']),
+        version=str(row['version']),
+        feature_version=str(row['featureVersion']),
+        dataset_version=str(row['trainingDatasetVersion']),
+        run_id=str(row['runId']),
+        artifacts_path=str(row['artifactsPath']),
+        metrics=json.loads(row['metrics']) if isinstance(row['metrics'], str) else dict(row['metrics']),
+    )
+
+
 async def write_registry_rows(
     database_url: str,
     *,

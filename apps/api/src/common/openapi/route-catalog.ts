@@ -451,6 +451,17 @@ export const ROUTE_CATALOG: readonly RouteSpec[] = [
       technical: { symbol: 'EUR/USD', timeframe: 'H1', source: 'cache', score: { score: 68.4 } },
       historical: { symbol: 'EUR/USD', timeframe: 'D1', dataPoints: 730 },
       regime: { regime: 'WEAK_UPTREND', confidence: 0.62, evidence: { adx: 23.4 } },
+      prediction: {
+        symbol: 'EUR/USD',
+        timeframe: 'H1',
+        direction: 'LONG',
+        probability: 0.72,
+        confidence: 0.74,
+        riskLevel: 'MEDIUM',
+        modelVersion: 'xgb-v1.0.0',
+      },
+      modelStatus: 'ACTIVE',
+      signalPolicy: { weight: 1, block: false, reason: null },
       pendingPhases: ['P11', 'P12', 'P17'],
     },
     errorExample: {

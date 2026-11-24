@@ -11,7 +11,8 @@ from ...config import settings
 from ...deps.auth import require_service_token
 from ...ml.dataset import parse_horizon
 from ...ml.train import TrainingConfig, run_training
-from ...schemas import TrainRequest, TrainResponse
+from ...schemas import DriftRequest, DriftResponse, TrainRequest, TrainResponse
+from ...services.drift import DriftConfig, evaluate_drift
 
 router = APIRouter()
 
@@ -49,3 +50,19 @@ async def train(request: TrainRequest, _token: str = Depends(require_service_tok
     return TrainResponse.model_validate(
         {name: result[name] for name in TrainResponse.model_fields}
     )
+
+
+@router.post('/ml/drift', response_model=DriftResponse)
+async def drift(request: DriftRequest, _token: str = Depends(require_service_token)) -> DriftResponse:
+    """Compare recent ACTIVE-model outcomes with historical performance."""
+    config = DriftConfig(
+        minSamples=request.minSamples,
+        recentWindow=request.recentWindow,
+        accuracyDrop=request.accuracyDrop,
+        brierIncrease=request.brierIncrease,
+    )
+    try:
+        report = await evaluate_drift(settings.DATABASE_URL, config=config)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return DriftResponse.model_validate(report.to_dict())

@@ -1,4 +1,5 @@
-import type { Timeframe } from './contracts';
+import type { PredictResponse, Timeframe } from './contracts';
+import type { ModelSignalPolicy } from './prediction';
 
 /** README §10.2 — detections are context scores, never predictions. */
 export type CandlePattern =
@@ -207,7 +208,7 @@ export interface RegimeAnalysisView extends RegimeSnapshot {
   source: 'ai' | 'cache';
 }
 
-/** P10 — P17 adds news/LLM sections; the assembled shape stays stable. */
+/** P14 — the calibrated prediction and its risk policy travel with the view. */
 export interface CombinedAssessmentView {
   symbol: string;
   timeframe: Timeframe;
@@ -215,6 +216,9 @@ export interface CombinedAssessmentView {
   technical: TechnicalAnalysisView;
   historical: HistoricalAnalysisView;
   regime: RegimeSnapshot;
+  prediction: PredictResponse | null;
+  modelStatus: 'TRAINING' | 'ACTIVE' | 'ARCHIVED' | 'DRIFT_WARNING';
+  signalPolicy: ModelSignalPolicy;
   pendingPhases: readonly ('P11' | 'P12' | 'P17')[];
 }
 

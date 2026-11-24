@@ -11,6 +11,6 @@ import { MarketModule } from './market.module';
     AiEngineClient,
     { provide: AI_ENGINE_FETCH, useValue: (url: string, init?: RequestInit) => fetch(url, init) },
   ],
-  exports: [FeatureService],
+  exports: [FeatureService, AiEngineClient],
 })
 export class FeatureModule {}

@@ -5,7 +5,8 @@ export type NotificationType =
   | 'NEWS_ALERT'
   | 'ECONOMIC_EVENT'
   | 'PRICE_ALERT'
-  | 'REGIME_CHANGED';
+  | 'REGIME_CHANGED'
+  | 'MODEL_DRIFT';
 
 export interface Notification {
   id: string;

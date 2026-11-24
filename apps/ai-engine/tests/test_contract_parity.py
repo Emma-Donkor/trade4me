@@ -13,6 +13,7 @@ from typing import Any
 from app.api.routers.explain import ExplainFactor, ExplainRequest, ExplainResponse
 from app.api.routers.features import FeaturesRequest, FeaturesResponse
 from app.api.routers.indicators import IndicatorsRequest, IndicatorsResponse
+from app.api.routers.ml import DriftRequest, DriftResponse
 from app.api.routers.predict import PredictRequest, PredictResponse
 from app.config import Settings
 
@@ -29,6 +30,8 @@ CONTRACT_MODELS: dict[str, tuple[tuple[str, ...], Any]] = {
     'FeaturesResponse': (('FeaturesResponse', 'FeatureResponse'), FeaturesResponse),
     'PredictRequest': (('PredictRequest',), PredictRequest),
     'PredictResponse': (('PredictResponse',), PredictResponse),
+    'DriftRequest': (('DriftRequest',), DriftRequest),
+    'DriftResponse': (('DriftResponse',), DriftResponse),
     'ExplainRequest': (('ExplainRequest',), ExplainRequest),
     'ExplainResponse': (('ExplainResponse',), ExplainResponse),
 }

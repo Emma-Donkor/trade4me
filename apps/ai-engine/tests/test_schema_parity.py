@@ -15,6 +15,8 @@ from typing import Any
 import pytest
 
 from app.schemas import (
+    DriftRequest,
+    DriftResponse,
     ExplainFactor,
     ExplainRequest,
     ExplainResponse,
@@ -42,6 +44,8 @@ MODELS: dict[str, Any] = {
     'PredictResponse': PredictResponse,
     'TrainRequest': TrainRequest,
     'TrainResponse': TrainResponse,
+    'DriftRequest': DriftRequest,
+    'DriftResponse': DriftResponse,
     'ExplainRequest': ExplainRequest,
     'ExplainFactor': ExplainFactor,
     'ExplainResponse': ExplainResponse,

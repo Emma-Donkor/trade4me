@@ -2,16 +2,24 @@ import { Inject, Injectable } from '@nestjs/common';
 import { configuration } from '../../config/configuration';
 import { aiUnavailable, insufficientData } from '../../common/errors/stub-errors';
 import type {
+  DriftRequest,
+  DriftResponse,
   FeaturesRequest,
   FeaturesResponse,
   IndicatorsRequest,
   IndicatorsResponse,
+  PredictRequest,
+  PredictResponse,
   TrainRequest,
   TrainResponse,
 } from '@ts/types';
 import {
+  driftRequestSchema,
+  driftResponseSchema,
   featuresResponseSchema,
   indicatorsResponseSchema,
+  predictRequestSchema,
+  predictResponseSchema,
   trainRequestSchema,
   trainResponseSchema,
 } from '@ts/validation';
@@ -77,6 +85,76 @@ export class AiEngineClient {
     } catch (error) {
       if (error instanceof Error && 'status' in error) throw error;
       aiUnavailable('features');
+    }
+  }
+
+  /** P14 — calibrated inference over the caller's exact versioned vector. */
+  async predict(request: PredictRequest): Promise<PredictResponse> {
+    predictRequestSchema.parse(request);
+    const url = `${configuration.app.aiUrl}/api/v1/ai/predict`;
+    try {
+      const response = await this.fetch(url, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'X-Service-Token': configuration.app.aiServiceToken,
+        },
+        body: JSON.stringify(request),
+        signal: AbortSignal.timeout(AI_ENGINE_TIMEOUT_MS),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        detail?: string | { code?: string; message?: string };
+      };
+      if (!response.ok) {
+        if (response.status === 422) {
+          insufficientData('prediction', {
+            message:
+              typeof payload.detail === 'string'
+                ? payload.detail
+                : (payload.detail?.message ?? 'Prediction inputs are incomplete'),
+          });
+        }
+        aiUnavailable(`prediction (HTTP ${response.status})`);
+      }
+      return predictResponseSchema.parse(payload) as PredictResponse;
+    } catch (error) {
+      if (error instanceof Error && 'status' in error) throw error;
+      aiUnavailable('prediction');
+    }
+  }
+
+  /** P14 — daily rolling-window drift verdict from the math authority. */
+  async drift(request: DriftRequest): Promise<DriftResponse> {
+    driftRequestSchema.parse(request);
+    const url = `${configuration.app.aiUrl}/api/v1/ai/ml/drift`;
+    try {
+      const response = await this.fetch(url, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'X-Service-Token': configuration.app.aiServiceToken,
+        },
+        body: JSON.stringify(request),
+        signal: AbortSignal.timeout(AI_ENGINE_TIMEOUT_MS),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        detail?: string | { message?: string };
+      };
+      if (!response.ok) {
+        if (response.status === 422) {
+          insufficientData('model drift', {
+            message:
+              typeof payload.detail === 'string'
+                ? payload.detail
+                : (payload.detail?.message ?? 'Drift inputs are incomplete'),
+          });
+        }
+        aiUnavailable(`model drift (HTTP ${response.status})`);
+      }
+      return driftResponseSchema.parse(payload) as DriftResponse;
+    } catch (error) {
+      if (error instanceof Error && 'status' in error) throw error;
+      aiUnavailable('model drift');
     }
   }
 

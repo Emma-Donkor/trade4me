@@ -28,6 +28,23 @@ export interface Prediction extends StructuredModelOutput {
   outcome?: PredictionOutcome;
 }
 
+/** README §8.2 / P28 — the prepared admin performance surface. */
+export interface ModelPerformanceView {
+  modelVersion: string;
+  status: 'TRAINING' | 'ACTIVE' | 'ARCHIVED' | 'DRIFT_WARNING';
+  predictions: number;
+  resolved: number;
+  accuracy: number;
+  brierScore: number;
+}
+
+/** README §13.9 — a drifting model is never silently treated as reliable. */
+export interface ModelSignalPolicy {
+  weight: number;
+  block: boolean;
+  reason: string | null;
+}
+
 export interface ModelMetrics {
   accuracy: number;
   precision?: number;

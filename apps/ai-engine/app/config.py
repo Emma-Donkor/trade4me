@@ -92,6 +92,7 @@ class Settings(BaseSettings):
     OUTCOME_JOB_CRON: str = '0 * * * *'
     CLEANUP_CRON: str = '0 3 * * *'
     MODEL_EVAL_CRON: str = '0 5 * * *'
+    DRIFT_JOB_CRON: str = '0 6 * * *'
 
     @field_validator(
         'MARKET_SYNC_CRON',
@@ -101,6 +102,7 @@ class Settings(BaseSettings):
         'OUTCOME_JOB_CRON',
         'CLEANUP_CRON',
         'MODEL_EVAL_CRON',
+        'DRIFT_JOB_CRON',
         mode='before',
     )
     @classmethod

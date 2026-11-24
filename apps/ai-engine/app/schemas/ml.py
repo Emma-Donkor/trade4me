@@ -47,3 +47,29 @@ class TrainResponse(BaseModel):
     models: dict[str, dict[str, Any]]
     comparison: list[dict[str, Any]]
     walkForward: dict[str, dict[str, Any]]
+
+
+class DriftRequest(BaseModel):
+    """Overrides for the daily rolling-window drift check."""
+
+    model_config = ConfigDict(extra='forbid')
+
+    minSamples: int = Field(gt=3)
+    recentWindow: int = Field(gt=3)
+    accuracyDrop: float = Field(gt=0)
+    brierIncrease: float = Field(gt=0)
+
+
+class DriftResponse(BaseModel):
+    """A signed drift verdict consumed by the API's admin/worker hooks."""
+
+    model_config = ConfigDict(extra='forbid')
+
+    modelVersion: str
+    status: Literal['HEALTHY', 'DRIFT_WARNING']
+    historicalAccuracy: float
+    recentAccuracy: float
+    historicalBrier: float
+    recentBrier: float
+    samples: int
+    reason: str | None

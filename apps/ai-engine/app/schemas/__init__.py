@@ -17,9 +17,11 @@ from .ai import (
     PredictResponse,
     RegimeInput,
 )
-from .ml import TrainRequest, TrainResponse
+from .ml import DriftRequest, DriftResponse, TrainRequest, TrainResponse
 
 __all__ = [
+    'DriftRequest',
+    'DriftResponse',
     'ExplainFactor',
     'ExplainRequest',
     'ExplainResponse',

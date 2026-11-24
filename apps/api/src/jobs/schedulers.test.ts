@@ -8,7 +8,7 @@ describe('cron registrations', () => {
   });
 
   it('registers every queue with a parseable cron pattern', () => {
-    expect(CRON_REGISTRATIONS).toHaveLength(8);
+    expect(CRON_REGISTRATIONS).toHaveLength(9);
     expect(CRON_REGISTRATIONS.map((item) => item.queue)).toContain('model-eval');
     for (const registration of CRON_REGISTRATIONS) {
       expect(registration.pattern.split(/\s+/)).toHaveLength(5);

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from .evaluate import reliability_table
 
@@ -82,4 +82,22 @@ def fit_calibrator(
         method=method,
         predictor=predictor,
         curve=tuple(reliability_table(labels, calibrated, buckets)),
+    )
+
+
+def calibrator_from_artifact(
+    payload: Mapping[str, Any], manifest: Mapping[str, Any]
+) -> Calibrator:
+    """Rebuild the fitted calibrator from a checksum-verified artifact.
+
+    Only the manifest's calibration metadata is trusted for the method/curve;
+    the fitted predictor itself lives in the joblib payload written by P13.
+    """
+    calibration = manifest.get('calibration') or {}
+    curve = tuple(calibration.get('curve') or ())
+    return Calibrator(
+        method=str(calibration.get('method') or 'identity'),
+        predictor=payload.get('calibrator'),
+        curve=curve,
+        reason=calibration.get('reason'),
     )

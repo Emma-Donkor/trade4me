@@ -20,3 +20,12 @@ export const HEALTH_CHECK_TIMEOUT_MS = 2000;
 
 /** README §8.5: /ai/* is limited to 20 requests per user per window. */
 export const AI_RATE_LIMIT_MAX = 20;
+
+/** P14 — a drifting model is down-weighted, never silently trusted. */
+export const DRIFT_SIGNAL_WEIGHT = 0.25;
+
+/** P14 — cache lifetime for version-keyed predictions. */
+export const PREDICTION_CACHE_TTL_SECONDS = 300;
+
+/** P14 — default analysis horizon (one hour) in minutes. */
+export const DEFAULT_PREDICTION_HORIZON_MINUTES = 60;

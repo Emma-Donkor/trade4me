@@ -1,5 +1,11 @@
 import { FEATURE_NAMES, env } from '@ts/config';
-import type { FeaturesResponse, IndicatorsResponse, TrainResponse } from '@ts/types';
+import type {
+  DriftResponse,
+  FeaturesResponse,
+  IndicatorsResponse,
+  PredictResponse,
+  TrainResponse,
+} from '@ts/types';
 import type { AiFetch } from '../../src/modules/technical-analysis/ai-engine.client';
 
 /** Deterministic P10 AI response; the API still owns persistence and caching. */
@@ -82,7 +88,9 @@ export interface FakeAiCall {
     indicators?: string[];
     candles?: Array<Record<string, unknown>>;
     featureVersion?: string;
+    horizon?: number;
     asOf?: string;
+    features?: Record<string, number>;
     timestamps?: string[];
     news?: unknown[];
     events?: unknown[];
@@ -144,6 +152,55 @@ export function fakeFeaturesFetch() {
     } as Response;
   };
   return { fetch, calls };
+}
+
+/** Deterministic P14 calibrated prediction for the internal inference route. */
+export function fakePredictFetch(overrides: Partial<PredictResponse> = {}) {
+  const calls: Array<{ url: string; init?: RequestInit; body: Record<string, unknown> }> = [];
+  const response: PredictResponse = {
+    symbol: 'EUR/USD',
+    timeframe: 'H1',
+    direction: 'LONG',
+    probability: 0.78,
+    confidence: 0.74,
+    riskLevel: 'MEDIUM',
+    modelVersion: 'xgboost-1.0.0',
+    ...overrides,
+  };
+  const fetch: AiFetch = async (url, init) => {
+    calls.push({
+      url,
+      init,
+      body: JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>,
+    });
+    return { ok: true, status: 200, json: async () => response } as Response;
+  };
+  return { fetch, calls, response };
+}
+
+/** Deterministic P14 drift verdict for the daily detector. */
+export function fakeDriftFetch(overrides: Partial<DriftResponse> = {}) {
+  const calls: Array<{ url: string; init?: RequestInit; body: Record<string, unknown> }> = [];
+  const response: DriftResponse = {
+    modelVersion: 'xgboost-1.0.0',
+    status: 'DRIFT_WARNING',
+    historicalAccuracy: 0.68,
+    recentAccuracy: 0.51,
+    historicalBrier: 0.19,
+    recentBrier: 0.26,
+    samples: 120,
+    reason: 'accuracy degraded by 0.17 (0.68 -> 0.51)',
+    ...overrides,
+  };
+  const fetch: AiFetch = async (url, init) => {
+    calls.push({
+      url,
+      init,
+      body: JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>,
+    });
+    return { ok: true, status: 200, json: async () => response } as Response;
+  };
+  return { fetch, calls, response };
 }
 
 /** Deterministic P13 training response for the internal model-eval worker. */

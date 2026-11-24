@@ -11,7 +11,14 @@ import type {
 
 describe('@ts/types contracts', () => {
   it('describes the AI service response shapes', () => {
-    const request: PredictRequest = { symbol: 'EUR/USD', timeframe: 'H1', horizon: 5 };
+    const request: PredictRequest = {
+      symbol: 'EUR/USD',
+      timeframe: 'H1',
+      horizon: 5,
+      featureVersion: 'v1.0',
+      asOf: '2026-11-24T00:00:00.000Z',
+      features: { rsi14: 55.2 },
+    };
     const prediction: PredictResponse = {
       symbol: request.symbol,
       timeframe: request.timeframe,

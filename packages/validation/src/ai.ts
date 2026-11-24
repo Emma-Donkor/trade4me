@@ -124,6 +124,9 @@ export const predictRequestSchema = z.object({
   symbol: z.string().min(1),
   timeframe: timeframeSchema,
   horizon: z.number().int().positive(),
+  featureVersion: z.string().min(1),
+  asOf: z.string().min(1),
+  features: z.record(z.string(), z.number()),
 });
 
 export const predictResponseSchema = z.object({
@@ -134,6 +137,24 @@ export const predictResponseSchema = z.object({
   confidence: z.number().min(0),
   riskLevel: riskLevelSchema,
   modelVersion: z.string().min(1),
+});
+
+export const driftRequestSchema = z.strictObject({
+  minSamples: z.number().int().gt(3),
+  recentWindow: z.number().int().gt(3),
+  accuracyDrop: z.number().gt(0),
+  brierIncrease: z.number().gt(0),
+});
+
+export const driftResponseSchema = z.strictObject({
+  modelVersion: z.string(),
+  status: z.enum(['HEALTHY', 'DRIFT_WARNING']),
+  historicalAccuracy: z.number().min(0).max(1),
+  recentAccuracy: z.number().min(0).max(1),
+  historicalBrier: z.number().min(0),
+  recentBrier: z.number().min(0),
+  samples: z.number().int().nonnegative(),
+  reason: z.string().nullable(),
 });
 
 export const explainRequestSchema = z.strictObject({
@@ -172,6 +193,8 @@ export const TrainRequestSchema = trainRequestSchema;
 export const TrainResponseSchema = trainResponseSchema;
 export const PredictRequestSchema = predictRequestSchema;
 export const PredictResponseSchema = predictResponseSchema;
+export const DriftRequestSchema = driftRequestSchema;
+export const DriftResponseSchema = driftResponseSchema;
 export const ExplainRequestSchema = explainRequestSchema;
 export const ExplainFactorSchema = explainFactorSchema;
 export const ExplainResponseSchema = explainResponseSchema;
@@ -186,6 +209,8 @@ export type TrainRequest = z.infer<typeof trainRequestSchema>;
 export type TrainResponse = z.infer<typeof trainResponseSchema>;
 export type PredictRequest = z.infer<typeof predictRequestSchema>;
 export type PredictResponse = z.infer<typeof predictResponseSchema>;
+export type DriftRequest = z.infer<typeof driftRequestSchema>;
+export type DriftResponse = z.infer<typeof driftResponseSchema>;
 export type ExplainRequest = z.infer<typeof explainRequestSchema>;
 export type ExplainResponse = z.infer<typeof explainResponseSchema>;
 export type AssistantMessage = z.infer<typeof assistantMessageSchema>;

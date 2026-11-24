@@ -1171,7 +1171,7 @@ Metrics: Accuracy, Precision, Recall, F1, ROC-AUC, **Brier score**, calibration/
 }
 ```
 
-Probability is never converted into a guarantee anywhere downstream.
+Probability is never converted into a guarantee anywhere downstream. Machine-readable contracts (`PredictResponse` and the shared cross-language fixture) normalise `confidence` to `0..1`; a 0–100 presentation is derived only at the UI layer.
 
 ### 13.8 Versioning
 

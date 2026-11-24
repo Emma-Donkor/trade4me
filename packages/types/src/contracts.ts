@@ -152,6 +152,9 @@ export interface PredictRequest {
   symbol: string;
   timeframe: Timeframe;
   horizon: number;
+  featureVersion: string;
+  asOf: string;
+  features: Record<string, number>;
 }
 
 export interface PredictResponse {
@@ -162,6 +165,24 @@ export interface PredictResponse {
   confidence: number;
   riskLevel: RiskLevel;
   modelVersion: string;
+}
+
+export interface DriftRequest {
+  minSamples: number;
+  recentWindow: number;
+  accuracyDrop: number;
+  brierIncrease: number;
+}
+
+export interface DriftResponse {
+  modelVersion: string;
+  status: 'HEALTHY' | 'DRIFT_WARNING';
+  historicalAccuracy: number;
+  recentAccuracy: number;
+  historicalBrier: number;
+  recentBrier: number;
+  samples: number;
+  reason: string | null;
 }
 
 export interface ExplainRequest {

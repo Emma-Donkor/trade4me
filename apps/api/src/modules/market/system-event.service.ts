@@ -45,6 +45,11 @@ export class SystemEventService {
     await this.record(level, 'WORKER', code, details);
   }
 
+  /** P14 — a drifting model is an auditable WARN, never a silent downgrade. */
+  async modelDrift(details: Record<string, unknown> = {}): Promise<void> {
+    await this.record('WARN', 'AI', 'model_performance_warning', details);
+  }
+
   private async record(
     level: 'INFO' | 'WARN' | 'ERROR',
     source: 'API' | 'AI' | 'WORKER' | 'PROVIDER',

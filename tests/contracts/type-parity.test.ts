@@ -15,6 +15,8 @@ import {
   type Candle,
   type CurrencyPair,
   type DecisionWeights,
+  type DriftRequest,
+  type DriftResponse,
   type Timeframe,
   type ErrorCode,
   type ExplainRequest,
@@ -48,6 +50,8 @@ import {
   assistantRequestSchema,
   backtestConfigSchema,
   candleRangeQuerySchema,
+  driftRequestSchema,
+  driftResponseSchema,
   errorCodeSchema,
   explainFactorSchema,
   explainRequestSchema,
@@ -82,6 +86,8 @@ describe('PHASE 05 contract parity', () => {
     expectMutual<Mutual<z.infer<typeof featuresRequestSchema>, FeaturesRequest>>(true);
     expectMutual<Mutual<z.infer<typeof predictRequestSchema>, PredictRequest>>(true);
     expectMutual<Mutual<z.infer<typeof predictResponseSchema>, PredictResponse>>(true);
+    expectMutual<Mutual<z.infer<typeof driftRequestSchema>, DriftRequest>>(true);
+    expectMutual<Mutual<z.infer<typeof driftResponseSchema>, DriftResponse>>(true);
     expectMutual<Mutual<z.infer<typeof explainRequestSchema>, ExplainRequest>>(true);
     expectMutual<Mutual<z.infer<typeof explainResponseSchema>, ExplainResponse>>(true);
     expectMutual<Mutual<z.infer<typeof featuresResponseSchema>, FeaturesResponse>>(true);
@@ -353,6 +359,8 @@ describe('PHASE 05 contract parity', () => {
       TrainResponse: trainResponseSchema,
       PredictRequest: predictRequestSchema,
       PredictResponse: predictResponseSchema,
+      DriftRequest: driftRequestSchema,
+      DriftResponse: driftResponseSchema,
       ExplainRequest: explainRequestSchema,
       ExplainFactor: explainFactorSchema,
       ExplainResponse: explainResponseSchema,

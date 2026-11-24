@@ -167,11 +167,14 @@
     }
   },
   "PredictRequest": {
-    "fields": ["symbol", "timeframe", "horizon"],
+    "fields": ["symbol", "timeframe", "horizon", "featureVersion", "asOf", "features"],
     "payload": {
       "symbol": "EUR/USD",
       "timeframe": "H1",
-      "horizon": 5
+      "horizon": 5,
+      "featureVersion": "v1.0",
+      "asOf": "2026-11-24T00:00:00.000Z",
+      "features": { "rsi14": 55.2 }
     }
   },
   "PredictResponse": {
@@ -192,6 +195,37 @@
       "confidence": 0.81,
       "riskLevel": "MEDIUM",
       "modelVersion": "xgboost-v1.4.2"
+    }
+  },
+  "DriftRequest": {
+    "fields": ["minSamples", "recentWindow", "accuracyDrop", "brierIncrease"],
+    "payload": {
+      "minSamples": 20,
+      "recentWindow": 50,
+      "accuracyDrop": 0.1,
+      "brierIncrease": 0.05
+    }
+  },
+  "DriftResponse": {
+    "fields": [
+      "modelVersion",
+      "status",
+      "historicalAccuracy",
+      "recentAccuracy",
+      "historicalBrier",
+      "recentBrier",
+      "samples",
+      "reason"
+    ],
+    "payload": {
+      "modelVersion": "xgboost-1.0.0",
+      "status": "DRIFT_WARNING",
+      "historicalAccuracy": 0.68,
+      "recentAccuracy": 0.51,
+      "historicalBrier": 0.19,
+      "recentBrier": 0.26,
+      "samples": 120,
+      "reason": "accuracy degraded by 0.17 (0.68 -> 0.51)"
     }
   },
   "ExplainRequest": {

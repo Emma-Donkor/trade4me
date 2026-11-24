@@ -14,6 +14,7 @@ export const QUEUE_NAMES = [
   'features',
   'model-eval',
   'outcomes',
+  'drift',
   'cleanup',
   'health',
 ] as const;
