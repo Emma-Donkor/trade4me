@@ -27,5 +27,12 @@ module.exports = {
       },
     ],
   },
+  // Every DB-backed suite shares the single disposable `tradesense_test`
+  // database, and database.integration.test.ts intentionally runs
+  // `prisma migrate reset` (which drops the whole schema) to verify the reset
+  // contract. Parallel workers let that reset land while other suites are
+  // mid-query, producing "relation ... does not exist" failures. Pin Jest to
+  // one worker so *every* invocation (npm test, npx jest, CI, IDE) is safe.
+  maxWorkers: 1,
   clearMocks: true,
 };
