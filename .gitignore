@@ -54,7 +54,8 @@ pgdata/
 redisdata/
 
 # ---- Project artifacts ----
-models/
+# Registry artifacts live only at the repository root; app/ml/models/ is source.
+/models/
 artifacts/
 *.log
 logs/

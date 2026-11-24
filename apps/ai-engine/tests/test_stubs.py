@@ -10,6 +10,7 @@ from app.api.routers.features import FeaturesRequest, FeaturesResponse
 from app.api.routers.indicators import IndicatorsRequest, IndicatorsResponse
 from app.api.routers.predict import PredictRequest, PredictResponse
 from app.main import app
+from app.schemas import TrainRequest, TrainResponse
 from fastapi.testclient import TestClient  # pyright: ignore[reportMissingImports]
 
 client = TestClient(app)
@@ -69,6 +70,44 @@ MODEL_FIELDS: list[tuple[Any, set[str]]] = [
             'confidence',
             'riskLevel',
             'modelVersion',
+        },
+    ),
+    (
+        TrainRequest,
+        {
+            'horizon',
+            'threshold',
+            'seed',
+            'featureVersion',
+            'symbols',
+            'timeframes',
+            'trainStart',
+            'validationStart',
+            'testStart',
+            'end',
+            'calibrationMethod',
+            'walkForward',
+            'registryPath',
+            'reportPath',
+            'writeReport',
+        },
+    ),
+    (
+        TrainResponse,
+        {
+            'datasetVersion',
+            'datasetChecksum',
+            'datasetRows',
+            'featureVersion',
+            'selectedModel',
+            'selectedVersion',
+            'selectionReason',
+            'xgboostGatePassed',
+            'calibrationMethod',
+            'modelRuns',
+            'models',
+            'comparison',
+            'walkForward',
         },
     ),
     (ExplainRequest, {'predictionId'}),

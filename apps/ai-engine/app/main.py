@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 
-from .api.routers import explain, features, health, indicators, predict
+from .api.routers import explain, features, health, indicators, ml, predict
 from .config import APP_NAME, APP_VERSION, settings
 from .logging import configure_logging
 
@@ -19,3 +19,4 @@ app.include_router(indicators.router, prefix=AI_API_PREFIX)
 app.include_router(features.router, prefix=AI_API_PREFIX)
 app.include_router(predict.router, prefix=AI_API_PREFIX)
 app.include_router(explain.router, prefix=AI_API_PREFIX)
+app.include_router(ml.router, prefix=AI_API_PREFIX)

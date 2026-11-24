@@ -36,10 +36,14 @@ import {
   type RiskAssessment,
   type SignalScoreBand,
   type TradeSignal,
+  type TrainRequest,
+  type TrainResponse,
   type WatchlistItem,
   type WebSocketEventPayloads,
 } from '../../packages/types/src';
 import {
+  trainRequestSchema,
+  trainResponseSchema,
   type z,
   assistantRequestSchema,
   backtestConfigSchema,
@@ -81,6 +85,8 @@ describe('PHASE 05 contract parity', () => {
     expectMutual<Mutual<z.infer<typeof explainRequestSchema>, ExplainRequest>>(true);
     expectMutual<Mutual<z.infer<typeof explainResponseSchema>, ExplainResponse>>(true);
     expectMutual<Mutual<z.infer<typeof featuresResponseSchema>, FeaturesResponse>>(true);
+    expectMutual<Mutual<z.infer<typeof trainRequestSchema>, TrainRequest>>(true);
+    expectMutual<Mutual<z.infer<typeof trainResponseSchema>, TrainResponse>>(true);
     // Existing P02 config declarations must not drift from the shared contracts.
     expectMutual<Mutual<Timeframe, ConfigTimeframe>>(true);
     expectMutual<Mutual<DecisionWeights, ConfigDecisionWeights>>(true);
@@ -343,6 +349,8 @@ describe('PHASE 05 contract parity', () => {
       IndicatorsResponse: indicatorsResponseSchema,
       FeaturesRequest: featuresRequestSchema,
       FeaturesResponse: featuresResponseSchema,
+      TrainRequest: trainRequestSchema,
+      TrainResponse: trainResponseSchema,
       PredictRequest: predictRequestSchema,
       PredictResponse: predictResponseSchema,
       ExplainRequest: explainRequestSchema,

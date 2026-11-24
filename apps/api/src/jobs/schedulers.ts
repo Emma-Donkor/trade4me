@@ -12,6 +12,7 @@ import { BackfillProcessor } from './processors/backfill.processor';
 import { FeaturesProcessor } from './processors/features.processor';
 import { IntegrityProcessor } from './processors/integrity.processor';
 import { MarketSyncProcessor } from './processors/market-sync.processor';
+import { ModelEvalProcessor } from './processors/model-eval.processor';
 import { NewsIngestProcessor } from './processors/news-ingest.processor';
 import { bullConnectionOptions, QUEUE_NAMES, QueueRegistry, type QueueName } from './queues';
 
@@ -49,6 +50,11 @@ export const CRON_REGISTRATIONS: CronRegistration[] = [
     queue: 'features',
     name: 'feature-regeneration',
     pattern: cronPattern(env.FEATURE_JOB_CRON, '*/30 * * * *'),
+  },
+  {
+    queue: 'model-eval',
+    name: 'model-evaluation-daily',
+    pattern: cronPattern(env.MODEL_EVAL_CRON, '0 5 * * *'),
   },
   {
     queue: 'outcomes',
@@ -115,6 +121,7 @@ export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
     @Optional() private readonly integrityProcessor?: IntegrityProcessor,
     @Optional() private readonly newsIngestProcessor?: NewsIngestProcessor,
     @Optional() private readonly featuresProcessor?: FeaturesProcessor,
+    @Optional() private readonly modelEvalProcessor?: ModelEvalProcessor,
   ) {}
 
   onModuleInit(): void {
@@ -145,6 +152,10 @@ export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
           }
           if (queueName === 'features' && this.featuresProcessor) {
             await this.featuresProcessor.process(job);
+            return;
+          }
+          if (queueName === 'model-eval' && this.modelEvalProcessor) {
+            await this.modelEvalProcessor.process(job);
             return;
           }
           this.logger.log('job received; processor arrives in a later phase', 'WORKER', {

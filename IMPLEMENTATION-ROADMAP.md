@@ -1316,22 +1316,24 @@ Depends on: PHASE 12
 ```
 
 ### Tasks
-- [ ] **Dataset builder**: label = "move ≥ threshold within horizon" (`PREDICTION_THRESHOLD=0.30`, horizons 1h/4h/24h/3d/7d), features from `MarketFeature` + labels from future candles; strict temporal alignment (`feature.t` → `label over (t, t+horizon]`)
-- [ ] **Time-series splitting only** — never shuffle: TRAIN ≤2023, VAL 2024, TEST 2025 (configurable), then **walk-forward**: (train 20–22/test 23), (train 20–23/test 24), (train 20–24/test 25)
-- [ ] **Trainers**: `train_lr.py`, `train_rf.py`, `train_xgb.py` (XGBoost primary: class weights, early stopping); comparison report produced by `evaluate.py`
-- [ ] **Evaluation**: Accuracy, Precision, Recall, F1, ROC-AUC, **Brier score**, reliability table (10 buckets); benchmarks vs baseline models and simple technical strategy
-- [ ] **Calibration**: fit Platt/isotonic on VAL; calibrated probability is the only one exposed; calibration curve artifact saved
-- [ ] **Registry**: create `ModelVersion` (name, version, featureVersion, trainingDatasetVersion, hyperparams, metrics, status) + `ModelRun` (ranges, seed, artifacts) rows; artifacts to `MODEL_REGISTRY_PATH` (`models/` — gitignored)
-- [ ] **Model selection gate**: XGBoost adopted as `ACTIVE` only if it beats baselines on Brier + ROC-AUC on walk-forward folds; otherwise document why another model wins
-- [ ] **ML test suite**: leakage (imported from P12), reproducibility (same seed+data → identical metrics), calibration within tolerance, feature correctness spot-checks
-- [ ] Training CLI: `python -m app.ml.train --horizon 24h --threshold 0.30` writing registry rows; job wrapper for scheduled retraining (`model-eval` daily)
+- [x] **Dataset builder**: label = "move ≥ threshold within horizon" (`PREDICTION_THRESHOLD=0.30`, horizons 1h/4h/24h/3d/7d), features from `MarketFeature` + labels from future candles; strict temporal alignment (`feature.t` → `label over (t, t+horizon]`)
+- [x] **Time-series splitting only** — never shuffle: TRAIN ≤2023, VAL 2024, TEST 2025 (configurable), then **walk-forward**: (train 20–22/test 23), (train 20–23/test 24), (train 20–24/test 25)
+- [x] **Trainers**: `train_lr.py`, `train_rf.py`, `train_xgb.py` (XGBoost primary: class weights, early stopping); comparison report produced by `evaluate.py`
+- [x] **Evaluation**: Accuracy, Precision, Recall, F1, ROC-AUC, **Brier score**, reliability table (10 buckets); benchmarks vs baseline models and simple technical strategy
+- [x] **Calibration**: fit Platt/isotonic on VAL; calibrated probability is the only one exposed; calibration curve artifact saved
+- [x] **Registry**: create `ModelVersion` (name, version, featureVersion, trainingDatasetVersion, hyperparams, metrics, status) + `ModelRun` (ranges, seed, artifacts) rows; artifacts to `MODEL_REGISTRY_PATH` (`models/` — gitignored)
+- [x] **Model selection gate**: XGBoost adopted as `ACTIVE` only if it beats baselines on Brier + ROC-AUC on walk-forward folds; otherwise document why another model wins
+- [x] **ML test suite**: leakage (imported from P12), reproducibility (same seed+data → identical metrics), calibration within tolerance, feature correctness spot-checks
+- [x] Training CLI: `python -m app.ml.train --horizon 24h --threshold 0.30` writing registry rows; job wrapper for scheduled retraining (`model-eval` daily)
 
 ### Files/Folders
 ```text
 apps/ai-engine/app/ml/{dataset.py, split.py, train.py, models/{logistic.py, random_forest.py, xgboost.py},
                        evaluate.py, calibrate.py, registry.py, cli.py}
 apps/ai-engine/tests/{test_dataset.py, test_split_no_shuffle.py, test_reproducibility.py,
-                      test_calibration.py, test_leakage.py}
+                      test_calibration.py, test_registry.py, test_leakage.py}
+apps/ai-engine/scripts/generate_report_dataset.py
+docs/ml-comparison.md (committed build artifact)
 models/ (gitignored artifacts)
 ```
 
@@ -1354,12 +1356,12 @@ None.
 Training data path read-only vs production tables; artifacts never contain secrets; model files validated (no arbitrary pickle loading from untrusted paths — prefer joblib within registry dir with checksum).
 
 ### Testing
-- [ ] **Leakage gate**: test suite fails if any feature row references future data
-- [ ] **No-shuffle gate**: splitter provably emits monotonic time folds
-- [ ] **Reproducibility gate**: two runs, same seed → identical metrics JSON
-- [ ] **Calibration gate**: predicted 0.8 bucket observed frequency within tolerance (e.g. ±10%)
-- [ ] Comparison report generated and committed as build artifact (metrics table for docs)
-- [ ] Regression: P02–P12 tests pass
+- [x] **Leakage gate**: test suite fails if any feature row references future data
+- [x] **No-shuffle gate**: splitter provably emits monotonic time folds
+- [x] **Reproducibility gate**: two runs, same seed → identical metrics JSON
+- [x] **Calibration gate**: predicted 0.8 bucket observed frequency within tolerance (e.g. ±10%)
+- [x] Comparison report generated and committed as build artifact (metrics table for docs)
+- [x] Regression: P02–P12 tests pass
 
 ### Completion Criteria
 Walk-forward-trained, calibrated, versioned models in the registry with documented metrics beating (or honestly not beating) baselines; all ML tests green.

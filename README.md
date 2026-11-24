@@ -1187,6 +1187,53 @@ XGBoost · v1.4.2 · Features v2.1 · Dataset 2026-10
 - The system never silently continues assuming a degraded model is reliable; signals produced by a drifting model are down-weighted/blocked per configuration.
 - Tracked: Accuracy, Precision, Recall, F1, ROC-AUC, Brier, calibration, win rate, profit factor, Sharpe, drawdown.
 
+### 13.10 Training, registry and scheduled retraining
+
+The whole pipeline is one deterministic command:
+
+```bash
+cd apps/ai-engine
+.venv/Scripts/python.exe -m app.ml.train --horizon 24h --threshold 0.30
+```
+
+It reads versioned `MarketFeature` rows plus strictly future `Candle` closes in a
+**read-only** transaction, builds the labelled snapshot (hash-derived dataset
+version), runs the three chronological walk-forward folds, fits Platt or
+isotonic calibration on VAL only, evaluates on TEST, writes checksummed joblib
+artifacts under `MODEL_REGISTRY_PATH` (`models/`, gitignored), and upserts
+`ModelVersion`/`ModelRun` rows through `asyncpg`. The calibrated probability is
+the only probability stored in the artifacts; raw scores are never exposed
+downstream.
+
+Useful flags: `--calibration-method isotonic`, `--symbols EUR/USD,GBP/USD`,
+`--dataset snapshot.json --no-registry` (replay a trusted snapshot and regenerate
+the report without a database), `--no-walk-forward`, and `--report-path`.
+
+`XGBoost` is promoted to `ACTIVE` **only** when it beats logistic regression,
+random forest and every simple baseline on *both* walk-forward Brier and
+ROC-AUC. If the gate fails, the best measured alternative is promoted and the
+exact reason is written to the registry metrics and the committed report at
+[`docs/ml-comparison.md`](docs/ml-comparison.md). The report can be regenerated
+byte-for-byte with:
+
+```bash
+PYTHONPATH=apps/ai-engine apps/ai-engine/.venv/Scripts/python.exe \
+  apps/ai-engine/scripts/generate_report_dataset.py /tmp/p13-dataset.json
+PYTHONPATH=apps/ai-engine apps/ai-engine/.venv/Scripts/python.exe -m app.ml.train \
+  --dataset /tmp/p13-dataset.json --no-registry \
+  --train-start 2025-01-01 --validation-start 2025-09-01 \
+  --test-start 2025-11-01 --end 2026-02-05 \
+  --report-path docs/ml-comparison.md
+npx prettier --write docs/ml-comparison.md
+```
+
+The Node API owns scheduling only: the `model-eval` BullMQ queue runs daily at
+`MODEL_EVAL_CRON` (default `0 5 * * *`) and its worker POSTs an auditable
+`TrainRequest` to the internal, service-token-protected
+`POST /api/v1/ai/ml/train` route. No public route is added. Artifacts are loaded
+only from inside the registry after their SHA-256 manifest matches, so arbitrary
+pickle paths are never unpickled.
+
 ---
 
 ## 14. Risk Engine
@@ -1574,6 +1621,7 @@ MODEL_REGISTRY_PATH=./models
 FEATURE_VERSION=v1.0
 DEFAULT_MODEL_NAME=xgboost
 DEFAULT_MODEL_VERSION=1.0.0
+MODEL_EVAL_CRON=0 5 * * *   # daily retraining/evaluation
 ```
 
 Full annotated list with jobs, rate limits and risk defaults: **`.env.example`**.

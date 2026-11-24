@@ -113,6 +113,41 @@ export interface FeaturesResponse {
   vectors: FeatureVectorItem[];
 }
 
+/** P13 internal training trigger; no public API route is added. */
+export interface TrainRequest {
+  horizon: string;
+  threshold: number;
+  seed: number;
+  featureVersion?: string;
+  symbols?: string[];
+  timeframes?: string[];
+  trainStart?: string;
+  validationStart?: string;
+  testStart?: string;
+  end?: string;
+  calibrationMethod: 'platt' | 'isotonic';
+  walkForward: boolean;
+  registryPath?: string;
+  reportPath?: string;
+  writeReport: boolean;
+}
+
+export interface TrainResponse {
+  datasetVersion: string;
+  datasetChecksum: string;
+  datasetRows: number;
+  featureVersion: string;
+  selectedModel: string;
+  selectedVersion: string;
+  selectionReason: string;
+  xgboostGatePassed: boolean;
+  calibrationMethod: string;
+  modelRuns: number;
+  models: Record<string, Record<string, unknown>>;
+  comparison: Array<Record<string, unknown>>;
+  walkForward: Record<string, Record<string, unknown>>;
+}
+
 export interface PredictRequest {
   symbol: string;
   timeframe: Timeframe;

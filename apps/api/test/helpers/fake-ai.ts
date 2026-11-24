@@ -1,5 +1,5 @@
 import { FEATURE_NAMES, env } from '@ts/config';
-import type { FeaturesResponse, IndicatorsResponse } from '@ts/types';
+import type { FeaturesResponse, IndicatorsResponse, TrainResponse } from '@ts/types';
 import type { AiFetch } from '../../src/modules/technical-analysis/ai-engine.client';
 
 /** Deterministic P10 AI response; the API still owns persistence and caching. */
@@ -144,4 +144,34 @@ export function fakeFeaturesFetch() {
     } as Response;
   };
   return { fetch, calls };
+}
+
+/** Deterministic P13 training response for the internal model-eval worker. */
+export function fakeTrainFetch(overrides: Partial<TrainResponse> = {}) {
+  const calls: Array<{ url: string; init?: RequestInit; body: Record<string, unknown> }> = [];
+  const response: TrainResponse = {
+    datasetVersion: '20260101-20261124-abcdef12',
+    datasetChecksum: 'abcdef12',
+    datasetRows: 300,
+    featureVersion: env.FEATURE_VERSION,
+    selectedModel: 'xgboost',
+    selectedVersion: '1.0.0',
+    selectionReason: 'xgbeat: all baselines beaten',
+    xgboostGatePassed: true,
+    calibrationMethod: 'platt',
+    modelRuns: 9,
+    models: { xgboost: { artifactPath: './models/xgboost/1.0.0', sha256: 'abc' } },
+    comparison: [{ name: 'xgboost', brier: 0.12, rocAuc: 0.71 }],
+    walkForward: { xgboost: { brier: 0.12, rocAuc: 0.71, folds: 3 } },
+    ...overrides,
+  };
+  const fetch: AiFetch = async (url, init) => {
+    calls.push({
+      url,
+      init,
+      body: JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>,
+    });
+    return { ok: true, status: 200, json: async () => response } as Response;
+  };
+  return { fetch, calls, response };
 }

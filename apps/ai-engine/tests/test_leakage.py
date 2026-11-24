@@ -1,4 +1,4 @@
-"""PHASE 12 leakage and as-of boundary tests."""
+"""PHASE 12 feature leakage and PHASE 13 dataset/fold leakage gates."""
 
 from __future__ import annotations
 
@@ -158,3 +158,98 @@ def test_route_rejects_timestamps_after_as_of() -> None:
         assert 'timestamps<=as_of' in exc.missing
     else:
         raise AssertionError('Future timestamp was accepted')
+
+
+# ─────────────────────────── PHASE 13 ───────────────────────────
+
+
+def test_dataset_label_ignores_candles_outside_the_forward_window() -> None:
+    """Only closes in (t, t+horizon] may set the label; past/late ones may not."""
+    from datetime import timedelta
+
+    from app.ml.dataset import CandlePoint, FeatureRow, build_dataset
+    from ml_fixtures import feature_values, utc
+
+    first = utc(2026, 1, 1)
+    times = [first + timedelta(hours=hour) for hour in range(6)]
+    # Baseline: a +1% move at t+1h, flat elsewhere. Label must be positive.
+    closes = [1.0, 1.01, 1.01, 1.01, 1.01, 1.01]
+    candles = [
+        CandlePoint('EUR/USD', 'H1', times[index], closes[index])
+        for index in range(len(times))
+    ]
+    feature = FeatureRow('EUR/USD', 'H1', first, 'v1.0', feature_values(0))
+
+    baseline = build_dataset(
+        [feature], candles, horizon='1h', threshold_pct=0.5, feature_names=list(feature.values)
+    ).examples[0]
+    assert baseline.label == 1
+
+    # A huge move at t (the reference candle itself) cannot create a label.
+    at_t = [
+        CandlePoint('EUR/USD', 'H1', times[index], 99.0 if index == 0 else closes[index])
+        for index in range(len(times))
+    ]
+    assert build_dataset(
+        [feature], at_t, horizon='1h', threshold_pct=0.5, feature_names=list(feature.values)
+    ).examples[0].label == 0
+
+    # A huge move after the horizon window also cannot change the label.
+    late = [
+        CandlePoint('EUR/USD', 'H1', times[index], 99.0 if index == 5 else closes[index])
+        for index in range(len(times))
+    ]
+    assert build_dataset(
+        [feature], late, horizon='1h', threshold_pct=0.5, feature_names=list(feature.values)
+    ).examples[0].label == 1
+
+    # Tampering with the in-window candle does change it (label really is derived there).
+    inside = [
+        CandlePoint('EUR/USD', 'H1', times[index], 0.90 if index == 1 else closes[index])
+        for index in range(len(times))
+    ]
+    assert build_dataset(
+        [feature], inside, horizon='1h', threshold_pct=0.5, feature_names=list(feature.values)
+    ).examples[0].label == 0
+
+
+def test_calibration_never_sees_test_rows() -> None:
+    """Changing only the test set leaves the fitted calibrator byte-identical."""
+    from app.ml.train import _train_one
+    from ml_fixtures import labeled_examples, utc
+
+    examples = labeled_examples(start=utc(2024, 1, 1), days=90)
+    train, validation, test = examples[:50], examples[50:70], examples[70:85]
+    names = list(examples[0].features)
+
+    _, first_calibrator, first_metrics = _train_one(
+        'logistic-regression', train, validation, test, names, 7, 'platt'
+    )
+    _, second_calibrator, second_metrics = _train_one(
+        'logistic-regression', train, validation, examples[85:], names, 7, 'platt'
+    )
+
+    assert first_calibrator.method == second_calibrator.method
+    assert first_calibrator.curve == second_calibrator.curve
+    assert first_metrics['samples'] == len(test)
+    assert second_metrics['samples'] == len(examples[85:])
+
+
+def test_dataset_snapshot_checksum_rejects_tampered_labels() -> None:
+    """A replayed dataset with an edited label must fail checksum verification."""
+    import pytest
+
+    from app.ml.dataset import build_dataset, dataset_from_records, dataset_to_records
+    from ml_fixtures import simple_market_rows
+
+    features, candles = simple_market_rows(count=20)
+    real = build_dataset(
+        features, candles, horizon='1h', threshold_pct=0.30
+    )
+    record = dataset_to_records(real)
+    restored = dataset_from_records(record)
+    assert restored.checksum == real.checksum
+
+    record['rows'][0]['label'] = 1 - int(record['rows'][0]['label'])
+    with pytest.raises(ValueError, match='checksum mismatch'):
+        dataset_from_records(record)

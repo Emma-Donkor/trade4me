@@ -24,6 +24,8 @@ from app.schemas import (
     IndicatorsResponse,
     PredictRequest,
     PredictResponse,
+    TrainRequest,
+    TrainResponse,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -38,6 +40,8 @@ MODELS: dict[str, Any] = {
     'FeaturesResponse': FeaturesResponse,
     'PredictRequest': PredictRequest,
     'PredictResponse': PredictResponse,
+    'TrainRequest': TrainRequest,
+    'TrainResponse': TrainResponse,
     'ExplainRequest': ExplainRequest,
     'ExplainFactor': ExplainFactor,
     'ExplainResponse': ExplainResponse,

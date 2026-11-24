@@ -91,6 +91,7 @@ class Settings(BaseSettings):
     FEATURE_JOB_CRON: str = '*/30 * * * *'
     OUTCOME_JOB_CRON: str = '0 * * * *'
     CLEANUP_CRON: str = '0 3 * * *'
+    MODEL_EVAL_CRON: str = '0 5 * * *'
 
     @field_validator(
         'MARKET_SYNC_CRON',
@@ -99,6 +100,7 @@ class Settings(BaseSettings):
         'FEATURE_JOB_CRON',
         'OUTCOME_JOB_CRON',
         'CLEANUP_CRON',
+        'MODEL_EVAL_CRON',
         mode='before',
     )
     @classmethod

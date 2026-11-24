@@ -12,6 +12,7 @@ export const QUEUE_NAMES = [
   'integrity',
   'news-ingest',
   'features',
+  'model-eval',
   'outcomes',
   'cleanup',
   'health',

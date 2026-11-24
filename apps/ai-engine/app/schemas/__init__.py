@@ -17,6 +17,7 @@ from .ai import (
     PredictResponse,
     RegimeInput,
 )
+from .ml import TrainRequest, TrainResponse
 
 __all__ = [
     'ExplainFactor',
@@ -34,4 +35,6 @@ __all__ = [
     'PredictRequest',
     'PredictResponse',
     'RegimeInput',
+    'TrainRequest',
+    'TrainResponse',
 ]

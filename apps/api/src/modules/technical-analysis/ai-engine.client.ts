@@ -6,14 +6,22 @@ import type {
   FeaturesResponse,
   IndicatorsRequest,
   IndicatorsResponse,
+  TrainRequest,
+  TrainResponse,
 } from '@ts/types';
-import { featuresResponseSchema, indicatorsResponseSchema } from '@ts/validation';
+import {
+  featuresResponseSchema,
+  indicatorsResponseSchema,
+  trainRequestSchema,
+  trainResponseSchema,
+} from '@ts/validation';
 
 /** Injectable boundary so tests can replace the AI engine without a socket. */
 export const AI_ENGINE_FETCH = Symbol('AI_ENGINE_FETCH');
 export type AiFetch = (url: string, init?: RequestInit) => Promise<Response>;
 
 const AI_ENGINE_TIMEOUT_MS = 15_000;
+const AI_TRAIN_TIMEOUT_MS = 180_000;
 
 /** Thin, validated HTTP client for the internal Python math authority. */
 @Injectable()
@@ -69,6 +77,41 @@ export class AiEngineClient {
     } catch (error) {
       if (error instanceof Error && 'status' in error) throw error;
       aiUnavailable('features');
+    }
+  }
+
+  /** P13 — trigger the internal walk-forward pipeline for scheduled retraining. */
+  async train(request: TrainRequest): Promise<TrainResponse> {
+    trainRequestSchema.parse(request);
+    const url = `${configuration.app.aiUrl}/api/v1/ai/ml/train`;
+    try {
+      const response = await this.fetch(url, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'X-Service-Token': configuration.app.aiServiceToken,
+        },
+        body: JSON.stringify(request),
+        signal: AbortSignal.timeout(AI_TRAIN_TIMEOUT_MS),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        detail?: string | { message?: string };
+      };
+      if (!response.ok) {
+        if (response.status === 422) {
+          insufficientData('model training', {
+            message:
+              typeof payload.detail === 'string'
+                ? payload.detail
+                : (payload.detail?.message ?? 'Training inputs are incomplete'),
+          });
+        }
+        aiUnavailable(`training (HTTP ${response.status})`);
+      }
+      return trainResponseSchema.parse(payload) as TrainResponse;
+    } catch (error) {
+      if (error instanceof Error && 'status' in error) throw error;
+      aiUnavailable('training');
     }
   }
 }

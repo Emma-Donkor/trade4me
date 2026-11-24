@@ -107,6 +107,7 @@ export const envSchema = z.object({
   FEATURE_JOB_CRON: cronExpression.default('*/30 * * * *'),
   OUTCOME_JOB_CRON: cronExpression.default('0 * * * *'),
   CLEANUP_CRON: cronExpression.default('0 3 * * *'),
+  MODEL_EVAL_CRON: cronExpression.default('0 5 * * *'),
 
   // Rate limiting
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60000),

@@ -86,6 +86,40 @@ export const featuresResponseSchema = z.object({
   vectors: z.array(featureVectorItemSchema),
 });
 
+export const trainRequestSchema = z.strictObject({
+  horizon: z.string().min(1),
+  threshold: z.number().gt(0).lt(1),
+  seed: z.number().int(),
+  featureVersion: z.string().min(1).optional(),
+  symbols: z.array(z.string().min(1)).optional(),
+  timeframes: z.array(z.string().min(1)).optional(),
+  trainStart: z.string().min(1).optional(),
+  validationStart: z.string().min(1).optional(),
+  testStart: z.string().min(1).optional(),
+  end: z.string().min(1).optional(),
+  calibrationMethod: z.enum(['platt', 'isotonic']),
+  walkForward: z.boolean(),
+  registryPath: z.string().min(1).optional(),
+  reportPath: z.string().min(1).optional(),
+  writeReport: z.boolean(),
+});
+
+export const trainResponseSchema = z.strictObject({
+  datasetVersion: z.string().min(1),
+  datasetChecksum: z.string().min(1),
+  datasetRows: z.number().int().nonnegative(),
+  featureVersion: z.string().min(1),
+  selectedModel: z.string().min(1),
+  selectedVersion: z.string().min(1),
+  selectionReason: z.string(),
+  xgboostGatePassed: z.boolean(),
+  calibrationMethod: z.string().min(1),
+  modelRuns: z.number().int().nonnegative(),
+  models: z.record(z.string(), z.record(z.string(), z.unknown())),
+  comparison: z.array(z.record(z.string(), z.unknown())),
+  walkForward: z.record(z.string(), z.record(z.string(), z.unknown())),
+});
+
 export const predictRequestSchema = z.object({
   symbol: z.string().min(1),
   timeframe: timeframeSchema,
@@ -134,6 +168,8 @@ export const IndicatorsRequestSchema = indicatorsRequestSchema;
 export const IndicatorsResponseSchema = indicatorsResponseSchema;
 export const FeaturesRequestSchema = featuresRequestSchema;
 export const FeaturesResponseSchema = featuresResponseSchema;
+export const TrainRequestSchema = trainRequestSchema;
+export const TrainResponseSchema = trainResponseSchema;
 export const PredictRequestSchema = predictRequestSchema;
 export const PredictResponseSchema = predictResponseSchema;
 export const ExplainRequestSchema = explainRequestSchema;
@@ -146,6 +182,8 @@ export type IndicatorsRequest = z.infer<typeof indicatorsRequestSchema>;
 export type IndicatorsResponse = z.infer<typeof indicatorsResponseSchema>;
 export type FeaturesRequest = z.infer<typeof featuresRequestSchema>;
 export type FeaturesResponse = z.infer<typeof featuresResponseSchema>;
+export type TrainRequest = z.infer<typeof trainRequestSchema>;
+export type TrainResponse = z.infer<typeof trainResponseSchema>;
 export type PredictRequest = z.infer<typeof predictRequestSchema>;
 export type PredictResponse = z.infer<typeof predictResponseSchema>;
 export type ExplainRequest = z.infer<typeof explainRequestSchema>;

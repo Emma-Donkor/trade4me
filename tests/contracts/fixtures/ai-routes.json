@@ -96,6 +96,76 @@
       ]
     }
   },
+  "TrainRequest": {
+    "fields": [
+      "horizon",
+      "threshold",
+      "seed",
+      "featureVersion",
+      "symbols",
+      "timeframes",
+      "trainStart",
+      "validationStart",
+      "testStart",
+      "end",
+      "calibrationMethod",
+      "walkForward",
+      "registryPath",
+      "reportPath",
+      "writeReport"
+    ],
+    "payload": {
+      "horizon": "24h",
+      "threshold": 0.3,
+      "seed": 42,
+      "featureVersion": "v1.0",
+      "symbols": ["EUR/USD"],
+      "timeframes": ["D1"],
+      "trainStart": "2024-01-01T00:00:00.000Z",
+      "validationStart": "2025-01-01T00:00:00.000Z",
+      "testStart": "2026-01-01T00:00:00.000Z",
+      "end": "2026-11-24T00:00:00.000Z",
+      "calibrationMethod": "platt",
+      "walkForward": true,
+      "registryPath": "./models",
+      "reportPath": "docs/ml-comparison.md",
+      "writeReport": false
+    }
+  },
+  "TrainResponse": {
+    "fields": [
+      "datasetVersion",
+      "datasetChecksum",
+      "datasetRows",
+      "featureVersion",
+      "selectedModel",
+      "selectedVersion",
+      "selectionReason",
+      "xgboostGatePassed",
+      "calibrationMethod",
+      "modelRuns",
+      "models",
+      "comparison",
+      "walkForward"
+    ],
+    "payload": {
+      "datasetVersion": "20260101-20261124-abcdef12",
+      "datasetChecksum": "abcdef12",
+      "datasetRows": 300,
+      "featureVersion": "v1.0",
+      "selectedModel": "xgboost",
+      "selectedVersion": "1.0.0",
+      "selectionReason": "xgbeat",
+      "xgboostGatePassed": true,
+      "calibrationMethod": "platt",
+      "modelRuns": 9,
+      "models": {
+        "xgboost": { "artifactPath": "./models/xgboost/1.0.0", "sha256": "abc" }
+      },
+      "comparison": [{ "name": "xgboost", "brier": 0.12, "rocAuc": 0.71 }],
+      "walkForward": { "xgboost": { "brier": 0.12, "rocAuc": 0.71, "folds": 3 } }
+    }
+  },
   "PredictRequest": {
     "fields": ["symbol", "timeframe", "horizon"],
     "payload": {

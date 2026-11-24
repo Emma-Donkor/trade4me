@@ -3,13 +3,14 @@ import { Queue } from 'bullmq';
 import { bullConnectionOptions, QUEUE_NAMES, queueToken } from './queues';
 
 describe('BullMQ scaffolding', () => {
-  it('defines the eight documented queues and stable injection tokens', () => {
+  it('defines the nine documented queues and stable injection tokens', () => {
     expect(QUEUE_NAMES).toEqual([
       'market-sync',
       'backfill',
       'integrity',
       'news-ingest',
       'features',
+      'model-eval',
       'outcomes',
       'cleanup',
       'health',
