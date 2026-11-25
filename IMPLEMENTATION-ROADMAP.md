@@ -1534,15 +1534,15 @@ Depends on: PHASE 10, PHASE 11, PHASE 14, PHASE 15
 ```
 
 ### Tasks
-- [ ] **Score providers** normalized to 0–100: technical (P10), historical similarity/edge (P09/P12), ML (probability+confidence from P14), news (aggregated sentiment from P11), regime (P10 encoded to score), risk (rule-based score from P15)
-- [ ] **Weighted combination** from `packages/config` (defaults: 25/20/25/10/10/10) — configurable, versioned with the signal (`weights` snapshot in scores JSON)
-- [ ] **Band mapping** per README §15.2: 80–100 Strong · 70–79 Good · 60–69 Watch · 50–59 Weak · <50 Avoid (configurable thresholds)
-- [ ] **Direction logic**: ML direction + technical/news bias alignment → `LONG`/`SHORT`/`NEUTRAL`; conflicts reduce score
-- [ ] **NO-TRADE engine** (README §15.3): hard gates from P15 verdicts + soft gates (model disagreement, unusual regime, insufficient historical evidence, low confidence) → action `NO_TRADE` with machine-readable `noTradeReasons[]`
-- [ ] **Evidence assembly**: `supporting[]` / `contradicting[]` evidence items (structured: `{source, claim, value}`) — the payload P17 explains
-- [ ] `signals` module real: signal generation job (`signals`, triggered after features/predictions refresh) → persist `TradeSignal` + `SignalFeature` snapshot; `GET /signals`, `GET /signals/:id` (full evidence)
-- [ ] **Scanner**: `GET /scanner` — all active pairs scored, sortable by score/probability/risk/volatility, filters; Redis-cached 5 min; `signal:new`/`signal:changed` WS emissions on material change
-- [ ] Weight configuration exposed to admin (P28) + backtest comparison hook (P24 validates weights)
+- [x] **Score providers** normalized to 0–100: technical (P10), historical similarity/edge (P09/P12), ML (probability+confidence from P14), news (aggregated sentiment from P11), regime (P10 encoded to score), risk (rule-based score from P15)
+- [x] **Weighted combination** from `packages/config` (defaults: 25/20/25/10/10/10) — configurable, versioned with the signal (`weights` snapshot in scores JSON)
+- [x] **Band mapping** per README §15.2: 80–100 Strong · 70–79 Good · 60–69 Watch · 50–59 Weak · <50 Avoid (configurable thresholds)
+- [x] **Direction logic**: ML direction + technical/news bias alignment → `LONG`/`SHORT`/`NEUTRAL`; conflicts reduce score
+- [x] **NO-TRADE engine** (README §15.3): hard gates from P15 verdicts + soft gates (model disagreement, unusual regime, insufficient historical evidence, low confidence) → action `NO_TRADE` with machine-readable `noTradeReasons[]`
+- [x] **Evidence assembly**: `supporting[]` / `contradicting[]` evidence items (structured: `{source, claim, value}`) — the payload P17 explains
+- [x] `signals` module real: signal generation job (`signals`, triggered after features/predictions refresh) → persist `TradeSignal` + `SignalFeature` snapshot; `GET /signals`, `GET /signals/:id` (full evidence)
+- [x] **Scanner**: `GET /scanner` — all active pairs scored, sortable by score/probability/risk/volatility, filters; Redis-cached 5 min; `signal:new`/`signal:changed` WS emissions on material change
+- [x] Weight configuration exposed to admin (P28) + backtest comparison hook (P24 validates weights) via the in-process `DecisionWeightsService` (no new HTTP route)
 
 ### Files/Folders
 ```text
@@ -1577,14 +1577,14 @@ None (P21 UI).
 Decision logic server-side only; signal payloads include model version + data freshness (auditability per README §28/75); no client can request a "forced" decision that bypasses NO-TRADE gates.
 
 ### Testing
-- [ ] Unit: weighted score math with known component scores (configurable weights honored)
-- [ ] Unit: band boundaries (59/60, 69/70, 79/80 exactly)
-- [ ] Unit: **NO-TRADE matrix** — each reason code triggers under its fixture (low confidence, stale data, missing features, bad R/R, extreme volatility, imminent high-impact event, model disagreement, unusual regime, conflicting indicators)
-- [ ] Unit: evidence assembly — supporting/contradicting counts match inputs; contradicting evidence always rendered (never suppressed)
-- [ ] Integration: seeded multi-pair state → scanner returns all 10 pairs with valid actions/scores, sorted correctly
-- [ ] Integration: signal persisted with `SignalFeature` snapshot matching P05 feature contract
-- [ ] Honesty tests: NO_TRADE rows exist in fixture output; no path returns action without evidence
-- [ ] Regression: P02–P15 tests pass
+- [x] Unit: weighted score math with known component scores (configurable weights honored)
+- [x] Unit: band boundaries (59/60, 69/70, 79/80 exactly, including fractional scores)
+- [x] Unit: **NO-TRADE matrix** — each reason code triggers under its fixture (low confidence, stale data, missing features, bad R/R, extreme volatility, imminent high-impact event, model disagreement, unusual regime, conflicting indicators)
+- [x] Unit: evidence assembly — supporting/contradicting counts match inputs; contradicting evidence always rendered (never suppressed)
+- [x] Integration: seeded multi-pair state → scanner returns all 10 pairs with valid actions/scores, sorted correctly
+- [x] Integration: signal persisted with `SignalFeature` snapshot matching P05 feature contract
+- [x] Honesty tests: NO_TRADE rows exist in fixture output; no path returns action without evidence
+- [x] Regression: P02–P15 tests pass
 
 ### Completion Criteria
 Signals generated with scores/evidence/NO-TRADE reasons; scanner live over all pairs; WS events flowing; every output traceable to component inputs.
@@ -3309,7 +3309,7 @@ Rules: two engineers may hold B/C/D and A simultaneously; never two phases writi
 | 13 | Machine Learning Pipeline | NOT STARTED | 12 | Calibrated versioned models |
 | 14 | Prediction Engine | COMPLETED | 13 | Recorded predictions + outcomes + drift |
 | 15 | Risk Management Engine | COMPLETED | 07,06,09 | Tested sizing + rule engine |
-| 16 | Decision Engine | NOT STARTED | 10,11,14,15 | Signals, NO-TRADE, scanner |
+| 16 | Decision Engine | COMPLETED | 10,11,14,15 | Signals, NO-TRADE, scanner |
 | 17 | AI Explanation Engine | NOT STARTED | 16,11 | Validated explanations/reports/assistant |
 | 18 | Frontend Foundation | NOT STARTED | 06,07 | Design system + shell + clients |
 | 19 | Dashboard | NOT STARTED | 18,16,08 | Real-data dashboard |

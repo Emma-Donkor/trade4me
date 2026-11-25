@@ -59,6 +59,20 @@ export const NEWS_RISK_WINDOW_MINUTES = 60;
 export const EXPOSURE_WARN_PCT = 5;
 export const EXPOSURE_HIGH_PCT = 15;
 
+/**
+ * P16 — deterministic decision gates. Every value is configuration so
+ * backtests (P24) can compare experiments without changing engine code.
+ */
+export const DECISION_WEIGHTS_VERSION = 'v1.0';
+export const SCANNER_CACHE_TTL_SECONDS = 300;
+export const MIN_SIGNAL_CONFIDENCE = 0.6;
+export const MIN_HISTORICAL_DATA_POINTS = 30;
+export const MIN_SIMILAR_WINDOWS = 3;
+export const DIRECTIONAL_ACTION_MIN_SCORE = 70;
+export const CONFLICT_SCORE_PENALTY = 8;
+export const SIGNAL_MATERIAL_CHANGE_SCORE = 5;
+export const NEUTRAL_COMPONENT_SCORE = 50;
+
 /** P15 — README §14.3 templates, capped by RISK_HARD_CAPS. */
 export const RISK_PROFILE_TEMPLATES = {
   CONSERVATIVE: {

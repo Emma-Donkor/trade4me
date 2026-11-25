@@ -1347,6 +1347,8 @@ USD/CAD     NO TRADE  42      HIGH
 
 Sortable by score, probability, risk and volatility; results cached 5 minutes; updated over WebSocket.
 
+**P16 implementation notes.** The decision path is a pure, deterministic engine (`decide(bundle)`) with no LLM/IO: six normalised providers feed a configurable weighted score, a versioned weights/evidence snapshot is persisted in `TradeSignal.scores`, and every `SignalFeature` row pins the exact feature vector used. All ten §15.3 reasons are machine-readable in `noTradeReasons[]`; any gate forces `NO_TRADE` even for a high score, and every emitted action carries at least one structured `{source, claim, value}` evidence item. The existing `GET /signals`, `GET /signals/:id` and `GET /scanner` routes are now real, the `signals` job runs after feature/prediction refresh, and `signal:new`/`signal:changed` are emitted on first and materially changed decisions. P28/P24 consume weight overrides through the in-process `DecisionWeightsService` without adding public routes.
+
 ---
 
 ## 16. Backtesting Engine

@@ -16,6 +16,7 @@ import { MarketSyncProcessor } from './processors/market-sync.processor';
 import { ModelEvalProcessor } from './processors/model-eval.processor';
 import { NewsIngestProcessor } from './processors/news-ingest.processor';
 import { OutcomesProcessor } from './processors/outcomes.processor';
+import { SignalGenerationProcessor } from './processors/signal-generation.processor';
 import { bullConnectionOptions, QUEUE_NAMES, QueueRegistry, type QueueName } from './queues';
 
 export interface CronRegistration {
@@ -57,6 +58,12 @@ export const CRON_REGISTRATIONS: CronRegistration[] = [
     queue: 'model-eval',
     name: 'model-evaluation-daily',
     pattern: cronPattern(env.MODEL_EVAL_CRON, '0 5 * * *'),
+  },
+  {
+    // Offset from feature regeneration so signals consume the refreshed vectors.
+    queue: 'signals',
+    name: 'signal-generation',
+    pattern: cronPattern(env.SIGNAL_JOB_CRON, '35 * * * *'),
   },
   {
     queue: 'outcomes',
@@ -129,6 +136,7 @@ export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
     @Optional() private readonly newsIngestProcessor?: NewsIngestProcessor,
     @Optional() private readonly featuresProcessor?: FeaturesProcessor,
     @Optional() private readonly modelEvalProcessor?: ModelEvalProcessor,
+    @Optional() private readonly signalGenerationProcessor?: SignalGenerationProcessor,
     @Optional() private readonly outcomesProcessor?: OutcomesProcessor,
     @Optional() private readonly driftProcessor?: DriftProcessor,
   ) {}
@@ -165,6 +173,10 @@ export class JobWorkersService implements OnModuleInit, OnModuleDestroy {
           }
           if (queueName === 'model-eval' && this.modelEvalProcessor) {
             await this.modelEvalProcessor.process(job);
+            return;
+          }
+          if (queueName === 'signals' && this.signalGenerationProcessor) {
+            await this.signalGenerationProcessor.process(job);
             return;
           }
           if (queueName === 'outcomes' && this.outcomesProcessor) {

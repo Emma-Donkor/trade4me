@@ -6052,6 +6052,58 @@
         "operationId": "SignalsController_recent",
         "parameters": [],
         "responses": {
+          "200": {
+            "description": "Recent trade signals with versioned scores and evidence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "items": [
+                      {
+                        "id": "sig_1",
+                        "symbol": "EUR/USD",
+                        "action": "LONG",
+                        "direction": "LONG",
+                        "score": 82,
+                        "probability": 0.74,
+                        "confidence": 0.78,
+                        "riskLevel": "MEDIUM",
+                        "scores": {
+                          "technical": 0.25,
+                          "historical": 0.2,
+                          "ml": 0.25,
+                          "news": 0.1,
+                          "regime": 0.1,
+                          "risk": 0.1,
+                          "components": {
+                            "technical": 88,
+                            "historical": 72,
+                            "ml": 84,
+                            "news": 65,
+                            "regime": 70,
+                            "risk": 90
+                          },
+                          "weightsVersion": "v1.0",
+                          "band": "Strong setup"
+                        },
+                        "reasons": ["ml: Model predicts LONG with probability 0.74"],
+                        "noTradeReasons": [],
+                        "generatedAt": "2026-01-15T12:00:00.000Z"
+                      }
+                    ],
+                    "limit": 50,
+                    "nextCursor": null,
+                    "hasMore": false
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
           "401": {
             "description": "UNAUTHORIZED",
             "content": {
@@ -6089,7 +6141,7 @@
             }
           },
           "422": {
-            "description": "INSUFFICIENT_DATA",
+            "description": "VALIDATION_ERROR",
             "content": {
               "application/json": {
                 "schema": {
@@ -6098,8 +6150,8 @@
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "INSUFFICIENT_DATA",
-                    "message": "Not enough data is available yet",
+                    "code": "VALIDATION_ERROR",
+                    "message": "Invalid signal filters",
                     "requestId": "req_01Jexample"
                   }
                 }
@@ -6192,7 +6244,7 @@
           }
         },
         "tags": ["Signals"],
-        "summary": "Recent trade signals (INSUFFICIENT_DATA until P16)",
+        "summary": "Recent trade signals with versioned scores and evidence",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "ip",
@@ -6221,6 +6273,44 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "Signal evidence, weight snapshot and feature values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": "sig_1",
+                    "symbol": "EUR/USD",
+                    "action": "LONG",
+                    "score": 82,
+                    "noTradeReasons": [],
+                    "supportingEvidence": [
+                      {
+                        "source": "ml",
+                        "claim": "Model predicts LONG",
+                        "value": 0.74
+                      }
+                    ],
+                    "contradictingEvidence": [
+                      {
+                        "source": "risk",
+                        "claim": "Spread is elevated",
+                        "value": 1.4
+                      }
+                    ],
+                    "status": "ACTIVE",
+                    "featureVersion": "v1.0",
+                    "analyses": []
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
           "401": {
             "description": "UNAUTHORIZED",
             "content": {
@@ -6257,8 +6347,8 @@
               }
             }
           },
-          "422": {
-            "description": "INSUFFICIENT_DATA",
+          "404": {
+            "description": "NOT_FOUND",
             "content": {
               "application/json": {
                 "schema": {
@@ -6267,8 +6357,32 @@
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "INSUFFICIENT_DATA",
-                    "message": "Not enough data is available yet",
+                    "code": "NOT_FOUND",
+                    "message": "Trade signal sig_1 was not found",
+                    "requestId": "req_01Jexample"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "VALIDATION_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Validation failed",
+                    "details": [
+                      {
+                        "field": "email",
+                        "message": "Expected a valid email address"
+                      }
+                    ],
                     "requestId": "req_01Jexample"
                   }
                 }
@@ -6361,7 +6475,7 @@
           }
         },
         "tags": ["Signals"],
-        "summary": "Signal evidence and explanation",
+        "summary": "Signal evidence, weight snapshot and feature values",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "ip",
@@ -6399,6 +6513,37 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "All-pairs scan table, cached for five minutes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "items": [
+                      {
+                        "symbol": "EUR/USD",
+                        "action": "LONG",
+                        "score": 82,
+                        "probability": 0.74,
+                        "riskLevel": "MEDIUM",
+                        "volatility": 0.8,
+                        "band": "Strong setup",
+                        "noTradeReasons": []
+                      }
+                    ],
+                    "limit": 50,
+                    "nextCursor": null,
+                    "hasMore": false
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
           "401": {
             "description": "UNAUTHORIZED",
             "content": {
@@ -6436,7 +6581,7 @@
             }
           },
           "422": {
-            "description": "INSUFFICIENT_DATA",
+            "description": "VALIDATION_ERROR",
             "content": {
               "application/json": {
                 "schema": {
@@ -6445,8 +6590,8 @@
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "INSUFFICIENT_DATA",
-                    "message": "Not enough data is available yet",
+                    "code": "VALIDATION_ERROR",
+                    "message": "Invalid scanner sort or order",
                     "requestId": "req_01Jexample"
                   }
                 }
@@ -6539,7 +6684,7 @@
           }
         },
         "tags": ["Signals"],
-        "summary": "All-pairs scan table (INSUFFICIENT_DATA until P16)",
+        "summary": "All-pairs scan table, cached for five minutes",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "ip",

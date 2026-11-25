@@ -11,6 +11,7 @@ describe('BullMQ scaffolding', () => {
       'news-ingest',
       'features',
       'model-eval',
+      'signals',
       'outcomes',
       'drift',
       'cleanup',

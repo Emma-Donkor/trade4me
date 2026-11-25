@@ -105,6 +105,7 @@ export const envSchema = z.object({
   MARKET_INTEGRITY_CRON: cronExpression.default('0 4 * * *'),
   NEWS_INGEST_CRON: cronExpression.default('*/15 * * * *'),
   FEATURE_JOB_CRON: cronExpression.default('*/30 * * * *'),
+  SIGNAL_JOB_CRON: cronExpression.default('35 * * * *'),
   OUTCOME_JOB_CRON: cronExpression.default('0 * * * *'),
   CLEANUP_CRON: cronExpression.default('0 3 * * *'),
   MODEL_EVAL_CRON: cronExpression.default('0 5 * * *'),

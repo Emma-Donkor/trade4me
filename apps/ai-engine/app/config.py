@@ -89,6 +89,7 @@ class Settings(BaseSettings):
     MARKET_INTEGRITY_CRON: str = '0 4 * * *'
     NEWS_INGEST_CRON: str = '*/15 * * * *'
     FEATURE_JOB_CRON: str = '*/30 * * * *'
+    SIGNAL_JOB_CRON: str = '35 * * * *'
     OUTCOME_JOB_CRON: str = '0 * * * *'
     CLEANUP_CRON: str = '0 3 * * *'
     MODEL_EVAL_CRON: str = '0 5 * * *'
@@ -99,6 +100,7 @@ class Settings(BaseSettings):
         'MARKET_INTEGRITY_CRON',
         'NEWS_INGEST_CRON',
         'FEATURE_JOB_CRON',
+        'SIGNAL_JOB_CRON',
         'OUTCOME_JOB_CRON',
         'CLEANUP_CRON',
         'MODEL_EVAL_CRON',
