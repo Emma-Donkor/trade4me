@@ -59,3 +59,7 @@ redisdata/
 artifacts/
 *.log
 logs/
+
+# ---- Private project documentation (kept locally, never published) ----
+/README.md
+/IMPLEMENTATION-ROADMAP.md
