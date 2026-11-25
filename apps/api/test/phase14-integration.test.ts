@@ -4,7 +4,11 @@ import { disconnect } from '@ts/database';
 import type { Prisma } from '@ts/database';
 import { configuration } from '../src/config/configuration';
 import { DriftProcessor } from '../src/jobs/processors/drift.processor';
-import { OutcomesProcessor, resolveMove } from '../src/jobs/processors/outcomes.processor';
+import {
+  labelStartOf,
+  OutcomesProcessor,
+  resolveMove,
+} from '../src/jobs/processors/outcomes.processor';
 import { QUEUE_NAMES } from '../src/jobs/queues';
 import { CRON_REGISTRATIONS } from '../src/jobs/schedulers';
 import { PredictionEngineService } from '../src/modules/prediction/prediction-engine.service';
@@ -218,10 +222,12 @@ describe('P14 prediction engine', () => {
     expect(await harness.prisma.prediction.count({ where: { modelVersionId: versionId } })).toBe(1);
   });
 
-  it('resolves outcomes from post-prediction candles only and recomputes accuracy', async () => {
+  it('resolves outcomes from the feature timestamp only and recomputes accuracy', async () => {
+    // The write time deliberately differs from the vector's `asOf`; the label
+    // window must follow the snapshot, not the wall clock.
     await harness.prisma.prediction.update({
       where: { id: predictionId },
-      data: { createdAt: END },
+      data: { createdAt: new Date(END.getTime() + 10 * 60_000) },
     });
     const pair = await harness.prisma.currencyPair.findUniqueOrThrow({ where: { symbol: SYMBOL } });
     // Keep the resolution window deterministic: only the fixtures below exist.
@@ -237,7 +243,7 @@ describe('P14 prediction engine', () => {
     });
     await harness.prisma.marketCandle.createMany({
       data: [
-        // Leakage bait: at/before the prediction timestamp with an enormous move.
+        // Leakage bait: before the vector timestamp with an enormous close.
         {
           pairId: pair.id,
           timeframe: 'H1',
@@ -248,24 +254,35 @@ describe('P14 prediction engine', () => {
           close: 3,
           provider: 'p14-fixture',
         },
+        // Reference close at the feature timestamp (P13's label basis).
+        {
+          pairId: pair.id,
+          timeframe: 'H1',
+          timestamp: END,
+          open: 1,
+          high: 1.001,
+          low: 0.999,
+          close: 1,
+          provider: 'p14-fixture',
+        },
         {
           pairId: pair.id,
           timeframe: 'H1',
           timestamp: new Date(END.getTime() + 10 * 60_000),
-          open: 1.1,
-          high: 1.101,
-          low: 1.099,
-          close: 1.1,
+          open: 1.001,
+          high: 1.002,
+          low: 1,
+          close: 1.001,
           provider: 'p14-fixture',
         },
         {
           pairId: pair.id,
           timeframe: 'H1',
           timestamp: new Date(END.getTime() + 20 * 60_000),
-          open: 1.115,
-          high: 1.116,
-          low: 1.114,
-          close: 1.115,
+          open: 1.004,
+          high: 1.005,
+          low: 1.003,
+          close: 1.004,
           provider: 'p14-fixture',
         },
       ],
@@ -280,8 +297,12 @@ describe('P14 prediction engine', () => {
     });
     expect(outcome.label).toBe(1);
     expect(outcome.correct).toBe(true);
-    expect(Number(outcome.actualMovePct)).toBeGreaterThan(0.3);
-    expect(Number(outcome.actualMovePct)).toBeLessThan(2);
+    // (1.004 - 1.0) / 1.0 * 100 = 0.4%: measured from the vector-time close,
+    // ignoring both the pre-vector bait and the later wall-clock write time.
+    expect(Number(outcome.actualMovePct)).toBe(0.4);
+    expect(outcome.resolvedAt.toISOString()).toBe(
+      new Date(END.getTime() + 3_600_000).toISOString(),
+    );
 
     const version = await harness.prisma.modelVersion.findUniqueOrThrow({
       where: { id: versionId },
@@ -289,10 +310,14 @@ describe('P14 prediction engine', () => {
     expect(version.metrics).toMatchObject({ liveAccuracy: 1, resolvedOutcomes: 1 });
   });
 
-  it('uses only the closes it is given when resolving a move', () => {
-    expect(resolveMove([1, 1.002], 'LONG', 0.3)).toEqual({ actualMovePct: 0.2, label: 0 });
-    expect(resolveMove([1, 1.12, 1.11], 'LONG', 0.3).label).toBe(1);
-    expect(resolveMove([1, 0.999, 0.998], 'SHORT', 0.3).label).toBe(0);
+  it('mirrors the P13 label rule from the exact inputs it is given', () => {
+    expect(resolveMove(1, [1.002], 0.3)).toEqual({ actualMovePct: 0.2, label: 0 });
+    expect(resolveMove(1, [1.12, 1.11], 0.3).label).toBe(1);
+    // A large down move is still label 0 — P13 is an up-move classifier.
+    expect(resolveMove(1, [0.99, 0.98], 0.3)).toEqual({ actualMovePct: 0, label: 0 });
+    expect(resolveMove(1, [], 0.3)).toEqual({ actualMovePct: 0, label: 0 });
+    expect(labelStartOf({ asOf: END.toISOString() }, new Date(0))).toEqual(END);
+    expect(labelStartOf({}, END)).toEqual(END);
   });
 
   it('warns loudly and blocks further trust when drift is detected', async () => {
