@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { UpdateProfileInput, UpdateRiskProfileInput } from '@ts/types';
+import { RISK_HARD_CAPS } from './risk.schema';
 
 const nullableName = z.string().min(1).max(120).nullable();
-const percent = z.number().finite().min(0);
 
 /** P06 user settings; unknown keys are rejected so clients cannot escalate. */
 export const updateProfileSchema = z.strictObject({
@@ -21,13 +21,18 @@ export const updateProfileSchema = z.strictObject({
 export const updateRiskProfileSchema = z
   .strictObject({
     profileType: z.enum(['CONSERVATIVE', 'MODERATE', 'AGGRESSIVE']).optional(),
-    riskPerTradePct: percent.max(2).optional(),
-    maxOpenPositions: z.number().int().min(1).max(50).optional(),
-    maxDailyLossPct: percent.max(100).optional(),
-    minRiskReward: z.number().finite().min(0).max(100).optional(),
-    maxPortfolioExposurePct: percent.max(100).optional(),
-    maxDrawdownPct: percent.max(100).optional(),
-    maxVolatility: percent.max(100).optional(),
+    riskPerTradePct: z.number().finite().min(0).max(RISK_HARD_CAPS.riskPerTradePct).optional(),
+    maxOpenPositions: z.number().int().min(1).max(RISK_HARD_CAPS.maxOpenPositions).optional(),
+    maxDailyLossPct: z.number().finite().min(0).max(RISK_HARD_CAPS.maxDailyLossPct).optional(),
+    minRiskReward: z.number().finite().min(0).max(RISK_HARD_CAPS.minRiskReward).optional(),
+    maxPortfolioExposurePct: z
+      .number()
+      .finite()
+      .min(0)
+      .max(RISK_HARD_CAPS.maxPortfolioExposurePct)
+      .optional(),
+    maxDrawdownPct: z.number().finite().min(0).max(RISK_HARD_CAPS.maxDrawdownPct).optional(),
+    maxVolatility: z.number().finite().min(0).max(RISK_HARD_CAPS.maxVolatilityPct).optional(),
     newsEventRestrictions: z.boolean().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {

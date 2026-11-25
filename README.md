@@ -1292,6 +1292,8 @@ IF high-impact economic event imminent   → WARNING / REDUCE RISK
 
 Every evaluation returns a structured verdict (pass / warn / block + machine-readable reasons) that is persisted with the signal — this is what the NO-TRADE engine and the audit log consume.
 
+The implemented rule chain has twelve independently tested rules: the nine above plus minimum confidence, data staleness and required-feature completeness. `GET /api/v1/risk/rules` returns the effective thresholds for the current profile; `POST /api/v1/risk/evaluate` returns `{ status, action, verdicts, reasonCodes, noTradeReasons }` on 200, or the same assessment inside a 422 `NO_TRADE_RULE_VIOLATION` response when any rule blocks. Sizes supplied by a client are always re-derived from the account balance, hard caps and pair `pipSize`/`pointValue` before evaluation.
+
 ---
 
 ## 15. Decision Engine, Signal Scoring, NO-TRADE & Scanner

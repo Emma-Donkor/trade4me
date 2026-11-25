@@ -1459,14 +1459,14 @@ Depends on: PHASE 07 (routes), PHASE 06 (risk-profile data), PHASE 09 (volatilit
 ```
 
 ### Tasks
-- [ ] **Core calculations** (README §14.2): `riskAmount`, `stopDistance`, `positionSize` (with `pointValue`/pip scaling — JPY pairs and crosses covered), `riskReward`, `potentialProfit/Loss`, `portfolioExposure`, drawdown tracker
-- [ ] **Profiles**: Conservative/Moderate/Aggressive defaults from README §14.3 seeded in P04; user overrides via `PATCH /users/me/risk-profile` (P06) constrained by hard caps (`MAX_RISK_PER_TRADE_PCT` etc.)
-- [ ] **Rule engine** (README §14.4) — each rule a pure function with structured verdict `{rule, severity: PASS|WARN|BLOCK, message, code}`:
+- [x] **Core calculations** (README §14.2): `riskAmount`, `stopDistance`, `positionSize` (with `pointValue`/pip scaling — JPY pairs and crosses covered), `riskReward`, `potentialProfit/Loss`, `portfolioExposure`, drawdown tracker
+- [x] **Profiles**: Conservative/Moderate/Aggressive defaults from README §14.3 seeded in P04; user overrides via `PATCH /users/me/risk-profile` (P06) constrained by hard caps (`MAX_RISK_PER_TRADE_PCT` etc.)
+- [x] **Rule engine** (README §14.4) — each rule a pure function with structured verdict `{rule, severity: PASS|WARN|BLOCK, message, code}`:
   max risk/trade · max daily loss · max open positions · max portfolio exposure · max correlated exposure · max drawdown · min risk/reward · max volatility · news-event restriction (proximity from P11) · confidence threshold · data staleness (from P08) · missing features (from P12)
-- [ ] **Verdict aggregation**: any `BLOCK` → overall `NO_TRADE` verdict with reason list (the machine-readable input to P16's NO-TRADE engine)
-- [ ] Real route bodies: `POST /risk/calculate` (sizing preview), `GET /risk/rules` (effective rules), `POST /risk/evaluate` (full verdict)
-- [ ] Exposure analyzer: per-currency exposure across open positions (`portfolio/exposure` data source for P26; uses seeded/empty positions until P25)
-- [ ] Config-driven thresholds from `packages/config` + per-user `RiskProfile`; all documented in API responses
+- [x] **Verdict aggregation**: any `BLOCK` → overall `NO_TRADE` verdict with reason list (the machine-readable input to P16's NO-TRADE engine)
+- [x] Real route bodies: `POST /risk/calculate` (sizing preview), `GET /risk/rules` (effective rules), `POST /risk/evaluate` (full verdict)
+- [x] Exposure analyzer: per-currency exposure across open positions (`portfolio/exposure` data source for P26; uses seeded/empty positions until P25)
+- [x] Config-driven thresholds from `packages/config` + per-user `RiskProfile`; all documented in API responses
 
 ### Files/Folders
 ```text
@@ -1502,12 +1502,12 @@ None (P23 UI).
 Server-authoritative: client-sent position sizes are re-validated server-side; caps cannot be exceeded by profile edits (validation enforces hard limits).
 
 ### Testing
-- [ ] **Formula unit tests (exhaustive)**: standard lot math, JPY pair (pip 0.01), cross pair, fractional size, zero/negative SL → error, SL=entry → error, R/R boundaries at 1.5
-- [ ] Unit: each rule — PASS, WARN, BLOCK fixtures (table-driven)
-- [ ] Unit: rule chain aggregation (one BLOCK → NO_TRADE with correct reason codes)
-- [ ] Unit: daily-loss/drawdown state machine across simulated sequences
-- [ ] Integration: `risk/evaluate` on order violating min-RR → `NO_TRADE_RULE_VIOLATION` with reasons array
-- [ ] Regression: P02–P14 tests pass
+- [x] **Formula unit tests (exhaustive)**: standard lot math, JPY pair (pip 0.01), cross pair, fractional size, zero/negative SL → error, SL=entry → error, R/R boundaries at 1.5
+- [x] Unit: each rule — PASS, WARN, BLOCK fixtures (table-driven)
+- [x] Unit: rule chain aggregation (one BLOCK → NO_TRADE with correct reason codes)
+- [x] Unit: daily-loss/drawdown state machine across simulated sequences
+- [x] Integration: `risk/evaluate` on order violating min-RR → `NO_TRADE_RULE_VIOLATION` with reasons array
+- [x] Regression: P02–P14 tests pass
 
 ### Completion Criteria
 All formulas and rules proven by unit tests; evaluate endpoint returns structured verdicts; caps enforced.
@@ -3308,7 +3308,7 @@ Rules: two engineers may hold B/C/D and A simultaneously; never two phases writi
 | 12 | Feature Engineering | NOT STARTED | 10,11 | Versioned leakage-free features |
 | 13 | Machine Learning Pipeline | NOT STARTED | 12 | Calibrated versioned models |
 | 14 | Prediction Engine | COMPLETED | 13 | Recorded predictions + outcomes + drift |
-| 15 | Risk Management Engine | NOT STARTED | 07,06,09 | Tested sizing + rule engine |
+| 15 | Risk Management Engine | COMPLETED | 07,06,09 | Tested sizing + rule engine |
 | 16 | Decision Engine | NOT STARTED | 10,11,14,15 | Signals, NO-TRADE, scanner |
 | 17 | AI Explanation Engine | NOT STARTED | 16,11 | Validated explanations/reports/assistant |
 | 18 | Frontend Foundation | NOT STARTED | 06,07 | Design system + shell + clients |

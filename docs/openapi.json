@@ -6558,6 +6558,36 @@
         "operationId": "RiskController_calculate",
         "parameters": [],
         "responses": {
+          "200": {
+            "description": "Calculate hypothetical position size and risk metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "symbol": "EUR/USD",
+                    "side": "LONG",
+                    "pipSize": 0.0001,
+                    "pointValue": 10,
+                    "riskAmount": 100,
+                    "stopDistance": 0.005,
+                    "stopPips": 50,
+                    "positionSize": 0.2,
+                    "maxLoss": 100,
+                    "riskReward": 2,
+                    "potentialProfit": 200,
+                    "potentialLoss": 100,
+                    "exposure": 5.5,
+                    "drawdown": 0
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
           "401": {
             "description": "UNAUTHORIZED",
             "content": {
@@ -6771,7 +6801,28 @@
                 "example": {
                   "success": true,
                   "data": {
-                    "items": []
+                    "items": [
+                      {
+                        "code": "MIN_RISK_REWARD",
+                        "rule": "Minimum risk/reward",
+                        "defaultSeverity": "PASS",
+                        "message": "Evaluates minimum risk/reward",
+                        "threshold": 1.5,
+                        "source": "profile"
+                      }
+                    ],
+                    "profile": {
+                      "name": "Moderate",
+                      "profileType": "MODERATE",
+                      "riskPerTradePct": 1,
+                      "maxOpenPositions": 5,
+                      "maxDailyLossPct": 3,
+                      "minRiskReward": 1.5
+                    },
+                    "thresholds": {
+                      "minConfidence": 0.6,
+                      "maxDataFreshnessSeconds": 120
+                    }
                   },
                   "requestId": "req_01Jexample"
                 }
@@ -6943,6 +6994,40 @@
         "operationId": "RiskController_evaluate",
         "parameters": [],
         "responses": {
+          "200": {
+            "description": "Evaluate an order against all risk rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "positionSize": 2,
+                    "maxLoss": 1000,
+                    "riskReward": 2,
+                    "potentialProfit": 2000,
+                    "potentialLoss": 1000,
+                    "exposure": 5.5,
+                    "drawdown": 0,
+                    "status": "PASS",
+                    "action": "TRADE",
+                    "verdicts": [
+                      {
+                        "rule": "Minimum risk/reward",
+                        "code": "MIN_RISK_REWARD",
+                        "status": "PASS"
+                      }
+                    ],
+                    "reasonCodes": [],
+                    "noTradeReasons": []
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
           "401": {
             "description": "UNAUTHORIZED",
             "content": {
@@ -6980,7 +7065,7 @@
             }
           },
           "422": {
-            "description": "VALIDATION_ERROR",
+            "description": "NO_TRADE_RULE_VIOLATION",
             "content": {
               "application/json": {
                 "schema": {
@@ -6989,14 +7074,8 @@
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "VALIDATION_ERROR",
-                    "message": "Validation failed",
-                    "details": [
-                      {
-                        "field": "email",
-                        "message": "Expected a valid email address"
-                      }
-                    ],
+                    "code": "NO_TRADE_RULE_VIOLATION",
+                    "message": "Order blocked by risk rules",
                     "requestId": "req_01Jexample"
                   }
                 }
@@ -7116,6 +7195,33 @@
                       },
                       "side": {
                         "type": "string"
+                      },
+                      "entry": {
+                        "type": "number"
+                      },
+                      "stopLoss": {
+                        "type": "number"
+                      },
+                      "takeProfit": {
+                        "type": "number"
+                      },
+                      "size": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "context": {
+                    "type": "object",
+                    "properties": {
+                      "confidence": {
+                        "type": "number"
+                      },
+                      "dataFreshnessSeconds": {
+                        "type": "number"
+                      },
+                      "missingFeatures": {
+                        "type": "array",
+                        "items": {}
                       }
                     }
                   }
@@ -7124,7 +7230,16 @@
               "example": {
                 "order": {
                   "symbol": "EUR/USD",
-                  "side": "LONG"
+                  "side": "LONG",
+                  "entry": 1.1,
+                  "stopLoss": 1.095,
+                  "takeProfit": 1.11,
+                  "size": 0.2
+                },
+                "context": {
+                  "confidence": 0.9,
+                  "dataFreshnessSeconds": 2,
+                  "missingFeatures": []
                 }
               }
             }
@@ -8812,8 +8927,16 @@
                 "example": {
                   "success": true,
                   "data": {
-                    "items": [],
+                    "items": [
+                      {
+                        "currency": "EUR",
+                        "notional": 5500,
+                        "exposurePct": 5.5,
+                        "warning": "MEDIUM"
+                      }
+                    ],
                     "warnings": [],
+                    "totalExposurePct": 5.5,
                     "nextCursor": null,
                     "hasMore": false
                   },

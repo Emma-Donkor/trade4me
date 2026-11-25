@@ -18,8 +18,12 @@ import {
   registerSchema,
   resetPasswordSchema,
   riskCalculateSchema,
+  riskEvaluateRequestSchema,
   riskEvaluateSchema,
   riskProfileSchema,
+  riskRuleCodeSchema,
+  RISK_HARD_CAPS,
+  updateRiskProfileSchema,
   scannerQuerySchema,
   watchlistItemSchema,
   watchlistReorderSchema,
@@ -339,7 +343,91 @@ describe('P05 validation schemas (table-driven)', () => {
         },
         valid: false,
       },
+      {
+        name: 'rejects a profile above the hard caps',
+        value: {
+          name: 'Aggressive',
+          riskPerTradePct: 5,
+          maxOpenPositions: 20,
+          maxDailyLossPct: 10,
+          minRiskReward: 0.5,
+        },
+        valid: false,
+      },
     ]);
+
+    const order = {
+      symbol: 'EUR/USD',
+      side: 'LONG',
+      entry: 1.1,
+      stopLoss: 1.095,
+      takeProfit: 1.11,
+      size: 0.2,
+    };
+    check(riskEvaluateRequestSchema, [
+      {
+        name: 'accepts live context alongside the documented order/profile shape',
+        value: {
+          order,
+          profile: {
+            riskPerTradePct: 1,
+            maxOpenPositions: 5,
+            maxDailyLossPct: 3,
+            minRiskReward: 1.5,
+          },
+          context: {
+            balance: 10_000,
+            confidence: 0.9,
+            dataFreshnessSeconds: 2,
+            missingFeatures: [],
+            imminentEvents: [{ eventName: 'NFP', currency: 'USD', minutesUntil: 15 }],
+          },
+        },
+        valid: true,
+      },
+      {
+        name: 'rejects confidence above 1',
+        value: { order, context: { confidence: 1.5 } },
+        valid: false,
+      },
+      {
+        name: 'rejects unknown context keys',
+        value: { order, context: { trustMe: true } },
+        valid: false,
+      },
+    ]);
+
+    check(riskRuleCodeSchema, [
+      { name: 'accepts all twelve documented rules', value: 'MIN_RISK_REWARD', valid: true },
+      { name: 'rejects invented rules', value: 'GUT_FEELING', valid: false },
+    ]);
+
+    check(updateRiskProfileSchema, [
+      { name: 'accepts an in-cap override', value: { riskPerTradePct: 1 }, valid: true },
+      { name: 'rejects risk above the hard cap', value: { riskPerTradePct: 3 }, valid: false },
+      {
+        name: 'rejects positions above the hard cap',
+        value: { maxOpenPositions: 50 },
+        valid: false,
+      },
+      {
+        name: 'rejects daily loss above the hard cap',
+        value: { maxDailyLossPct: 9 },
+        valid: false,
+      },
+    ]);
+
+    it('mirrors the config hard caps exactly', () => {
+      expect(RISK_HARD_CAPS).toEqual({
+        riskPerTradePct: 2,
+        maxOpenPositions: 8,
+        maxDailyLossPct: 5,
+        minRiskReward: 10,
+        maxPortfolioExposurePct: 50,
+        maxDrawdownPct: 20,
+        maxVolatilityPct: 40,
+      });
+    });
   });
 
   describe('watchlist and assistant', () => {
