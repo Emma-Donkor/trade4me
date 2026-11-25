@@ -5663,183 +5663,8 @@
           }
         ],
         "responses": {
-          "401": {
-            "description": "UNAUTHORIZED",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "UNAUTHORIZED",
-                    "message": "Missing or invalid bearer token",
-                    "requestId": "req_01Jexample"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "FORBIDDEN",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "FORBIDDEN",
-                    "message": "Insufficient role",
-                    "requestId": "req_01Jexample"
-                  }
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "VALIDATION_ERROR",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "VALIDATION_ERROR",
-                    "message": "Validation failed",
-                    "details": [
-                      {
-                        "field": "email",
-                        "message": "Expected a valid email address"
-                      }
-                    ],
-                    "requestId": "req_01Jexample"
-                  }
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "RATE_LIMITED",
-            "headers": {
-              "Retry-After": {
-                "description": "Seconds until the current rate-limit window resets",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "RATE_LIMITED",
-                    "message": "Too many requests",
-                    "details": {
-                      "limit": 100,
-                      "windowSeconds": 60
-                    },
-                    "requestId": "req_01Jexample"
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "INTERNAL_ERROR",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": "Internal server error",
-                    "requestId": "req_01Jexample"
-                  }
-                }
-              }
-            }
-          },
-          "501": {
-            "description": "NOT_IMPLEMENTED",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "NOT_IMPLEMENTED",
-                    "message": "Feature is not implemented yet",
-                    "requestId": "req_01Jexample"
-                  }
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "AI_SERVICE_UNAVAILABLE",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "AI_SERVICE_UNAVAILABLE",
-                    "message": "AI service is unavailable",
-                    "requestId": "req_01Jexample"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": ["Prediction"],
-        "summary": "AI market report (AI_SERVICE_UNAVAILABLE until P17)",
-        "x-auth": "Bearer",
-        "x-rate-limit": {
-          "scope": "ip",
-          "limit": 100,
-          "windowSeconds": 60
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/analysis/{symbol}": {
-      "get": {
-        "operationId": "PredictionController_assessment",
-        "parameters": [
-          {
-            "name": "symbol",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          }
-        ],
-        "responses": {
           "200": {
-            "description": "Real combined assessment: technical + regime + historical evidence",
+            "description": "AI market report with labeled probability scenarios and deterministic fallback",
             "content": {
               "application/json": {
                 "schema": {
@@ -5849,44 +5674,28 @@
                   "success": true,
                   "data": {
                     "symbol": "EUR/USD",
-                    "timeframe": "H1",
-                    "asOf": "2026-11-24T12:00:02.000Z",
-                    "technical": {
-                      "symbol": "EUR/USD",
-                      "timeframe": "H1",
-                      "source": "cache",
-                      "score": {
-                        "score": 68.4
+                    "summary": "Technical score 68.4 with regime WEAK_UPTREND",
+                    "trend": "WEAK_UPTREND",
+                    "scenarios": [
+                      {
+                        "label": "Bullish",
+                        "probability": 34
+                      },
+                      {
+                        "label": "Neutral",
+                        "probability": 33
+                      },
+                      {
+                        "label": "Bearish",
+                        "probability": 33
                       }
-                    },
-                    "historical": {
-                      "symbol": "EUR/USD",
-                      "timeframe": "D1",
-                      "dataPoints": 730
-                    },
-                    "regime": {
-                      "regime": "WEAK_UPTREND",
-                      "confidence": 0.62,
-                      "evidence": {
-                        "adx": 23.4
-                      }
-                    },
-                    "prediction": {
-                      "symbol": "EUR/USD",
-                      "timeframe": "H1",
-                      "direction": "LONG",
-                      "probability": 0.72,
-                      "confidence": 0.74,
-                      "riskLevel": "MEDIUM",
-                      "modelVersion": "xgb-v1.0.0"
-                    },
-                    "modelStatus": "ACTIVE",
-                    "signalPolicy": {
-                      "weight": 1,
-                      "block": false,
-                      "reason": null
-                    },
-                    "pendingPhases": ["P11", "P12", "P17"]
+                    ],
+                    "decision": "WATCH",
+                    "warnings": [],
+                    "generatedAt": "2026-11-24T12:00:02.000Z",
+                    "explanationSource": "template",
+                    "llmModel": "template-v1",
+                    "payloadHash": "4f8c..."
                   },
                   "requestId": "req_01Jexample"
                 }
@@ -6033,7 +5842,257 @@
           }
         },
         "tags": ["Prediction"],
-        "summary": "Real combined assessment: technical + regime + historical evidence",
+        "summary": "AI market report with labeled probability scenarios and deterministic fallback",
+        "x-auth": "Bearer",
+        "x-rate-limit": {
+          "scope": "ip",
+          "limit": 100,
+          "windowSeconds": 60
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/analysis/{symbol}": {
+      "get": {
+        "operationId": "PredictionController_assessment",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Real combined assessment: technical + historical + news + prediction + regime + risk + decision + explanation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "symbol": "EUR/USD",
+                    "timeframe": "H1",
+                    "asOf": "2026-11-24T12:00:02.000Z",
+                    "technical": {
+                      "symbol": "EUR/USD",
+                      "timeframe": "H1",
+                      "source": "cache",
+                      "score": {
+                        "score": 68.4
+                      }
+                    },
+                    "historical": {
+                      "symbol": "EUR/USD",
+                      "timeframe": "D1",
+                      "dataPoints": 730
+                    },
+                    "regime": {
+                      "regime": "WEAK_UPTREND",
+                      "confidence": 0.62,
+                      "evidence": {
+                        "adx": 23.4
+                      }
+                    },
+                    "prediction": {
+                      "symbol": "EUR/USD",
+                      "timeframe": "H1",
+                      "direction": "LONG",
+                      "probability": 0.72,
+                      "confidence": 0.74,
+                      "riskLevel": "MEDIUM",
+                      "modelVersion": "xgb-v1.0.0"
+                    },
+                    "modelStatus": "ACTIVE",
+                    "signalPolicy": {
+                      "weight": 1,
+                      "block": false,
+                      "reason": null
+                    },
+                    "news": null,
+                    "risk": null,
+                    "decision": null,
+                    "explanation": {
+                      "decision": "WATCH",
+                      "supporting": ["technical: Price above EMA50"],
+                      "contradicting": [],
+                      "final": "WATCH",
+                      "probability": 72,
+                      "confidence": 74,
+                      "riskLevel": "MEDIUM",
+                      "dataFreshnessSeconds": 12,
+                      "modelVersion": "xgb-v1.0.0",
+                      "timestamp": "2026-11-24T12:00:02.000Z",
+                      "factors": [],
+                      "summary": "WATCH",
+                      "explanationText": "DECISION\nWATCH",
+                      "explanationSource": "template",
+                      "llmModel": "template-v1",
+                      "payloadHash": "4f8c...",
+                      "validation": {
+                        "valid": true,
+                        "violations": [],
+                        "attempts": 0
+                      }
+                    },
+                    "pendingPhases": ["P11", "P12"]
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "UNAUTHORIZED",
+                    "message": "Missing or invalid bearer token",
+                    "requestId": "req_01Jexample"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Insufficient role",
+                    "requestId": "req_01Jexample"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INSUFFICIENT_DATA",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "INSUFFICIENT_DATA",
+                    "message": "Not enough data is available for technical candles",
+                    "requestId": "req_01Jexample"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the current rate-limit window resets",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Too many requests",
+                    "details": {
+                      "limit": 100,
+                      "windowSeconds": 60
+                    },
+                    "requestId": "req_01Jexample"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Internal server error",
+                    "requestId": "req_01Jexample"
+                  }
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "NOT_IMPLEMENTED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "NOT_IMPLEMENTED",
+                    "message": "Feature is not implemented yet",
+                    "requestId": "req_01Jexample"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "AI_SERVICE_UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "AI_SERVICE_UNAVAILABLE",
+                    "message": "AI service is unavailable",
+                    "requestId": "req_01Jexample"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Prediction"],
+        "summary": "Real combined assessment: technical + historical + news + prediction + regime + risk + decision + explanation",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "ip",
@@ -10684,6 +10743,54 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "Real combined assessment with a grounded explanation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "symbol": "EUR/USD",
+                    "timeframe": "H1",
+                    "asOf": "2026-11-24T12:00:02.000Z",
+                    "technical": {
+                      "symbol": "EUR/USD",
+                      "timeframe": "H1",
+                      "source": "cache"
+                    },
+                    "historical": {
+                      "symbol": "EUR/USD",
+                      "timeframe": "D1",
+                      "dataPoints": 730
+                    },
+                    "regime": {
+                      "regime": "WEAK_UPTREND",
+                      "confidence": 0.62
+                    },
+                    "prediction": null,
+                    "modelStatus": "TRAINING",
+                    "signalPolicy": {
+                      "weight": 0,
+                      "block": true,
+                      "reason": null
+                    },
+                    "news": null,
+                    "risk": null,
+                    "decision": null,
+                    "explanation": {
+                      "decision": "WATCH",
+                      "explanationSource": "template"
+                    },
+                    "pendingPhases": ["P11", "P12"]
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
           "401": {
             "description": "UNAUTHORIZED",
             "content": {
@@ -10721,7 +10828,7 @@
             }
           },
           "422": {
-            "description": "VALIDATION_ERROR",
+            "description": "INSUFFICIENT_DATA",
             "content": {
               "application/json": {
                 "schema": {
@@ -10730,14 +10837,8 @@
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "VALIDATION_ERROR",
-                    "message": "Validation failed",
-                    "details": [
-                      {
-                        "field": "email",
-                        "message": "Expected a valid email address"
-                      }
-                    ],
+                    "code": "INSUFFICIENT_DATA",
+                    "message": "Not enough data is available for technical candles",
                     "requestId": "req_01Jexample"
                   }
                 }
@@ -10830,7 +10931,7 @@
           }
         },
         "tags": ["Ai"],
-        "summary": "Structured assessment with explanation (AI_SERVICE_UNAVAILABLE)",
+        "summary": "Real combined assessment with a grounded explanation",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "ip",
@@ -10849,6 +10950,44 @@
         "operationId": "AiController_explain",
         "parameters": [],
         "responses": {
+          "201": {
+            "description": "Explain a persisted decision from verified evidence only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "predictionId": "sig_1",
+                    "decision": "WATCH",
+                    "supporting": ["technical: Positive momentum"],
+                    "contradicting": ["risk: Elevated volatility"],
+                    "final": "WATCH",
+                    "probability": 64,
+                    "confidence": 72,
+                    "riskLevel": "MEDIUM",
+                    "dataFreshnessSeconds": 12,
+                    "modelVersion": "xgboost-v1.4.2",
+                    "timestamp": "2026-11-24T12:00:02.000Z",
+                    "factors": [],
+                    "summary": "WATCH",
+                    "explanationText": "DECISION\nWATCH",
+                    "explanationSource": "template",
+                    "llmModel": "template-v1",
+                    "payloadHash": "4f8c...",
+                    "validation": {
+                      "valid": true,
+                      "violations": [],
+                      "attempts": 0
+                    }
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
           "401": {
             "description": "UNAUTHORIZED",
             "content": {
@@ -10879,6 +11018,24 @@
                   "error": {
                     "code": "FORBIDDEN",
                     "message": "Insufficient role",
+                    "requestId": "req_01Jexample"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Prediction sig_1 was not found",
                     "requestId": "req_01Jexample"
                   }
                 }
@@ -10995,7 +11152,7 @@
           }
         },
         "tags": ["Ai"],
-        "summary": "Explain a prediction (AI_SERVICE_UNAVAILABLE)",
+        "summary": "Explain a persisted decision from verified evidence only",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "user",
@@ -11020,7 +11177,7 @@
                 }
               },
               "example": {
-                "predictionId": "pred_1"
+                "predictionId": "sig_1"
               }
             }
           }
@@ -11032,6 +11189,28 @@
         "operationId": "AiController_assistant",
         "parameters": [],
         "responses": {
+          "201": {
+            "description": "Grounded assistant chat using only retrieved application data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "answer": "I do not have application data for that question yet.",
+                    "sources": [],
+                    "grounded": true,
+                    "hasData": false,
+                    "explanationSource": "none",
+                    "llmModel": "template-v1"
+                  },
+                  "requestId": "req_01Jexample"
+                }
+              }
+            }
+          },
           "401": {
             "description": "UNAUTHORIZED",
             "content": {
@@ -11094,14 +11273,6 @@
           },
           "429": {
             "description": "RATE_LIMITED",
-            "headers": {
-              "Retry-After": {
-                "description": "Seconds until the current rate-limit window resets",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "application/json": {
                 "schema": {
@@ -11111,11 +11282,7 @@
                   "success": false,
                   "error": {
                     "code": "RATE_LIMITED",
-                    "message": "Too many requests",
-                    "details": {
-                      "limit": 100,
-                      "windowSeconds": 60
-                    },
+                    "message": "AI rate limit exceeded",
                     "requestId": "req_01Jexample"
                   }
                 }
@@ -11178,7 +11345,7 @@
           }
         },
         "tags": ["Ai"],
-        "summary": "Grounded assistant chat (AI_SERVICE_UNAVAILABLE)",
+        "summary": "Grounded assistant chat using only retrieved application data",
         "x-auth": "Bearer",
         "x-rate-limit": {
           "scope": "user",

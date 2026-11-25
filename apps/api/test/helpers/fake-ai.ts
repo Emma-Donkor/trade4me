@@ -6,6 +6,18 @@ import type {
   PredictResponse,
   TrainResponse,
 } from '@ts/types';
+import type {
+  AssistantFact,
+  ExplanationRequestV2,
+  NewsEnhancerResult,
+  ReportInput,
+} from '@ts/validation';
+import {
+  scenarioSplit,
+  templateAssistant,
+  templateExplanation,
+  templateReport,
+} from '../../src/modules/ai/template';
 import type { AiFetch } from '../../src/modules/technical-analysis/ai-engine.client';
 
 /** Deterministic P10 AI response; the API still owns persistence and caching. */
@@ -82,7 +94,7 @@ export function fakeIndicatorsResponse(
 export interface FakeAiCall {
   url: string;
   init?: RequestInit;
-  body: {
+  body: Record<string, unknown> & {
     symbol?: string;
     timeframe?: string;
     indicators?: string[];
@@ -98,6 +110,51 @@ export interface FakeAiCall {
   };
 }
 
+function fakeNewsEnhancerResponse(body: FakeAiCall['body']): NewsEnhancerResult {
+  const rule = (body.ruleClassification ?? {}) as Partial<NewsEnhancerResult>;
+  const sentiment = rule.sentiment;
+  const impact = rule.impact;
+  return {
+    eventType: rule.eventType ?? 'ECONOMIC_RELEASE',
+    sentiment:
+      sentiment === 'BULLISH' || sentiment === 'BEARISH' || sentiment === 'NEUTRAL'
+        ? sentiment
+        : 'NEUTRAL',
+    impact:
+      impact === 'LOW' || impact === 'MEDIUM' || impact === 'HIGH' || impact === 'EXTREME'
+        ? impact
+        : 'LOW',
+    confidence: typeof rule.confidence === 'number' ? rule.confidence : 0.5,
+    analyzedBy: 'fake-llm-v1',
+  };
+}
+
+/** Endpoint-aware responses keep P17 API tests honest without a Python service. */
+function fakeResponseFor(
+  url: string,
+  body: FakeAiCall['body'],
+  indicators: IndicatorsResponse,
+): unknown {
+  if (url.endsWith('/api/v1/ai/explain')) {
+    return templateExplanation(body as unknown as ExplanationRequestV2);
+  }
+  if (url.endsWith('/api/v1/ai/report')) {
+    const input = body as unknown as ReportInput;
+    return templateReport(input, scenarioSplit(input.prediction));
+  }
+  if (url.endsWith('/api/v1/ai/assistant')) {
+    return templateAssistant((body.facts ?? []) as AssistantFact[]);
+  }
+  if (url.endsWith('/api/v1/ai/news/enhance')) {
+    return fakeNewsEnhancerResponse(body);
+  }
+  return {
+    ...indicators,
+    symbol: body.symbol ?? indicators.symbol,
+    timeframe: body.timeframe ?? indicators.timeframe,
+  };
+}
+
 /** Records every call so tests can assert the bounded, token-protected payload. */
 export function fakeAiFetch(response: IndicatorsResponse = fakeIndicatorsResponse()) {
   const calls: FakeAiCall[] = [];
@@ -107,11 +164,7 @@ export function fakeAiFetch(response: IndicatorsResponse = fakeIndicatorsRespons
     return {
       ok: true,
       status: 200,
-      json: async () => ({
-        ...response,
-        symbol: body.symbol ?? response.symbol,
-        timeframe: body.timeframe ?? response.timeframe,
-      }),
+      json: async () => fakeResponseFor(url, body, response),
     } as Response;
   };
   return { fetch, calls };

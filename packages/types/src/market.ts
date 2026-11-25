@@ -1,5 +1,9 @@
 import type { PredictResponse, Timeframe } from './contracts';
+import type { ExplanationResult } from './ai';
+import type { PairSentiment } from './news';
 import type { ModelSignalPolicy } from './prediction';
+import type { RiskAssessment } from './risk';
+import type { TradeSignal } from './signal';
 
 /** README §10.2 — detections are context scores, never predictions. */
 export type CandlePattern =
@@ -219,7 +223,12 @@ export interface CombinedAssessmentView {
   prediction: PredictResponse | null;
   modelStatus: 'TRAINING' | 'ACTIVE' | 'ARCHIVED' | 'DRIFT_WARNING';
   signalPolicy: ModelSignalPolicy;
-  pendingPhases: readonly ('P11' | 'P12' | 'P17')[];
+  /** P17 — the full combined view now carries every evidence layer. */
+  news?: PairSentiment | null;
+  risk?: RiskAssessment | null;
+  decision?: TradeSignal | null;
+  explanation?: ExplanationResult | null;
+  pendingPhases: readonly ('P11' | 'P12')[];
 }
 
 export interface ProviderHealth {

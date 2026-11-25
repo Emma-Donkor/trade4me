@@ -1,17 +1,19 @@
 import { Inject, Injectable, Optional } from '@nestjs/common';
+import { env } from '@ts/config';
 import { Prisma } from '@prisma/client';
 import type { NewsImpact, NewsSafety, Notification, Sentiment } from '@ts/types';
 import { JsonLogger } from '../../common/logger/json-logger';
 import { PrismaService } from '../prisma/prisma.service';
 import { SystemEventService } from '../market/system-event.service';
 import { EventsService } from '../websocket/events.service';
-import { classifyText } from './analysis/classifier';
+import { classifyText, type Classification } from './analysis/classifier';
 import { detectEventClass, isHighImpact } from './analysis/events';
 import { extractCurrencies, pairsForCurrencies } from './analysis/extractor';
 import { contentHash, encodeStoredText, sanitizeText } from './analysis/sanitizer';
 import { NEWS_NOW } from './news.tokens';
 import { NewsCacheService } from './news-cache.service';
 import { NewsProviderRegistry } from './providers/news.registry';
+import { AiEngineClient } from '../technical-analysis/ai-engine.client';
 
 export const NEWS_ANALYZER = 'lexicon-v1';
 
@@ -44,6 +46,7 @@ export class NewsIngestionService {
     private readonly events: EventsService,
     private readonly systemEvents: SystemEventService,
     private readonly logger: JsonLogger,
+    private readonly ai: AiEngineClient,
     @Inject(NEWS_NOW) @Optional() now?: () => Date,
   ) {
     this.now = now ?? (() => new Date());
@@ -116,8 +119,8 @@ export class NewsIngestionService {
       }
 
       const currencies = extractCurrencies(combined);
-      const classification = classifyText(combined);
       const affectedPairs = pairsForCurrencies(currencies, knownPairs);
+      const { classification, analyzer } = await this.classify(combined, title.text, affectedPairs);
       const publishedAt = new Date(item.publishedAt);
       const safePublishedAt = Number.isNaN(publishedAt.getTime()) ? now : publishedAt;
 
@@ -139,7 +142,7 @@ export class NewsIngestionService {
                 impact: classification.impact,
                 confidence: classification.confidence,
                 affectedPairs,
-                analyzedBy: NEWS_ANALYZER,
+                analyzedBy: analyzer,
                 analyzedAt: now,
               },
             },
@@ -263,6 +266,40 @@ export class NewsIngestionService {
     };
     // P27 owns persistence/delivery; P11 prepares the typed fan-out only.
     this.events.notificationNew({ notification });
+  }
+
+  /**
+   * P17 optional enhancer: the rule path remains authoritative keyless. With a
+   * server-side AI_API_KEY the LLM may only refine the same structured schema,
+   * and every failure leaves the P11 classification untouched.
+   */
+  private async classify(
+    combined: string,
+    title: string,
+    affectedPairs: string[],
+  ): Promise<{ classification: Classification; analyzer: string }> {
+    const rule = classifyText(combined);
+    if (!env.AI_API_KEY) return { classification: rule, analyzer: NEWS_ANALYZER };
+    try {
+      const enhanced = await this.ai.enhanceNews({
+        title,
+        text: combined,
+        affectedPairs,
+        ruleClassification: { ...rule } as unknown as Record<string, unknown>,
+      });
+      return {
+        classification: {
+          eventType: enhanced.eventType as Classification['eventType'],
+          sentiment: enhanced.sentiment,
+          impact: enhanced.impact,
+          confidence: enhanced.confidence,
+        },
+        analyzer: enhanced.analyzedBy,
+      };
+    } catch (error) {
+      this.logFailure('news_enhancer', error);
+      return { classification: rule, analyzer: NEWS_ANALYZER };
+    }
   }
 
   private logFailure(kind: string, error: unknown): void {

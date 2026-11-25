@@ -14,14 +14,29 @@ import type {
   TrainResponse,
 } from '@ts/types';
 import {
+  assistantResponseSchema,
   driftRequestSchema,
   driftResponseSchema,
+  explanationRequestV2Schema,
+  explanationResultV2Schema,
   featuresResponseSchema,
   indicatorsResponseSchema,
+  marketReportViewSchema,
+  newsEnhancerInputSchema,
+  newsEnhancerResultSchema,
   predictRequestSchema,
   predictResponseSchema,
+  reportInputSchema,
   trainRequestSchema,
   trainResponseSchema,
+  type AssistantInput,
+  type AssistantResponse,
+  type ExplanationRequestV2,
+  type ExplanationResultV2,
+  type MarketReportView,
+  type NewsEnhancerInput,
+  type NewsEnhancerResult,
+  type ReportInput,
 } from '@ts/validation';
 
 /** Injectable boundary so tests can replace the AI engine without a socket. */
@@ -190,6 +205,60 @@ export class AiEngineClient {
     } catch (error) {
       if (error instanceof Error && 'status' in error) throw error;
       aiUnavailable('training');
+    }
+  }
+
+  /** P17 — grounded explanation narration over a verified structured payload. */
+  async explain(request: ExplanationRequestV2): Promise<ExplanationResultV2> {
+    explanationRequestV2Schema.parse(request);
+    return this.postJson('/api/v1/ai/explain', request, explanationResultV2Schema, 'explanation');
+  }
+
+  /** P17 — AI market report narration with deterministic scenario probabilities. */
+  async report(request: ReportInput): Promise<MarketReportView> {
+    reportInputSchema.parse(request);
+    return this.postJson('/api/v1/ai/report', request, marketReportViewSchema, 'market report');
+  }
+
+  /** P17 — grounded assistant rendering over DB/cache-retrieved facts. */
+  async assistantRequest(request: AssistantInput): Promise<AssistantResponse> {
+    return this.postJson('/api/v1/ai/assistant', request, assistantResponseSchema, 'assistant');
+  }
+
+  /** P17 — optional LLM news classifier using the P11 NewsAnalysis shape. */
+  async enhanceNews(request: NewsEnhancerInput): Promise<NewsEnhancerResult> {
+    newsEnhancerInputSchema.parse(request);
+    return this.postJson(
+      '/api/v1/ai/news/enhance',
+      request,
+      newsEnhancerResultSchema,
+      'news enhancer',
+    );
+  }
+
+  private async postJson<T>(
+    path: string,
+    body: unknown,
+    schema: { parse(value: unknown): T },
+    label: string,
+  ): Promise<T> {
+    const url = `${configuration.app.aiUrl}${path}`;
+    try {
+      const response = await this.fetch(url, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'X-Service-Token': configuration.app.aiServiceToken,
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(AI_ENGINE_TIMEOUT_MS),
+      });
+      const payload = (await response.json().catch(() => ({}))) as unknown;
+      if (!response.ok) aiUnavailable(`${label} (HTTP ${response.status})`);
+      return schema.parse(payload);
+    } catch (error) {
+      if (error instanceof Error && 'status' in error) throw error;
+      aiUnavailable(label);
     }
   }
 }

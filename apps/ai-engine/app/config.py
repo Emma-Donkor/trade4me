@@ -73,6 +73,8 @@ class Settings(BaseSettings):
     AI_LLM_PROVIDER: str = 'openai'
     AI_API_KEY: str = ''
     AI_LLM_MODEL: str = 'gpt-4o-mini'
+    AI_LLM_BASE_URL: str = 'https://api.openai.com/v1'
+    AI_LLM_TEMPERATURE: float = 0.0
     AI_LLM_MAX_TOKENS: int = 700
     AI_LLM_TIMEOUT_MS: int = 15000
 

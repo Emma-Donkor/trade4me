@@ -19,6 +19,6 @@ import {
     { provide: AI_ENGINE_FETCH, useValue: (url: string, init?: RequestInit) => fetch(url, init) },
     { provide: TechnicalAnalysisService, useClass: TechnicalAnalysisServiceImpl },
   ],
-  exports: [TechnicalAnalysisService],
+  exports: [TechnicalAnalysisService, AiEngineClient],
 })
 export class TechnicalAnalysisModule {}

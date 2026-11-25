@@ -875,7 +875,7 @@ regime:changed      { symbol, regime }
 | `MARKET_DATA_UNAVAILABLE` | 503 | All providers failed |
 | `NO_TRADE_RULE_VIOLATION` | 422 | Order blocked by risk rules (includes reasons) |
 | `RATE_LIMITED` | 429 | Too many requests (includes `Retry-After`) |
-| `AI_SERVICE_UNAVAILABLE` | 503 | Explanation/assistant degraded (structured data still served) |
+| `AI_SERVICE_UNAVAILABLE` | 503 | AI-engine proxy unavailable; P17 explanations/assistant degrade to grounded templates while structured data still serves |
 | `INSUFFICIENT_DATA` | 422 | Not enough history for requested analysis |
 
 ### 8.5 Rate limits
@@ -1090,6 +1090,8 @@ Scenarios are explicitly labeled as probabilities, never certainties.
 Sample questions: *"Why is EUR/USD risky?"*, *"What is affecting GBP today?"*, *"Explain RSI."*, *"Why did the system return NO TRADE?"*, *"What changed in USD/JPY?"*, *"Compare EUR/USD and GBP/USD."*
 
 Grounding rules: the assistant retrieves facts from the application DB/cache (assessments, news analyses, indicator values, signal history) and answers only from them. If data is missing it says so — it must not fabricate live information.
+
+**P17 implementation notes.** The Python engine owns the LLM boundary: a keyless `MockLLM` renders deterministic templates by default, while the OpenAI-compatible adapter activates only when `AI_API_KEY` is set server-side. Every generated explanation is checked against the verified structured payload; a violation triggers exactly one regeneration and then the template fallback. Report scenarios are computed by deterministic integer arithmetic before narration and always sum to 100. Every generation is audited with its payload hash, model, latency, attempt count and validation result; stored explanations carry the same metadata in `AIAnalysis`. The optional news enhancer reuses the rule-based `NewsAnalysis` shape and never overrides an invalid label.
 
 ---
 

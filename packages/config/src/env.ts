@@ -89,6 +89,8 @@ export const envSchema = z.object({
   AI_LLM_PROVIDER: z.string().min(1).default('openai'),
   AI_API_KEY: z.string().default(''),
   AI_LLM_MODEL: z.string().min(1).default('gpt-4o-mini'),
+  AI_LLM_BASE_URL: z.string().min(1).default('https://api.openai.com/v1'),
+  AI_LLM_TEMPERATURE: z.coerce.number().min(0).max(1).default(0),
   AI_LLM_MAX_TOKENS: z.coerce.number().int().positive().default(700),
   AI_LLM_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
 

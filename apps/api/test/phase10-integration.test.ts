@@ -193,7 +193,7 @@ describe('P10 technical analysis engine', () => {
     expect(response.body.data).toMatchObject({
       symbol: 'EUR/USD',
       timeframe: 'H1',
-      pendingPhases: ['P11', 'P12', 'P17'],
+      pendingPhases: ['P11', 'P12'],
       regime: { regime: 'WEAK_UPTREND' },
       technical: { symbol: 'EUR/USD', score: { score: 68.4 } },
       historical: { symbol: 'EUR/USD', timeframe: 'D1' },

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MarketModule } from '../market/market.module';
+import { TechnicalAnalysisModule } from '../technical-analysis/technical-analysis.module';
 import { WebsocketModule } from '../websocket/websocket.module';
 import { NewsController } from './news.controller';
 import { NewsService, NewsServiceImpl } from './news.service';
@@ -15,7 +16,7 @@ import { NewsRateLimiter } from './providers/news-rate-limiter';
 import { HttpCalendarProvider, HttpNewsProvider } from './providers/production.provider';
 
 @Module({
-  imports: [MarketModule, WebsocketModule],
+  imports: [MarketModule, TechnicalAnalysisModule, WebsocketModule],
   controllers: [NewsController],
   providers: [
     NewsCacheService,

@@ -17,13 +17,34 @@ client = TestClient(app)
 
 SERVICE_HEADERS = {'X-Service-Token': 'tradesense-dev-service-token'}
 
-STUB_CASES = [
-    (
-        '/api/v1/ai/explain',
-        {'predictionId': 'prediction-1'},
-        'Not implemented until PHASE 17',
-    ),
-]
+# PHASE 17 replaced the last stub (/explain) with the grounded engine. The
+# remaining stub-era assertions keep guarding the P03 contract field sets.
+STUB_CASES: list[tuple[str, dict[str, Any], str]] = []
+
+
+def explanation_payload() -> dict[str, Any]:
+    return {
+        'predictionId': 'prediction-1',
+        'payload': {
+            'symbol': 'EUR/USD',
+            'technicalScore': 82,
+            'historicalScore': 71,
+            'newsScore': 69,
+            'modelProbability': 0.73,
+            'confidence': 74,
+            'risk': 'MEDIUM',
+            'marketRegime': 'UPTREND',
+            'riskReward': 2.1,
+            'dataFreshnessSeconds': 12,
+            'modelVersion': 'xgboost-v1.4.2',
+        },
+        'decision': 'Potential Long',
+        'supportingEvidence': [{'source': 'technical', 'claim': 'Positive momentum'}],
+        'contradictingEvidence': [{'source': 'risk', 'claim': 'Elevated volatility'}],
+        'reasons': ['technical: Positive momentum'],
+        'noTradeReasons': [],
+        'timestamp': '2026-10-08T09:30:00.000Z',
+    }
 
 MODEL_FIELDS: list[tuple[Any, set[str]]] = [
     (IndicatorsRequest, {'symbol', 'timeframe', 'indicators', 'candles'}),
@@ -125,7 +146,7 @@ def test_stub_endpoints_return_501(path: str, payload: dict[str, Any], detail: s
     ('path', 'payload'),
     [
         ('/api/v1/ai/predict', {'symbol': 'EUR/USD', 'timeframe': 'H1', 'horizon': 5}),
-        ('/api/v1/ai/explain', {'predictionId': 'prediction-1'}),
+        ('/api/v1/ai/explain', explanation_payload()),
         ('/api/v1/ai/ml/drift', {}),
     ],
 )

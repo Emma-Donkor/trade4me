@@ -114,8 +114,15 @@ describe('P07 integration contract', () => {
       .post('/api/v1/ai/assistant')
       .set('Authorization', bearer(await accessTokenFor(harness)))
       .send({ message: 'What changed?' })
-      .expect(503);
-    expect(ai.body.error.code).toBe('AI_SERVICE_UNAVAILABLE');
+      .expect(201);
+    expect(ai.body.data).toMatchObject({
+      grounded: expect.any(Boolean),
+      hasData: expect.any(Boolean),
+      explanationSource: expect.any(String),
+      llmModel: expect.any(String),
+      sources: expect.any(Array),
+      answer: expect.any(String),
+    });
   });
 
   it('returns honest empty collections for watchlist, notifications and portfolio', async () => {
@@ -196,7 +203,7 @@ describe('P07 integration contract', () => {
         .post('/api/v1/ai/assistant')
         .set('Authorization', bearer(token))
         .send({ message: 'hello' })
-        .expect(503);
+        .expect(201);
     }
 
     const limited = await request(harness.app.getHttpServer())
